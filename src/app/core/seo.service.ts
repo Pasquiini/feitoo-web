@@ -1,4 +1,5 @@
 import { toolFaqs } from './tool-faqs';
+import { guidePages, GuidePath } from './guide-pages';
 import { DOCUMENT } from '@angular/common';
 import { inject, Injectable } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
@@ -22,6 +23,7 @@ export class SeoService {
   }
   apply(url: string): void {
     const path = safePage(url);
+    const guide = path in guidePages ? guidePages[path as GuidePath] : null;
     const page = publicPages[path as PublicPath] ?? {
       title: path === '/404' ? 'Página não encontrada | Feitoo' : 'Sua conta | Feitoo',
       description: 'Entre na sua conta Feitoo para continuar.',
@@ -35,7 +37,7 @@ export class SeoService {
     for (const [property, content] of Object.entries({
       'og:title': page.title,
       'og:description': page.description,
-      'og:type': 'website',
+      'og:type': guide ? 'article' : 'website',
       'og:site_name': 'Feitoo',
       'og:locale': 'pt_BR',
     }))
@@ -74,21 +76,52 @@ export class SeoService {
       const main =
         path === '/'
           ? { '@type': 'WebSite', name: 'Feitoo', url: canonical, inLanguage: 'pt-BR' }
-          : tool
+          : guide
             ? {
-                '@type': 'WebApplication',
-                name:
-                  path === '/xml-para-excel'
-                    ? 'Converter XML para Excel'
-                    : 'Extrair produtos de XMLs NF-e',
+                '@type': 'Article',
+                name: guide.headline,
+                headline: guide.headline,
+                description: guide.description,
+                mainEntityOfPage: canonical,
                 url: canonical,
-                applicationCategory: 'UtilitiesApplication',
-                operatingSystem: 'Web',
-                description: page.description,
+                image: this.config.origin + '/og/feitoo-og.png',
+                publisher: {
+                  '@type': 'Organization',
+                  name: 'Feitoo',
+                  url: this.config.origin + '/',
+                },
                 inLanguage: 'pt-BR',
               }
-            : { '@type': 'WebPage', name: page.title, url: canonical };
+            : tool
+              ? {
+                  '@type': 'WebApplication',
+                  name:
+                    path === '/xml-para-excel'
+                      ? 'Converter XML para Excel'
+                      : 'Extrair produtos de XMLs NF-e',
+                  url: canonical,
+                  applicationCategory: 'UtilitiesApplication',
+                  operatingSystem: 'Web',
+                  description: page.description,
+                  inLanguage: 'pt-BR',
+                }
+              : { '@type': 'WebPage', name: page.title, url: canonical };
       const graph: object[] = [main];
+      if (guide) {
+        graph.push({
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Feitoo', item: this.config.origin + '/' },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: guide.toolName,
+              item: this.config.origin + guide.toolPath,
+            },
+            { '@type': 'ListItem', position: 3, name: guide.headline, item: canonical },
+          ],
+        });
+      }
       if (path === '/xml-para-excel' || path === '/produtos-dos-xmls') {
         graph.push({
           '@type': 'BreadcrumbList',

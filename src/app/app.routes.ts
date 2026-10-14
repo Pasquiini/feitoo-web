@@ -1,8 +1,14 @@
 import { Routes } from '@angular/router';
 import { guestGuard } from './features/auth/guards/guest.guard';
 import { authGuard } from './features/auth/guards/auth.guard';
+import { guidePages } from './core/guide-pages';
 
 export const routes: Routes = [
+  ...Object.keys(guidePages).map((guide) => ({
+    path: guide.slice(1),
+    data: { guide },
+    loadComponent: () => import('./features/public/guide-page').then((m) => m.GuidePage),
+  })),
   {
     path: 'planos',
     loadComponent: () => import('./features/public/plans').then((m) => m.PlansPage),

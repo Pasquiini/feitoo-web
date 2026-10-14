@@ -1,4 +1,6 @@
+import { guidePages } from './guide-pages';
 export const publicPages = {
+  ...guidePages,
   '/planos': {
     title: 'Planos Free, Avulso e Pro | Feitoo',
     description: 'Compare os planos Feitoo para processar seus XMLs.',

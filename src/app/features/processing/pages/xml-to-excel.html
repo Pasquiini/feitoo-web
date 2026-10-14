@@ -819,6 +819,14 @@
     <a routerLink="/planos">planos e limites de processamento</a>.
   </p>
   <h2>Perguntas frequentes</h2>
+  <p>
+    @if (productsMode) {
+      <a routerLink="/como-extrair-produtos-de-xml-nfe">Veja como extrair produtos de XMLs NF-e</a>.
+    } @else {
+      <a routerLink="/como-converter-xml-nfe-para-excel">Veja como converter XML NF-e para Excel</a
+      >.
+    }
+  </p>
   @for (faq of faqs; track faq.question) {
     <details>
       <summary>{{ faq.question }}</summary>

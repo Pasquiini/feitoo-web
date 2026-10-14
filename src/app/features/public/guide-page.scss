@@ -1,0 +1,47 @@
+:host {
+  display: block;
+}
+.guide {
+  margin-inline: auto;
+  line-height: 1.75;
+}
+.breadcrumbs {
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+.guide h1 {
+  line-height: 1.15;
+}
+.guide-index {
+  padding: 1rem 1.25rem;
+  background: #f0f5ed;
+  border-radius: 0.75rem;
+  margin-block: 1.5rem;
+}
+.guide-index ul {
+  margin-bottom: 0;
+}
+.guide section {
+  scroll-margin-top: 2rem;
+}
+.guide li {
+  margin-block: 0.5rem;
+}
+.guide-callout {
+  border-left: 3px solid #50863e;
+  padding: 0.75rem 1rem;
+  background: #f0f5ed;
+  margin-block: 1.5rem;
+}
+.guide .btn {
+  white-space: normal;
+  line-height: 1.5;
+}
+.guide section:last-child {
+  margin-block: 2rem;
+}
+@media (max-width: 480px) {
+  .guide-index {
+    padding: 0.75rem 1rem;
+  }
+}

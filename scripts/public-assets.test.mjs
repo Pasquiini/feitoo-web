@@ -2,9 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { publicAssets, paths } from './generate-public-assets.mjs';
-test('sitemap lista as sete páginas públicas e a origem configurada', () => {
+test('sitemap lista as nove páginas públicas e a origem configurada', () => {
   const result = publicAssets('https://feitoo.example');
-  assert.equal((result.sitemap.match(/<url>/g) ?? []).length, 7);
+  assert.equal((result.sitemap.match(/<url>/g) ?? []).length, 9);
+  assert.ok(result.sitemap.includes('/como-converter-xml-nfe-para-excel'));
+  assert.ok(result.sitemap.includes('/como-extrair-produtos-de-xml-nfe'));
   assert.ok(result.sitemap.includes('/produtos-dos-xmls'));
   for (const path of paths)
     assert.ok(result.sitemap.includes(`<loc>https://feitoo.example${path}</loc>`));

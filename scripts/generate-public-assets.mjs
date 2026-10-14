@@ -10,6 +10,8 @@ export const paths = [
   '/seguranca',
   '/privacidade',
   '/termos',
+  '/como-converter-xml-nfe-para-excel',
+  '/como-extrair-produtos-de-xml-nfe',
 ];
 export function publicAssets(origin) {
   return {
@@ -77,6 +79,23 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       assert.equal(document.querySelectorAll('link[rel="canonical"]').length, 1);
       assert.equal(document.querySelector('meta[property="og:url"]').content, config.origin + path);
       const graph = JSON.parse(document.getElementById('feitoo-schema').textContent)['@graph'];
+      if (path.startsWith('/como-')) {
+        const article = graph.find((node) => node['@type'] === 'Article');
+        assert.equal(article.headline, document.querySelector('h1').textContent.trim());
+        assert.equal(
+          article.description,
+          document.querySelector('meta[name="description"]').content,
+        );
+        assert.equal(article.url, config.origin + path);
+        assert.equal(article.mainEntityOfPage, config.origin + path);
+        assert.equal(article.image, config.origin + '/og/feitoo-og.png');
+        assert.equal(article.publisher.name, 'Feitoo');
+        const crumbs = graph.find((node) => node['@type'] === 'BreadcrumbList').itemListElement;
+        assert.equal(crumbs.length, 3);
+        assert.equal(crumbs[2].item, config.origin + path);
+        assert.equal(document.querySelector('meta[property="og:type"]').content, 'article');
+        assert.ok(document.querySelector('article.guide'));
+      }
       if (path === '/') assert.ok(graph.some((node) => node['@type'] === 'WebSite'));
       if (path === '/xml-para-excel' || path === '/produtos-dos-xmls') {
         assert.ok(graph.some((node) => node['@type'] === 'WebApplication'));
@@ -97,13 +116,27 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       assert.ok(!html.includes('rel="canonical"'), `Canonical inventado: ${path}`);
       assert.equal(document.querySelectorAll('#feitoo-schema').length, 0);
     }
-    if (path === '/' || path === '/xml-para-excel' || path === '/produtos-dos-xmls') {
+    if (
+      path === '/' ||
+      path === '/xml-para-excel' ||
+      path === '/produtos-dos-xmls' ||
+      path.startsWith('/como-')
+    ) {
       const links = Array.from(document.querySelectorAll('a[href]')).map((link) =>
         link.getAttribute('href'),
       );
       for (const target of ['/xml-para-excel', '/produtos-dos-xmls', '/seguranca', '/planos'])
         if (target !== path)
           assert.ok(links.includes(target), `Link interno ausente: ${path} -> ${target}`);
+      if (path === '/xml-para-excel')
+        assert.ok(links.includes('/como-converter-xml-nfe-para-excel'));
+      if (path === '/produtos-dos-xmls')
+        assert.ok(links.includes('/como-extrair-produtos-de-xml-nfe'));
+      for (const anchor of document.querySelectorAll('.guide-index a')) {
+        const target = new URL(anchor.getAttribute('href'), 'https://feitoo.com.br');
+        assert.equal(target.pathname, path, `Índice sai do guia: ${path}`);
+        assert.ok(document.getElementById(target.hash.slice(1)), `Âncora ausente: ${path}`);
+      }
     }
   }
   const notFound = readFileSync(new URL('404.html', output), 'utf8');

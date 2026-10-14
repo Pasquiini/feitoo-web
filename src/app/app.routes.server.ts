@@ -8,6 +8,8 @@ export const serverRoutes: ServerRoute[] = [
     'seguranca',
     'privacidade',
     'termos',
+    'como-converter-xml-nfe-para-excel',
+    'como-extrair-produtos-de-xml-nfe',
     '404',
   ].map((path): ServerRoute => ({ path, renderMode: RenderMode.Prerender })),
   { path: '**', renderMode: RenderMode.Client },

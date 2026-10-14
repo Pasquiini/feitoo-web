@@ -1,0 +1,310 @@
+<article class="reading-page guide" aria-labelledby="guide-title">
+  <nav class="breadcrumbs" aria-label="Caminho da página">
+    <a routerLink="/">Feitoo</a> / <a [routerLink]="guide.toolPath">{{ guide.toolName }}</a> /
+    <span aria-current="page">{{ guide.headline }}</span>
+  </nav>
+  <p class="eyebrow">Guia da ferramenta</p>
+  <h1 id="guide-title">{{ guide.headline }}</h1>
+  @if (xmlGuide) {
+    <p class="lead">
+      O XML guarda os dados da NF-e em uma estrutura feita para sistemas. Ler esse arquivo linha por
+      linha até encontrar uma quantidade ou um valor dá trabalho. Uma planilha coloca notas e itens
+      em colunas, prontas para consulta e filtros.
+    </p>
+  } @else {
+    <p class="lead">
+      Quando um produto aparece em várias notas, a quantidade de uma compra não conta a história
+      toda. Extrair os itens dos XMLs e reunir os produtos em uma planilha ajuda a conferir o lote
+      sem abrir cada nota separadamente.
+    </p>
+  }
+  <nav class="guide-index" aria-label="Neste guia">
+    <strong>Neste guia</strong>
+    <ul>
+      <li><a [routerLink]="path" fragment="passo-a-passo">Passo a passo no Feitoo</a></li>
+      <li><a [routerLink]="path" fragment="resultado">O que aparece na planilha</a></li>
+      <li>
+        <a [routerLink]="path" fragment="lotes">{{
+          xmlGuide ? 'Conversão em lote e limites' : 'Soma de quantidades'
+        }}</a>
+      </li>
+      <li><a [routerLink]="path" fragment="privacidade">Privacidade dos arquivos</a></li>
+    </ul>
+  </nav>
+
+  @if (xmlGuide) {
+    <section>
+      <h2>Por que converter XML de NF-e para Excel?</h2>
+      <p>
+        A NF-e reúne informações da nota e uma lista de itens. No XML, esses dados ficam
+        distribuídos em grupos de campos. No Excel, você pode filtrar por fornecedor, ordenar notas
+        por data e consultar quantidades sem procurar cada informação no arquivo original.
+      </p>
+      <p>
+        Para uma conferência de compras, por exemplo, a aba de notas permite consultar os valores
+        dos documentos; a aba de itens mostra o que foi comprado. Reunir vários XMLs no mesmo
+        arquivo também evita copiar dados de uma nota por vez.
+      </p>
+    </section>
+    <section id="passo-a-passo">
+      <h2>Como converter XML para Excel passo a passo</h2>
+      <ol>
+        <li>
+          <strong>Acesse a ferramenta.</strong> Abra
+          <a routerLink="/xml-para-excel">Converter XML para Excel</a> no navegador.
+        </li>
+        <li>
+          <strong>Selecione os XMLs.</strong> Escolha os arquivos de NF-e modelo 55 ou arraste-os
+          para a área de envio. Confira os limites indicados antes de continuar.
+        </li>
+        <li>
+          <strong>Inicie o processamento.</strong> Entre na sua conta ou crie uma para processar. Se
+          o lote ultrapassar o limite gratuito, confira as opções apresentadas pela ferramenta.
+        </li>
+        <li>
+          <strong>Aguarde a conclusão.</strong> O envio e o processamento são etapas separadas. A
+          página acompanha o andamento do lote.
+        </li>
+        <li>
+          <strong>Confira o resultado.</strong> Consulte a prévia de notas e itens. Se houver
+          arquivos com erro, veja quais não entraram no resultado.
+        </li>
+        <li>
+          <strong>Baixe o Excel.</strong> Salve a planilha antes do prazo de disponibilidade
+          mostrado na página.
+        </li>
+      </ol>
+      <p class="guide-callout">
+        Se parte do lote tiver erro, os documentos válidos podem gerar uma planilha. Antes de
+        analisar os totais, confira a quantidade de notas processadas.
+      </p>
+    </section>
+    <section id="resultado">
+      <h2>Quais informações podem ser extraídas?</h2>
+      <p>O arquivo Excel tem duas abas:</p>
+      <ul>
+        <li>
+          <strong>Notas:</strong> chave de acesso, número, série, data de emissão, natureza da
+          operação, dados do emitente e do destinatário, quantidade de itens e valores da nota,
+          incluindo produtos, frete, desconto e total.
+        </li>
+        <li>
+          <strong>Itens:</strong> referência à NF-e, fornecedor, código e descrição do produto, NCM,
+          CFOP, unidade comercial, quantidade, valor unitário e total do item.
+        </li>
+      </ul>
+      <p>
+        Os dados vêm dos XMLs enviados; campos opcionais podem estar vazios. Chaves e documentos são
+        preservados como texto. As datas de emissão com horário são exportadas em UTC, com o offset
+        original em uma coluna separada.
+      </p>
+      <p>
+        A aba Itens mantém os produtos por nota. Para agrupar produtos repetidos e somar suas
+        quantidades, use <a routerLink="/produtos-dos-xmls">extrair produtos de XMLs</a>.
+      </p>
+    </section>
+    <section id="lotes">
+      <h2>Posso converter vários XMLs de uma vez?</h2>
+      <p>
+        Sim. A ferramenta aceita um lote e reúne os documentos válidos no mesmo Excel. Os limites
+        por processamento, por dia e de tamanho aparecem na área de envio. Eles dependem do plano e
+        da configuração da ferramenta.
+      </p>
+      <p>
+        Para um lote maior, consulte os
+        <a routerLink="/planos">planos e limites de processamento</a>. Se dividir o lote, mantenha
+        uma lista dos arquivos já usados para não contar a mesma nota duas vezes nas suas análises.
+      </p>
+    </section>
+    <section id="privacidade">
+      <h2>É seguro enviar XMLs de NF-e?</h2>
+      <p>
+        Os arquivos e resultados ficam em armazenamento privado, com acesso restrito à conta que
+        enviou o lote. A retenção é temporária: ao vencer o prazo exibido, o acesso é bloqueado e a
+        rotina periódica de limpeza remove os arquivos. Você também pode excluí-los ao terminar.
+      </p>
+      <p>
+        Envie apenas documentos que você tenha autorização para usar e guarde seus originais. A
+        ferramenta não substitui seu arquivo de documentos. Leia sobre a
+        <a routerLink="/seguranca">segurança dos seus arquivos</a>.
+      </p>
+    </section>
+    <section>
+      <h2>XML para Excel funciona com qualquer XML?</h2>
+      <p>
+        Não. XML é um formato usado por muitos sistemas, com estruturas diferentes. A ferramenta
+        atual do Feitoo é voltada a NF-e modelo 55; não promete converter NFC-e, CT-e ou XMLs de
+        outras origens. PDF e DANFE também não substituem o XML no envio.
+      </p>
+    </section>
+    <section>
+      <h2>Quando usar XML para Excel?</h2>
+      <p>
+        Use para conferir compras por fornecedor, organizar notas de um período, consultar itens
+        recebidos e preparar levantamentos de produtos. Os dados podem apoiar uma conferência de
+        estoque, mas a planilha não registra saídas, ajustes ou o saldo atual.
+      </p>
+      <p>
+        O Feitoo organiza os dados disponíveis nas notas. Não é um sistema contábil e não valida a
+        autenticidade ou a situação fiscal de uma NF-e.
+      </p>
+    </section>
+    <section>
+      <h2>Converter XML para Excel online ou usar programa instalado?</h2>
+      <p>
+        No navegador, você pode enviar um lote sem instalar ou configurar um conversor. Um programa
+        instalado pode ser mais adequado quando sua rotina exige integração com sistemas locais ou
+        regras próprias de tratamento dos dados.
+      </p>
+      <p>
+        Abrir um XML diretamente no Excel também é uma opção para exploração manual, mas a
+        apresentação depende da estrutura do arquivo e da forma de importação. Converter para abas
+        de notas e itens entrega uma organização definida para essa consulta.
+      </p>
+    </section>
+  } @else {
+    <section>
+      <h2>Por que extrair produtos dos XMLs?</h2>
+      <p>
+        Em um lote de compras, o mesmo produto pode aparecer em diferentes notas, com quantidades e
+        preços distintos. Conferir tudo manualmente exige abrir os documentos, localizar cada item e
+        manter uma soma à parte.
+      </p>
+      <p>
+        A extração coloca os itens em colunas. A consolidação reúne os grupos compatíveis,
+        facilitando a consulta de quantidades e preços sem perder o detalhe por nota no Excel.
+      </p>
+    </section>
+    <section id="passo-a-passo">
+      <h2>Como extrair produtos dos XMLs passo a passo</h2>
+      <ol>
+        <li>
+          <strong>Acesse a ferramenta.</strong> Abra
+          <a routerLink="/produtos-dos-xmls">Extrair produtos de XMLs</a>.
+        </li>
+        <li>
+          <strong>Selecione as notas.</strong> Envie os XMLs de NF-e modelo 55 que deseja analisar e
+          confira os limites apresentados.
+        </li>
+        <li>
+          <strong>Inicie o processamento.</strong> Entre na sua conta para continuar. Confira as
+          opções de processamento se o lote ultrapassar o limite do seu plano.
+        </li>
+        <li>
+          <strong>Aguarde a consolidação.</strong> A ferramenta lê os itens e agrupa os produtos
+          automaticamente; não é preciso montar uma soma manual.
+        </li>
+        <li>
+          <strong>Visualize o resultado.</strong> Consulte a prévia de produtos consolidados e de
+          itens por nota. Confira também os arquivos que não puderam ser processados.
+        </li>
+        <li>
+          <strong>Exporte.</strong> Baixe o Excel completo ou o PDF resumido antes do vencimento do
+          lote.
+        </li>
+      </ol>
+    </section>
+    <section>
+      <h2>Como funciona a consolidação dos produtos?</h2>
+      <p>
+        O agrupamento considera o documento do emitente, o código do produto, o NCM e a unidade. Se
+        não houver código, usa a descrição do produto. Na comparação, espaços repetidos e diferenças
+        entre maiúsculas e minúsculas são normalizados; o texto apresentado no resultado é
+        preservado.
+      </p>
+      <p>
+        Produtos de fornecedores diferentes ou com NCM e unidades distintos ficam separados. Quando
+        falta o documento do emitente, a identificação da nota mantém o agrupamento restrito a ela.
+        A ferramenta não descobre equivalências entre códigos nem converte unidades.
+      </p>
+      <p>
+        Em cada grupo, as quantidades e os valores dos itens são somados. O valor unitário médio é
+        calculado dividindo o total pela quantidade total; se a quantidade for zero, não há média.
+        Os produtos são apresentados com os maiores valores totais primeiro.
+      </p>
+      <p class="guide-callout">
+        Um item em “CX” e outro em “UN” não viram um único total. Confira a unidade e o fornecedor
+        antes de comparar produtos que parecem iguais pela descrição.
+      </p>
+    </section>
+    <section id="resultado">
+      <h2>O que aparece na planilha?</h2>
+      <p>O Excel traz duas abas:</p>
+      <ul>
+        <li>
+          <strong>Produtos:</strong> código, produto, NCM, unidade, quantidade total, número de
+          NF-es, menor e maior valor unitário, valor unitário médio, total, documento e nome do
+          emitente.
+        </li>
+        <li>
+          <strong>Itens:</strong> número e série da NF-e, emissão em UTC, emitente e seu documento,
+          código, produto, NCM, CFOP, unidade, quantidade, valor unitário e total.
+        </li>
+      </ul>
+      <p>
+        A aba Produtos permite consultar o consolidado; a aba Itens ajuda a conferir de quais notas
+        vieram os dados. Para uma planilha com o resumo dos documentos e seus itens, use
+        <a routerLink="/xml-para-excel">converter XML para Excel</a>.
+      </p>
+    </section>
+    <section id="lotes">
+      <h2>É possível somar quantidades de vários XMLs?</h2>
+      <p>
+        Sim, desde que os itens pertençam ao mesmo grupo. Se um produto do mesmo emitente, com o
+        mesmo código, NCM e unidade, aparece com 3 unidades em uma nota e 5 em outra, o consolidado
+        mostra 8 unidades.
+      </p>
+      <p>
+        Essa soma descreve os arquivos enviados, não o saldo de estoque. Escolha o período e os
+        documentos com cuidado. Os limites de lote e uso diário aparecem na ferramenta e variam
+        conforme o plano; veja os <a routerLink="/planos">planos de processamento</a>.
+      </p>
+    </section>
+    <section>
+      <h2>Posso exportar os resultados?</h2>
+      <p>
+        Sim. O Excel contém todos os produtos consolidados e os itens detalhados processados. O PDF
+        é um resumo visual com uma amostra dos produtos; descrições longas podem ser abreviadas. Use
+        o Excel quando precisar consultar o resultado completo ou aplicar seus próprios filtros.
+      </p>
+    </section>
+    <section>
+      <h2>Quando essa ferramenta é útil?</h2>
+      <p>
+        Use para conferir a entrada de mercadorias, reunir compras de um período, comparar preços de
+        um produto no mesmo fornecedor ou preparar uma lista para auxiliar um inventário. A
+        separação por emitente ajuda a consultar as notas de cada fornecedor.
+      </p>
+      <p>
+        A planilha não controla movimentações de estoque nem substitui uma conferência física. Antes
+        de usar os totais, confira quais notas entraram no lote e se houve falhas no processamento.
+      </p>
+    </section>
+    <section id="privacidade">
+      <h2>Privacidade dos XMLs</h2>
+      <p>
+        O processamento usa armazenamento privado, com acesso restrito à sua conta. Arquivos e
+        resultados ficam disponíveis por um prazo temporário indicado na ferramenta. Ao vencer, o
+        acesso é bloqueado e a limpeza periódica remove os arquivos; você pode excluí-los ao
+        terminar.
+      </p>
+      <p>
+        Envie apenas documentos que você tenha autorização para utilizar e mantenha seus originais.
+        Entenda a retenção e a <a routerLink="/seguranca">segurança dos seus arquivos</a>.
+      </p>
+    </section>
+  }
+  <section>
+    <h2>
+      {{ xmlGuide ? 'Experimente converter seus XMLs' : 'Extraia os produtos dos seus XMLs' }}
+    </h2>
+    <p>
+      {{
+        xmlGuide
+          ? 'Selecione um lote de NF-e modelo 55 e confira as notas e os itens antes de baixar sua planilha.'
+          : 'Reúna as notas que deseja conferir e veja os produtos consolidados, com o detalhe de cada item no Excel.'
+      }}
+    </p>
+    <a class="btn btn-primary" [routerLink]="guide.toolPath">{{ guide.action }}</a>
+  </section>
+</article>

@@ -160,6 +160,26 @@ describe('Public launch', () => {
     seo.apply('/login');
     expect(TestBed.inject(Title).getTitle()).toBe('Sua conta | Feitoo');
   });
+  it('aplica imagem OG e Twitter sem duplicar tags nas sete páginas públicas', () => {
+    const seo = TestBed.inject(SeoService);
+    for (const path of Object.keys(publicPages)) {
+      seo.apply(path);
+      seo.apply(path + '?source=test');
+      for (const [selector, expected] of [
+        ['meta[property="og:image"]', config.origin + '/og/feitoo-og.png'],
+        ['meta[property="og:image:width"]', '1200'],
+        ['meta[property="og:image:height"]', '630'],
+        ['meta[name="twitter:image"]', config.origin + '/og/feitoo-og.png'],
+        ['meta[name="twitter:card"]', 'summary_large_image'],
+      ]) {
+        expect(document.querySelectorAll(selector)).toHaveLength(1);
+        expect(document.querySelector(selector)?.getAttribute('content')).toBe(expected);
+      }
+    }
+    seo.apply('/login');
+    expect(document.querySelector('meta[property="og:image"]')).toBeNull();
+    expect(document.querySelector('meta[name="twitter:image"]')).toBeNull();
+  });
   it('normaliza barra e query e substitui schema ao navegar entre ferramentas', () => {
     const seo = TestBed.inject(SeoService);
     for (const path of ['/xml-para-excel', '/produtos-dos-xmls'] as const) {

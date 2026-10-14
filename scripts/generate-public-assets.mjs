@@ -24,6 +24,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     readFileSync(new URL('../.angular-launch.json', import.meta.url), 'utf8'),
   );
   const output = new URL('../dist/feitoo-web/browser/', import.meta.url);
+  const image = readFileSync(new URL('og/feitoo-og.png', output));
+  assert.equal(image.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', 'OG deve ser PNG');
   const assets = publicAssets(config.origin);
   writeFileSync(new URL('robots.txt', output), assets.robots);
   writeFileSync(new URL('sitemap.xml', output), assets.sitemap);
@@ -34,6 +36,24 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       'utf8',
     );
     const document = new JSDOM(html).window.document;
+    for (const [selector, expected] of [
+      ['meta[property="og:image"]', config.origin + '/og/feitoo-og.png'],
+      ['meta[property="og:image:width"]', '1200'],
+      ['meta[property="og:image:height"]', '630'],
+      ['meta[name="twitter:image"]', config.origin + '/og/feitoo-og.png'],
+      ['meta[name="twitter:card"]', 'summary_large_image'],
+    ]) {
+      assert.equal(
+        document.querySelectorAll(selector).length,
+        1,
+        `Tag social duplicada/ausente: ${path} ${selector}`,
+      );
+      assert.equal(
+        document.querySelector(selector).content,
+        expected,
+        `Tag social incorreta: ${path} ${selector}`,
+      );
+    }
     assert.equal(document.querySelectorAll('h1').length, 1, `H1 deve ser único: ${path}`);
     assert.ok(document.querySelector('h1').textContent.trim(), `H1 vazio: ${path}`);
     for (const property of ['og:title', 'og:description', 'og:type', 'og:site_name'])

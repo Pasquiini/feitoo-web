@@ -40,9 +40,23 @@ export class SeoService {
       'og:locale': 'pt_BR',
     }))
       this.meta.updateTag({ property, content });
-    this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+    this.meta.updateTag({
+      name: 'twitter:card',
+      content: path in publicPages ? 'summary_large_image' : 'summary',
+    });
     this.meta.updateTag({ name: 'twitter:title', content: page.title });
     this.meta.updateTag({ name: 'twitter:description', content: page.description });
+    if (path in publicPages) {
+      const image = this.config.origin + '/og/feitoo-og.png';
+      this.meta.updateTag({ property: 'og:image', content: image });
+      this.meta.updateTag({ property: 'og:image:width', content: '1200' });
+      this.meta.updateTag({ property: 'og:image:height', content: '630' });
+      this.meta.updateTag({ name: 'twitter:image', content: image });
+    } else {
+      for (const property of ['og:image', 'og:image:width', 'og:image:height'])
+        this.meta.removeTag(`property="${property}"`);
+      this.meta.removeTag('name="twitter:image"');
+    }
     this.document.querySelector('link[rel="canonical"]')?.remove();
     this.document.getElementById('feitoo-schema')?.remove();
     this.meta.removeTag('property="og:url"');

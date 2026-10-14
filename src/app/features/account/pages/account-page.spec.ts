@@ -421,14 +421,47 @@ describe('AccountPage', () => {
     expect(page.subscriptionPollingActive()).toBe(false);
   });
 
-  it('offers configurable Pro checkout to Free and opens Stripe checkout', () => {
+  it.each([true, false])(
+    'opens Pro checkout for Free regardless of legacy availability %s',
+    (available) => {
+      const billing = TestBed.inject(BillingService);
+      const checkout = vi.spyOn(billing, 'proCheckout');
+      page.subscription.update((s) => (s ? { ...s, offer: { ...s.offer, available } } : s));
+      fixture.detectChanges();
+      expect(element.textContent).toContain('Assinar Feitoo Pro');
+      expect(element.textContent?.replace(/\s/g, ' ')).toContain('R$ 29,90/mês');
+      expect(element.textContent).not.toContain('Assinatura em preparação');
+      const button = element.querySelector<HTMLButtonElement>('.upgrade-offer button')!;
+      expect(button.disabled).toBe(false);
+      button.click();
+      expect(checkout).toHaveBeenCalledOnce();
+      expect(billing.redirect).toHaveBeenCalledWith('https://checkout.stripe.com/test');
+    },
+  );
+
+  it('keeps checkout loading, prevents duplicate requests and allows retry after an error', () => {
+    const billing = TestBed.inject(BillingService);
+    const request = new Subject<{ data: { url: string } }>();
+    const checkout = vi.spyOn(billing, 'proCheckout').mockReturnValue(request);
     fixture.detectChanges();
-    expect(element.textContent).toContain('Assinar Feitoo Pro');
-    expect(element.textContent).toContain('29,90');
+    const button = element.querySelector<HTMLButtonElement>('.upgrade-offer button')!;
+    button.click();
+    fixture.detectChanges();
+    expect(button.disabled).toBe(true);
+    expect(button.textContent).toContain('Abrindo…');
     page.openSubscription();
-    expect(TestBed.inject(BillingService).redirect).toHaveBeenCalledWith(
-      'https://checkout.stripe.com/test',
+    expect(checkout).toHaveBeenCalledOnce();
+    request.error(new HttpErrorResponse({ status: 503 }));
+    fixture.detectChanges();
+    expect(button.disabled).toBe(false);
+    expect(element.querySelector('[role="alert"]')?.textContent).toContain(
+      'Não foi possível abrir a Stripe. Tente novamente.',
     );
+    checkout.mockReturnValue(of({ data: { url: 'https://checkout.stripe.com/test' } }));
+    button.click();
+    expect(checkout).toHaveBeenCalledTimes(2);
+    expect(page.subscriptionError()).toBe('');
+    expect(billing.redirect).toHaveBeenCalledWith('https://checkout.stripe.com/test');
   });
 
   it('shows active Pro, next billing, scheduled cancellation and payment problem with portal', () => {
@@ -442,6 +475,7 @@ describe('AccountPage', () => {
     page.usage.update((u) => (u ? { ...u, plan: 'pro' } : u));
     page.subscription.update((s) => (s ? { ...s, subscription: sub } : s));
     fixture.detectChanges();
+    expect(element.textContent).toContain('Feitoo Pro');
     expect(element.textContent).toContain('Ativo');
     expect(element.textContent).toContain('09/11/2026');
     expect(element.textContent).not.toContain('Assinar Feitoo Pro');

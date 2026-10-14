@@ -107,7 +107,7 @@
             <button
               type="button"
               class="btn btn-primary"
-              [disabled]="subscriptionBusy() || !billing.offer.available"
+              [disabled]="subscriptionBusy()"
               (click)="openSubscription()"
             >
               {{ subscriptionBusy() ? 'Abrindo…' : 'Assinar Feitoo Pro' }}
@@ -116,9 +116,6 @@
               {{ billing.offer.per_processing }} XMLs por processamento ·
               {{ billing.offer.daily }} XMLs por dia · Retenção de 24 horas
             </p>
-            @if (!billing.offer.available) {
-              <p class="small">Assinatura em preparação.</p>
-            }
           </div>
         }
       } @else if (subscriptionLoading()) {

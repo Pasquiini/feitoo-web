@@ -60,9 +60,9 @@ describe('App', () => {
     respondToHealth();
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.querySelector('#primary-nav a[href="/#planos"]')?.textContent).toBe('Planos');
+    expect(element.querySelector('#primary-nav a[href="/planos"]')?.textContent).toBe('Planos');
     expect(element.querySelector('.header-account a')?.getAttribute('href')).toBe('/login');
-    for (const href of ['/#ferramentas', '/seguranca', '/privacidade', '/termos', '/conta'])
+    for (const href of ['/xml-para-excel', '/produtos-dos-xmls', '/planos', '/seguranca', '/privacidade', '/termos', '/conta'])
       expect(element.querySelector(`footer a[href="${href}"]`)).not.toBeNull();
   });
 

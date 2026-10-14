@@ -53,3 +53,15 @@
     grid-template-columns: 1fr;
   }
 }
+.plan-price {
+  font-size: 1.6rem;
+  font-weight: 750;
+  margin: 0.25rem 0 0.8rem;
+  letter-spacing: -0.035em;
+}
+.plan-price span {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  font-weight: 400;
+  margin-left: 0.25rem;
+}

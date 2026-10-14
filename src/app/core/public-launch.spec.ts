@@ -170,7 +170,7 @@ describe('Public launch', () => {
   it('home mostra as duas ferramentas e navegação funcional', async () => {
     const harness = await RouterTestingHarness.create('/');
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain(
-      'Resolva tarefas com XML em segundos.',
+      'Ferramentas simples para resolver arquivos e dados em minutos.',
     );
     expect(harness.routeNativeElement?.querySelectorAll('.home-tool-card').length).toBe(2);
     expect(harness.routeNativeElement?.querySelector('a')?.getAttribute('href')).toBe(

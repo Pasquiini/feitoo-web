@@ -1,0 +1,16 @@
+<article class="home-tool-card">
+  <a [routerLink]="tool().route" [attr.aria-label]="tool().cta + ': ' + tool().title">
+    <div class="tool-top">
+      <span class="icon-tile" [class.product-icon]="tool().icon === 'product'"
+        ><app-home-icon [name]="tool().icon" /></span
+      ><span class="tool-badge">{{ tool().badge }}</span>
+    </div>
+    <h3>{{ tool().title }}</h3>
+    <p class="tool-description">{{ tool().description }}</p>
+    <p class="tool-benefit">{{ tool().benefit }}</p>
+    <div class="tool-bottom">
+      <span class="tool-meta">{{ tool().meta }}</span
+      ><span class="tool-cta">{{ tool().cta }} <app-home-icon name="arrow" /></span>
+    </div>
+  </a>
+</article>

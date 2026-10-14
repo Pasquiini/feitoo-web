@@ -39,8 +39,10 @@ export class HomeIcon {
     | 'download'
     | 'check'
     | 'arrow'
+    | 'search'
   >();
   readonly paths = {
+    search: 'M16 10a6 6 0 1 1-12 0 6 6 0 0 1 12 0 M15 15l6 6',
     xml: 'M14 2H5v20h14V7z M14 2v5h5 M9 11l-3 3 3 3 M15 11l3 3-3 3',
     excel: 'M14 2H5v20h14V7z M14 2v5h5 M8 11h8v7H8z M12 11v7 M8 14h8',
     product: 'M12 2l9 5v10l-9 5-9-5V7z M3 7l9 5 9-5 M12 12v10 M7 4l9 5',

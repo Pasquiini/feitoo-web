@@ -1,35 +1,35 @@
-<div class="plans-grid">
+﻿<div class="plans-grid">
   <article class="plan-card">
     <h3>Free</h3>
-    <p>Para começar.</p>
+    <p>Para uso ocasional.</p>
+    <div class="plan-price">Grátis</div>
     <ul>
-      <li>20 XMLs por processamento</li>
-      <li>50 XMLs por dia</li>
+      <li>Até 20 XMLs por processamento</li>
+      <li>Limite diário conforme a ferramenta</li>
       <li>Sem cartão para começar</li>
     </ul>
     <a class="btn btn-outline-primary" routerLink="/" fragment="ferramentas">Usar grátis</a>
   </article>
   <article class="plan-card">
     <h3>Avulso</h3>
-    <p>Para um lote maior.</p>
+    <p>Um lote maior, sem assinar.</p>
+    <div class="plan-price">Por volume</div>
     <ul>
       <li>Pagamento único</li>
-      <li>Sem assinatura</li>
-      <li>Escolha ao enviar seus XMLs</li>
+      <li>Valor conforme o volume de XMLs</li>
+      <li>Confira as opções na ferramenta</li>
     </ul>
-    <a class="btn btn-outline-primary" routerLink="/xml-para-excel">Processar um lote</a>
+    <a class="btn btn-outline-primary" routerLink="/xml-para-excel">Ver opções</a>
   </article>
   <article class="plan-card plan-pro">
-    <span class="plan-label">Para a sua rotina</span>
     <h3>Pro</h3>
     <p>Para quem usa com frequência.</p>
+    <div class="plan-price">R$ 29,90<span>/mês</span></div>
     <ul>
-      <li>250 XMLs por processamento</li>
-      <li>500 XMLs por dia</li>
-      <li>Maior retenção: 24 horas</li>
+      <li>Até 250 XMLs por processamento</li>
+      <li>Maior limite diário</li>
+      <li>Retenção de 24h</li>
     </ul>
-    <a class="btn btn-primary" routerLink="/conta">{{
-      auth.user() ? 'Ver Pro na minha conta' : 'Conhecer o Pro'
-    }}</a>
+    <a class="btn btn-primary" routerLink="/conta">Assinar Pro</a>
   </article>
 </div>

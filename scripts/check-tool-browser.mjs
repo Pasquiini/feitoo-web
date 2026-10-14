@@ -365,6 +365,7 @@ const server = createServer(async (request, response) => {
         '/',
         '/xml-para-excel',
         '/produtos-dos-xmls',
+        '/planos',
         '/seguranca',
         '/privacidade',
         '/termos',
@@ -387,7 +388,13 @@ const server = createServer(async (request, response) => {
         '.svg': 'image/svg+xml',
       }[extname(actual)] ?? 'application/octet-stream',
     );
-    response.end(await readFile(actual));
+    const content = await readFile(actual);
+    // Route the production API origin to the local synthetic server for this check only.
+    response.end(
+      extname(actual) === '.js'
+        ? content.toString().replaceAll('https://api.feitoo.com.br', `http://127.0.0.1:${port}`)
+        : content,
+    );
   } catch {
     response.writeHead(404).end();
   }
@@ -492,9 +499,34 @@ try {
     await evaluate(
       "[...document.querySelectorAll('button')].find(b => b.textContent.includes('Recusar opcionais')).click()",
     );
+  await command('Page.navigate', { url: `http://127.0.0.1:${port}/` });
+  await waitFor('!!document.querySelector("#tool-search")');
+  for (const [query, count] of [
+    ['excel', 2],
+    ['xml', 2],
+    ['produto', 1],
+    ['nota', 2],
+    ['nfe', 2],
+    ['CONVERSÃO', 1],
+    ['inexistente', 0],
+    ['', 2],
+  ]) {
+    await evaluate(
+      `(() => { const input = document.querySelector('#tool-search'); input.value = ${JSON.stringify(query)}; input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
+    );
+    await waitFor(`document.querySelectorAll('.home-tool-card').length === ${count}`);
+  }
+  await evaluate(
+    "document.querySelector('#tool-search').value = 'produto'; document.querySelector('#tool-search').dispatchEvent(new Event('input', { bubbles: true }))",
+  );
+  await waitFor("!!document.querySelector('.search-field button')");
+  await evaluate("document.querySelector('.search-field button').click()");
+  await waitFor(
+    "document.querySelectorAll('.home-tool-card').length === 2 && document.activeElement.id === 'tool-search'",
+  );
   const publicChecks = [];
   for (const [path, heading] of [
-    ['/', 'Resolva tarefas com XML em segundos.'],
+    ['/', 'Ferramentas simples para resolver arquivos e dados em minutos.'],
     ['/seguranca', 'Segurança sem promessas vazias'],
     ['/privacidade', 'Privacidade e cookies'],
     ['/termos', 'Termos de uso'],
@@ -535,7 +567,11 @@ try {
             ),
           );
           assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'), false);
-          assert.ok(await evaluate('document.querySelector("#primary-nav").getBoundingClientRect().right <= innerWidth'));
+          assert.ok(
+            await evaluate(
+              'document.querySelector("#primary-nav").getBoundingClientRect().right <= innerWidth',
+            ),
+          );
           const menuShot = await command('Page.captureScreenshot', { format: 'png' });
           await writeFile(
             resolve(artifacts, `home-menu-${width}.png`),
@@ -1093,7 +1129,7 @@ try {
     '!!document.querySelector(".account-menu") && document.querySelector(".plan-pro a")?.getAttribute("href") === "/conta"',
   );
   assert.ok(
-    await evaluate('!document.querySelector(".hero-note").textContent.includes("Entre grátis")'),
+    await evaluate('!!document.querySelector("#tool-search")'),
   );
   const homeLayouts = [];
   for (const width of [320, 375, 768, 1024, 1440]) {
@@ -1116,17 +1152,17 @@ try {
     );
     homeLayouts.push({ state: 'authenticated', width, overflow: false });
   }
-  await evaluate('document.querySelector(".hero-actions a:last-child").click()');
+  await evaluate('document.querySelector("#primary-nav a").click()');
   await waitFor(
     'location.hash === "#ferramentas" && document.querySelector("#ferramentas").getBoundingClientRect().top < 100',
   );
-  await evaluate('document.querySelector(".home-tool-card:last-child a").click()');
+  await evaluate('document.querySelector("app-tool-card:last-child a").click()');
   await waitFor(
     'location.pathname === "/produtos-dos-xmls" && !!document.querySelector("#xml-files")',
   );
   await command('Page.navigate', { url: `http://127.0.0.1:${port}/` });
   await waitFor(
-    '!!document.querySelector(".account-menu") && document.querySelector(".plan-pro a")?.textContent.includes("Ver Pro na minha conta")',
+    '!!document.querySelector(".account-menu") && document.querySelector(".plan-pro a")?.textContent.includes("Assinar Pro")',
   );
   await evaluate('document.querySelector(".plan-pro a").click()');
   await waitFor('location.pathname === "/conta" && !!document.querySelector("#account-name")');
@@ -1140,6 +1176,8 @@ try {
             .map((check) => ({ ...check, state: 'guest' })),
           ...homeLayouts,
         ],
+        search: true,
+        searchClearFocus: true,
         toolLinks: true,
         toolsAnchor: true,
         proAccountLink: true,

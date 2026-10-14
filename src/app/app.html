@@ -1,4 +1,4 @@
-<a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+﻿<a class="skip-link" href="#main-content">Pular para o conteúdo</a>
 <header class="site-header container">
   <a routerLink="/" class="brand" aria-label="Feitoo, início"
     >feitoo<span aria-hidden="true">.</span></a
@@ -29,8 +29,8 @@
       [class.is-open]="mobileMenuOpen()"
       (click)="mobileMenuOpen.set(false)"
     >
-      <a routerLink="/" fragment="ferramentas">Ferramentas</a
-      ><a routerLink="/seguranca">Segurança</a><a routerLink="/" fragment="planos">Planos</a>
+      <a routerLink="/" fragment="ferramentas">Ferramentas</a><a routerLink="/planos">Planos</a
+      ><a routerLink="/seguranca">Segurança</a>
     </nav>
     <div class="header-account">
       @if (auth.user(); as user) {
@@ -80,18 +80,36 @@
   <div class="footer-identity">
     <a class="brand" routerLink="/">feitoo<span aria-hidden="true">.</span></a>
     <p>Tarefas com arquivos. Feitas.</p>
-    <small>© {{ year }} Feitoo</small>
+    <a href="mailto:suporte@feitoo.com.br">suporte@feitoo.com.br</a>
   </div>
-  <nav aria-label="Informações">
-    <a routerLink="/" fragment="ferramentas">Ferramentas</a><a routerLink="/seguranca">Segurança</a
-    ><a routerLink="/privacidade">Privacidade</a><a routerLink="/termos">Termos</a
-    ><a routerLink="/conta">Minha conta</a
+  <div class="footer-groups">
+    <nav aria-label="Ferramentas">
+      <h2>Ferramentas</h2>
+      <a routerLink="/xml-para-excel">XML para Excel</a
+      ><a routerLink="/produtos-dos-xmls">Produtos dos XMLs</a>
+    </nav>
+    <nav aria-label="Produto">
+      <h2>Produto</h2>
+      <a routerLink="/planos">Planos</a><a routerLink="/seguranca">Segurança</a>
+    </nav>
+    <nav aria-label="Legal">
+      <h2>Legal</h2>
+      <a routerLink="/privacidade">Privacidade</a><a routerLink="/termos">Termos</a>
+    </nav>
+    <nav aria-label="Conta">
+      <h2>Conta</h2>
+      @if (auth.user()) {
+        <a routerLink="/conta">Minha conta</a>
+      } @else {
+        <a routerLink="/login">Entrar</a><a routerLink="/conta">Minha conta</a>
+      }
+    </nav>
+  </div>
+  <div class="footer-bottom">
+    <small>© {{ year }} Feitoo. Todos os direitos reservados.</small
     ><button type="button" class="link-button" (click)="analytics.preferences.set(true)">
       Preferências de cookies
     </button>
-    @if (launch.contact) {
-      <a [href]="'mailto:' + launch.contact">Contato</a>
-    }
-  </nav>
+  </div>
 </footer>
 <app-cookie-preferences />

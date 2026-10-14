@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/feitoo-web/browser",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "X-Frame-Options": "DENY",
+        "Content-Security-Policy": "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+      },
+      "continue": true
+    },
+    { "handle": "filesystem" },
+    { "src": "/(?:conta|login|cadastro)/?", "dest": "/index.html" },
+    { "src": "/.*", "dest": "/404.html", "status": 404 }
+  ]
+}

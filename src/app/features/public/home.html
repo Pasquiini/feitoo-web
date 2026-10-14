@@ -1,0 +1,149 @@
+<section class="home-hero" aria-labelledby="home-title">
+  <div class="hero-copy">
+    <p class="home-eyebrow">
+      <span class="status-dot" aria-hidden="true"></span> Grátis para começar
+    </p>
+    <h1 id="home-title">Resolva tarefas com <span>XML em segundos.</span></h1>
+    <p class="home-lead">
+      Converta NF-es para Excel, consolide produtos e baixe resultados prontos sem instalar nada.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" routerLink="/xml-para-excel"
+        >Usar XML para Excel <app-home-icon name="arrow"
+      /></a>
+      <a class="btn btn-outline-primary" routerLink="/" fragment="ferramentas">Ver ferramentas</a>
+    </div>
+    <p class="hero-note">
+      {{
+        auth.user()
+          ? 'Escolha a ferramenta e envie seus XMLs.'
+          : 'Selecione os arquivos primeiro. Entre grátis para processar.'
+      }}
+    </p>
+  </div>
+  <app-home-preview />
+</section>
+
+<section class="home-section" id="ferramentas" aria-labelledby="tools-title">
+  <div class="section-heading">
+    <p class="home-eyebrow">Menos trabalho com arquivos</p>
+    <h2 id="tools-title">O que você pode fazer agora</h2>
+    <p>Duas ferramentas. Cada uma resolve uma tarefa.</p>
+  </div>
+  <div class="tools-grid">
+    <article class="home-tool-card">
+      <span class="icon-tile"><app-home-icon name="excel" /></span>
+      <h3>XML para Excel</h3>
+      <p>Transforme várias NF-es em uma planilha organizada.</p>
+      <ul class="output-chips" aria-label="Saídas e recursos">
+        <li>Excel</li>
+        <li>Preview</li>
+        <li>NF-e</li>
+      </ul>
+      <a class="tool-cta" routerLink="/xml-para-excel" aria-label="Usar ferramenta XML para Excel"
+        >Usar ferramenta <app-home-icon name="arrow"
+      /></a>
+    </article>
+    <article class="home-tool-card">
+      <span class="icon-tile"><app-home-icon name="product" /></span>
+      <h3>Produtos dos XMLs</h3>
+      <p>Consolide produtos, quantidades e valores das suas notas.</p>
+      <ul class="output-chips" aria-label="Saídas e recursos">
+        <li>Excel</li>
+        <li>PDF</li>
+        <li>Preview</li>
+      </ul>
+      <a
+        class="tool-cta"
+        routerLink="/produtos-dos-xmls"
+        aria-label="Usar ferramenta Produtos dos XMLs"
+        >Usar ferramenta <app-home-icon name="arrow"
+      /></a>
+    </article>
+  </div>
+</section>
+
+<section class="home-section workflow" aria-labelledby="workflow-title">
+  <div class="section-heading">
+    <h2 id="workflow-title">Do arquivo ao feito.</h2>
+    <p>Como funciona, em três passos.</p>
+  </div>
+  <ol class="workflow-grid">
+    <li>
+      <span class="step-icon"><app-home-icon name="upload" /></span
+      ><span class="step-label">01 / Envio</span>
+      <h3>Envie seus arquivos</h3>
+      <p>Selecione os XMLs de NF-e.</p>
+    </li>
+    <li>
+      <span class="step-icon"><app-home-icon name="speed" /></span
+      ><span class="step-label">02 / Processamento</span>
+      <h3>O Feitoo processa</h3>
+      <p>Acompanhe e confira o preview.</p>
+    </li>
+    <li>
+      <span class="step-icon"><app-home-icon name="download" /></span
+      ><span class="step-label">03 / Resultado</span>
+      <h3>Baixe o resultado</h3>
+      <p>Excel ou PDF, quando disponível.</p>
+    </li>
+  </ol>
+</section>
+
+<section class="home-section" aria-labelledby="benefits-title">
+  <div class="section-heading"><h2 id="benefits-title">Por que usar o Feitoo?</h2></div>
+  <div class="benefits-grid">
+    <article>
+      <app-home-icon name="speed" />
+      <h3>Rápido</h3>
+      <p>Deixe a organização com o Feitoo. O tempo varia conforme o lote.</p>
+    </article>
+    <article>
+      <app-home-icon name="shield" />
+      <h3>Privado</h3>
+      <p>Arquivos armazenados temporariamente, com acesso pela sua conta.</p>
+    </article>
+    <article>
+      <app-home-icon name="browser" />
+      <h3>Sem instalação</h3>
+      <p>Tudo funciona direto no navegador.</p>
+    </article>
+    <article>
+      <app-home-icon name="download" />
+      <h3>Resultado pronto</h3>
+      <p>Confira o preview e baixe o arquivo organizado.</p>
+    </article>
+  </div>
+</section>
+
+<section class="security-block" aria-labelledby="security-title">
+  <span class="icon-tile"><app-home-icon name="shield" /></span>
+  <div>
+    <h2 id="security-title">Seus arquivos são seus.</h2>
+    <p>
+      Usados apenas para o processamento solicitado e excluídos automaticamente conforme o prazo da
+      sua conta.
+    </p>
+    <a routerLink="/seguranca">Saiba mais sobre segurança <app-home-icon name="arrow" /></a>
+  </div>
+</section>
+
+<section class="home-section" id="planos" aria-labelledby="plans-title">
+  <div class="section-heading">
+    <p class="home-eyebrow">No seu ritmo</p>
+    <h2 id="plans-title">Comece grátis. Amplie quando precisar.</h2>
+    <p>Para uma tarefa ocasional ou para a sua rotina.</p>
+  </div>
+  <app-home-plans />
+  <p class="plans-note">
+    Limites diários separados por ferramenta. Confira as opções e os valores antes de pagar.
+  </p>
+</section>
+
+<section class="final-cta" aria-labelledby="final-title">
+  <p class="home-eyebrow">Mais tempo para o que importa</p>
+  <h2 id="final-title">Escolha uma ferramenta<br />e resolva agora.</h2>
+  <a class="btn btn-primary" routerLink="/" fragment="ferramentas"
+    >Ver ferramentas <app-home-icon name="arrow"
+  /></a>
+</section>

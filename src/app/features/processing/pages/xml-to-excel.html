@@ -1,0 +1,808 @@
+<section class="tool mt-3" [class.products-tool]="productsMode" aria-labelledby="tool-title">
+  @if (productsMode) {
+    <p class="tool-eyebrow"><app-tool-icon name="xml" /> XML → produtos → Excel + PDF</p>
+  }
+  <h1 id="tool-title">{{ tool.name }}</h1>
+  <p class="tool-subtitle">
+    {{
+      productsMode
+        ? 'Reúna os produtos das suas NF-es. Confira os totais e baixe o resultado.'
+        : tool.subtitle
+    }}
+  </p>
+  @if (config()?.free; as free) {
+    <p class="small text-secondary">
+      {{ usage()?.plan === 'pro' ? 'Feitoo Pro' : 'Plano gratuito' }} ·
+      {{ usage()?.limits?.per_processing ?? free.per_processing }} XMLs por processamento ·
+      {{ usage()?.limits?.daily ?? free.daily }} XMLs por dia.
+      @if (usage(); as current) {
+        Você ainda pode processar {{ current.limits.remaining_today }} XMLs hoje.
+      }
+      O limite diário é separado por ferramenta.
+    </p>
+  }
+  @if (paymentMessage()) {
+    <p class="feedback" role="status">{{ paymentMessage() }}</p>
+  }
+  @if (state() === 'uploading') {
+    <p role="status">
+      Enviando arquivos… {{ uploaded() }} enviados. Upload e processamento são etapas separadas.
+    </p>
+  }
+  @if (deferredFiles().length) {
+    <p class="small">
+      {{ deferredFiles().length }} arquivos ficaram fora deste processamento por sua escolha. Use
+      “Selecionar outros arquivos” para recuperar essa seleção.
+    </p>
+  }
+  @if (
+    (!processing() || processing()?.status === 'pending') &&
+    (needsPurchase() || purchase()) &&
+    auth.user()
+  ) {
+    <section class="paywall" aria-labelledby="paywall-title">
+      <h2 id="paywall-title" class="h5">Como deseja processar seus XMLs?</h2>
+      <p>Você selecionou {{ files().length || processing()?.files_count }} XMLs.</p>
+      <p>
+        Seu plano permite até
+        {{ usage()?.limits?.per_processing ?? config()?.free?.per_processing }} XMLs por
+        processamento.
+      </p>
+      @if (freeCount() > 0) {
+        <p>
+          Você pode processar {{ freeCount() }} destes arquivos
+          {{ usage()?.plan === 'pro' ? 'com seu Pro' : 'gratuitamente' }} hoje. Serão usados os
+          primeiros da seleção, na ordem exibida.
+        </p>
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          [disabled]="busy()"
+          (click)="useFree()"
+        >
+          Processar {{ freeCount() }} {{ usage()?.plan === 'pro' ? 'com Pro' : 'grátis' }}
+        </button>
+      } @else {
+        <p>
+          Você utilizou seu limite {{ usage()?.plan === 'pro' ? 'Pro' : 'gratuito' }} de hoje. Ele
+          será renovado à meia-noite, no horário de São Paulo.
+        </p>
+      }
+      @if (usage()?.plan !== 'pro') {
+        @if (suggestedPackage(); as pack) {
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="busy() || !config()?.checkout_available"
+            (click)="buy()"
+          >
+            Processar todos por {{ price(pack.amount, pack.currency) }}
+          </button>
+          <p class="small">
+            Até {{ pack.files_limit }} XMLs neste processamento. Compra única, sem assinatura ou
+            saldo reutilizável. A compra libera o processamento; XMLs inválidos podem falhar.
+          </p>
+          @if (!config()?.checkout_available) {
+            <p class="small">
+              Compra avulsa temporariamente indisponível. Você pode usar seu saldo gratuito.
+            </p>
+          }
+        }
+      }
+      @if (usage()?.plan !== 'pro') {
+        <div class="recurring-offer">
+          <a class="btn btn-outline-primary" routerLink="/conta">Assinar Feitoo Pro</a>
+          <p class="small text-secondary">
+            Para usar com frequência: 250 XMLs por processamento, 500 por dia e retenção de 24
+            horas.
+          </p>
+        </div>
+      }
+      @if (purchase()) {
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          [disabled]="busy()"
+          (click)="confirmPayment()"
+        >
+          Consultar pagamento
+        </button>
+      }
+      <p class="small text-secondary">
+        Limite técnico: {{ config()?.max_processing_items }} itens e
+        {{ size((config()?.max_total_size_kb ?? 40960) * 1024) }} por lote.
+      </p>
+    </section>
+  }
+  <ol class="flow-steps" aria-label="Etapas da conversão">
+    <li [class.current]="!processing() && !busy()">1. Selecionar XMLs</li>
+    <li [class.current]="busy()">2. Processar</li>
+    <li [class.current]="state() === 'completed'">3. Conferir e baixar</li>
+  </ol>
+
+  @if (!processing()) {
+    <div
+      class="upload-zone rounded text-center"
+      [class.is-dragging]="dragOver()"
+      [class.has-files]="files().length > 0"
+      [class.has-error]="!!error()"
+      [class.is-disabled]="busy() || !config()"
+      [attr.aria-busy]="busy()"
+      (dragenter)="dragEnter($event)"
+      (dragover)="dragEnter($event)"
+      (dragleave)="dragLeave($event)"
+      (drop)="drop($event)"
+    >
+      <span class="upload-icon" aria-hidden="true">
+        @if (productsMode) {
+          <app-tool-icon name="xml" />
+        } @else {
+          ↑
+        }
+      </span>
+      <h2 class="h5 mb-2">{{ busy() ? 'Enviando seus XMLs' : 'Arraste seus XMLs aqui' }}</h2>
+      <p class="small text-secondary">
+        {{
+          files().length
+            ? files().length + ' arquivos · ' + size(totalSize())
+            : 'Selecione um ou vários arquivos de uma vez.'
+        }}
+      </p>
+      @if (!files().length) {
+        <p class="small text-secondary">Nenhum XML selecionado ainda.</p>
+      }
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="busy() || !config()"
+        (click)="xmlInput.click()"
+      >
+        Selecionar XMLs
+      </button>
+      <input
+        #xmlInput
+        id="xml-files"
+        hidden
+        type="file"
+        accept=".xml"
+        multiple
+        [disabled]="busy() || !config()"
+        aria-label="Selecionar arquivos XML"
+        (change)="select($event)"
+      />
+      @if (config(); as limits) {
+        <p class="small text-secondary mt-3 mb-0">
+          Somente XML de NF-e modelo 55 · Até
+          {{ limits.max_processing_files ?? limits.max_files }} arquivos por lote ·
+          {{ size(limits.max_file_size_kb * 1024) }} por arquivo
+        </p>
+      } @else {
+        <p class="small mt-3 mb-0">Consultando limites de envio…</p>
+      }
+    </div>
+    <p class="small mt-3 mb-1"><strong>Seus arquivos são privados.</strong></p>
+    <p class="small text-secondary">
+      São utilizados somente para o processamento solicitado e excluídos automaticamente após o
+      prazo informado.
+      @if (config(); as limits) {
+        Disponíveis por até {{ limits.ttl_minutes }} minutos após iniciar o envio.
+      }
+    </p>
+  }
+  @if (!auth.user() && !processing()) {
+    <p class="small text-secondary">
+      É necessário entrar gratuitamente para processar. Você pode selecionar seus XMLs primeiro.
+    </p>
+  }
+  @if (configError()) {
+    <p class="feedback feedback-error" role="alert">{{ configError() }}</p>
+    <button type="button" class="btn btn-outline-secondary" (click)="loadConfig()">
+      Consultar limites novamente
+    </button>
+  }
+
+  @if (files().length) {
+    <div class="selection-summary mt-3">
+      <p class="mb-0 fw-semibold">
+        {{ files().length }} arquivos selecionados · {{ size(totalSize()) }}
+      </p>
+      @if (!busy() && !processing()) {
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clear()">
+          Limpar seleção
+        </button>
+      }
+    </div>
+    <ul class="list-group my-3">
+      @for (file of visibleFiles(); track $index) {
+        <li class="list-group-item file-row">
+          <span class="file-name"
+            >{{ file.name }} <small class="text-secondary">· {{ size(file.size) }}</small></span
+          >
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            [disabled]="busy() || !!processing()"
+            [attr.aria-label]="'Remover ' + file.name"
+            (click)="remove(page() * pageSize + $index)"
+          >
+            Remover
+          </button>
+        </li>
+      }
+    </ul>
+    @if (pages() > 1) {
+      <nav
+        class="d-flex flex-wrap align-items-center gap-2 mb-3"
+        aria-label="Arquivos selecionados"
+      >
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          [disabled]="page() === 0"
+          (click)="page.set(page() - 1)"
+        >
+          Anterior
+        </button>
+        <span class="small">Página {{ page() + 1 }} de {{ pages() }}</span>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          [disabled]="page() + 1 >= pages()"
+          (click)="page.set(page() + 1)"
+        >
+          Próxima
+        </button>
+      </nav>
+    }
+    @if (!busy() && (!auth.user() || (!needsPurchase() && !purchase()))) {
+      <button type="button" class="btn btn-primary" [disabled]="!config()" (click)="start()">
+        {{ auth.user() ? 'Processar XMLs' : 'Entre para continuar' }}
+      </button>
+    }
+    @if (authPrompt() && !auth.user()) {
+      <div class="auth-options border rounded p-3 mt-3" aria-labelledby="continue-title">
+        <h3 id="continue-title" class="h5">Entre para continuar</h3>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-google" [disabled]="googleBusy()" (click)="google()">
+            {{ googleBusy() ? 'Conectando com Google…' : 'Continuar com Google' }}
+          </button>
+          <button type="button" class="btn btn-outline-secondary" (click)="emailLogin()">
+            Entrar com e-mail
+          </button>
+          <a
+            class="btn btn-outline-secondary"
+            routerLink="/cadastro"
+            [queryParams]="{ returnTo: tool.path }"
+            >Criar conta</a
+          >
+        </div>
+        <p class="small text-secondary mt-2 mb-0">
+          Sua seleção permanece em memória ao entrar com e-mail. Com Google, selecione os arquivos
+          novamente após entrar.
+        </p>
+      </div>
+    }
+  }
+
+  <div
+    class="processing-feedback mt-3"
+    [class.is-active]="busy() || !!processing()"
+    [class.is-complete]="state() === 'completed' && !expired() && !deleted()"
+    role="status"
+  >
+    @if (deleting()) {
+      <p>Excluindo seus arquivos e o Excel…</p>
+    }
+    @if (state() === 'uploading') {
+      <h2 class="h4">Preparando seus arquivos</h2>
+      <p>{{ files().length }} XMLs · {{ size(totalSize()) }}</p>
+      <p class="small text-secondary">Aguarde enquanto recebemos seus XMLs com segurança.</p>
+    }
+    @if (state() === 'queued') {
+      <h2 class="h4">Preparando seus arquivos</h2>
+      <p>Recebemos seus XMLs. Vamos organizar as notas e os produtos para você.</p>
+    }
+    @if (processing(); as batch) {
+      @if (state() === 'processing') {
+        <h2 class="h4">
+          {{
+            batch.processed_files_count === batch.files_count
+              ? 'Gerando seu Excel'
+              : 'Processando XMLs'
+          }}
+        </h2>
+        <p class="fw-semibold">
+          {{ batch.processed_files_count }} de {{ batch.files_count }} XMLs processados.
+        </p>
+        <progress
+          class="processing-progress"
+          [value]="batch.processed_files_count"
+          [max]="batch.files_count || 1"
+          aria-label="XMLs processados"
+        ></progress>
+        <p class="small text-secondary">
+          {{ batch.successful_files_count }} válidos · {{ batch.failed_files_count }} com falha ·
+          {{ progress() }}% conferidos
+        </p>
+        <p>
+          {{
+            batch.processed_files_count === batch.files_count
+              ? 'Gerando seu Excel…'
+              : 'Processando XMLs…'
+          }}
+        </p>
+      }
+      @if (deleted()) {
+        <p>Seus arquivos e o Excel foram excluídos.</p>
+      } @else if (state() === 'completed') {
+        @if (!expired()) {
+          <span class="result-check" aria-hidden="true">
+            @if (productsMode) {
+              <app-tool-icon name="success" />
+            } @else {
+              ✓
+            }
+          </span>
+          <h2 class="h4">
+            {{ productsMode ? 'Seus produtos estão prontos' : 'Seu Excel está pronto' }}
+          </h2>
+          @if (!batch.failed_files_count) {
+            <p>
+              {{ batch.successful_files_count }}
+              {{ batch.successful_files_count === 1 ? 'XML processado' : 'XMLs processados' }} com
+              sucesso.
+            </p>
+          } @else {
+            <p>
+              {{ batch.files_count }} XMLs enviados. Seu Excel foi gerado com
+              {{ batch.successful_files_count }}
+              {{ batch.successful_files_count === 1 ? 'documento' : 'documentos' }}.
+            </p>
+            <p>
+              {{ batch.failed_files_count }}
+              {{
+                batch.failed_files_count === 1
+                  ? 'arquivo não pôde ser processado'
+                  : 'arquivos não puderam ser processados'
+              }}.
+            </p>
+          }
+          @if (batch.preview; as preview) {
+            <dl class="result-summary" aria-label="Resumo do resultado">
+              <div>
+                <dt>
+                  @if (productsMode) {
+                    <app-tool-icon name="xml" />
+                  }
+                  NF-es válidas
+                </dt>
+                <dd>{{ preview.summary.successful_documents_count }}</dd>
+              </div>
+              <div>
+                <dt>
+                  @if (productsMode) {
+                    <app-tool-icon name="product" />
+                  }
+                  Itens
+                </dt>
+                <dd>{{ preview.summary.items_count }}</dd>
+              </div>
+              @if (productsMode) {
+                <div>
+                  <dt><app-tool-icon name="product" /> Produtos diferentes</dt>
+                  <dd>{{ preview.summary.products_count }}</dd>
+                </div>
+              }
+              <div>
+                <dt>{{ productsMode ? 'Valor em produtos' : 'Valor total informado' }}</dt>
+                <dd>{{ decimal(preview.summary.total_value, true) }}</dd>
+              </div>
+              @if (!productsMode) {
+                <div>
+                  <dt>Falhas</dt>
+                  <dd>{{ preview.summary.failed_documents_count }}</dd>
+                </div>
+              }
+            </dl>
+            @if (preview.summary.documents_without_total_count) {
+              <p class="small">
+                {{ preview.summary.documents_without_total_count }} nota(s) sem valor total
+                informado. A soma considera os valores disponíveis.
+              </p>
+            }
+          }
+          <button
+            class="btn btn-primary result-download"
+            type="button"
+            [disabled]="downloading() || deleting()"
+            (click)="download()"
+          >
+            @if (productsMode) {
+              <app-tool-icon name="spreadsheet" />
+            }
+            {{ downloading() ? 'Baixando…' : 'Baixar Excel' }}
+          </button>
+          @if (productsMode && batch.preview) {
+            <button
+              type="button"
+              class="btn btn-outline-primary result-download pdf-download"
+              [disabled]="deleting() || !batch.result.available"
+              (click)="downloadPdf()"
+            >
+              <app-tool-icon name="pdf" /> Baixar PDF
+            </button>
+            <p class="small pdf-hint">
+              <app-tool-icon name="info" /> PDF: resumo de até 10 produtos. Excel: resultado
+              completo.
+            </p>
+          }
+          <p class="small text-secondary mt-2">
+            Arquivo disponível até {{ batch.expires_at | date: 'dd/MM/yyyy HH:mm' }} (horário
+            local).
+          </p>
+        } @else {
+          <p>O resultado não está mais disponível. Selecione outros XMLs para continuar.</p>
+        }
+      }
+    }
+  </div>
+
+  @if (state() === 'completed' && !expired() && !deleted()) {
+    @if (processing()?.preview; as preview) {
+      @if (productsMode) {
+        <section class="preview-section" aria-labelledby="products-preview-title">
+          <h2 id="products-preview-title" class="h5">Produtos encontrados</h2>
+          <div
+            class="preview-tabs d-flex flex-wrap gap-2 mb-3"
+            role="group"
+            aria-label="Modo do preview"
+          >
+            <button
+              type="button"
+              class="btn"
+              [class.btn-primary]="previewMode() === 'consolidated'"
+              [class.btn-outline-primary]="previewMode() !== 'consolidated'"
+              [attr.aria-pressed]="previewMode() === 'consolidated'"
+              (click)="previewMode.set('consolidated')"
+            >
+              Consolidado
+            </button>
+            <button
+              type="button"
+              class="btn"
+              [class.btn-primary]="previewMode() === 'detailed'"
+              [class.btn-outline-primary]="previewMode() !== 'detailed'"
+              [attr.aria-pressed]="previewMode() === 'detailed'"
+              (click)="previewMode.set('detailed')"
+            >
+              Detalhado
+            </button>
+          </div>
+          <p class="small text-secondary">
+            Amostra de até 10 linhas. O Excel contém todos os produtos e itens.
+          </p>
+          <div
+            class="preview-scroll"
+            tabindex="0"
+            role="region"
+            aria-labelledby="products-preview-title"
+          >
+            @if (previewMode() === 'consolidated') {
+              <table>
+                <caption class="visually-hidden">
+                  Produtos consolidados, maiores totais primeiro
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Produto</th>
+                    <th scope="col">Código</th>
+                    <th scope="col">Emitente</th>
+                    <th scope="col">Unidade</th>
+                    <th scope="col">Qtd total</th>
+                    <th scope="col">NF-es</th>
+                    <th scope="col">Valor médio</th>
+                    <th scope="col">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (product of preview.products_preview; track $index) {
+                    <tr>
+                      <td>{{ product.product }}</td>
+                      <td>{{ product.code ?? 'Não informado' }}</td>
+                      <td>{{ product.issuer_name }}</td>
+                      <td>{{ product.unit }}</td>
+                      <td>{{ decimal(product.total_quantity) }}</td>
+                      <td>{{ product.invoice_count }}</td>
+                      <td>{{ decimal(product.average_unit_value, true) }}</td>
+                      <td>{{ decimal(product.total_value, true) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            } @else {
+              <table>
+                <caption class="visually-hidden">
+                  Itens detalhados por NF-e
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">NF-e</th>
+                    <th scope="col">Série</th>
+                    <th scope="col">Emissão</th>
+                    <th scope="col">Emitente</th>
+                    <th scope="col">Código</th>
+                    <th scope="col">Produto</th>
+                    <th scope="col">NCM</th>
+                    <th scope="col">CFOP</th>
+                    <th scope="col">Unidade</th>
+                    <th scope="col">Quantidade</th>
+                    <th scope="col">Unitário</th>
+                    <th scope="col">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of preview.items_preview; track $index) {
+                    <tr>
+                      <td>{{ item.note_number }}</td>
+                      <td>{{ item.series }}</td>
+                      <td>{{ item.issued_at?.slice(0, 10) | date: 'dd/MM/yyyy' : 'UTC' }}</td>
+                      <td>{{ item.issuer_name }}</td>
+                      <td>{{ item.code ?? 'Não informado' }}</td>
+                      <td>{{ item.product }}</td>
+                      <td>{{ item.ncm }}</td>
+                      <td>{{ item.cfop }}</td>
+                      <td>{{ item.unit }}</td>
+                      <td>{{ decimal(item.quantity) }}</td>
+                      <td>{{ decimal(item.unit_value, true) }}</td>
+                      <td>{{ decimal(item.total_value, true) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+          <p class="small mt-3">
+            Produtos são separados por emitente, código, NCM e unidade. Sem código, usamos a
+            descrição. O valor médio é ponderado pela quantidade.
+          </p>
+        </section>
+      } @else {
+        <section class="preview-section" aria-labelledby="notes-title">
+          <h2 id="notes-title" class="h5">Preview de notas</h2>
+          <p id="notes-count" class="small text-secondary">
+            Mostrando {{ preview.notes_preview.length }} de
+            {{ preview.summary.successful_documents_count }} notas. O Excel reúne o resultado
+            completo.
+          </p>
+          <div class="preview-scroll" tabindex="0" role="region" aria-labelledby="notes-title">
+            <table aria-describedby="notes-count">
+              <caption class="visually-hidden">
+                Amostra das NF-es processadas
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Número</th>
+                  <th scope="col">Série</th>
+                  <th scope="col">Emissão</th>
+                  <th scope="col">Emitente</th>
+                  <th scope="col">Destinatário</th>
+                  <th scope="col">Itens</th>
+                  <th scope="col">Valor total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (note of preview.notes_preview; track $index) {
+                  <tr>
+                    <td>{{ note.number }}</td>
+                    <td>{{ note.series }}</td>
+                    <td>{{ note.issued_at.slice(0, 10) | date: 'dd/MM/yyyy' : 'UTC' }}</td>
+                    <td class="party-cell">{{ note.issuer_name ?? 'Não informado' }}</td>
+                    <td class="party-cell">{{ note.recipient_name ?? 'Não informado' }}</td>
+                    <td class="numeric">{{ note.items_count }}</td>
+                    <td class="numeric">{{ decimal(note.total_value, true) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="preview-section" aria-labelledby="items-title">
+          <h2 id="items-title" class="h5">Preview de itens</h2>
+          <p id="items-count" class="small text-secondary">
+            Mostrando {{ preview.items_preview.length }} de {{ preview.summary.items_count }} itens.
+            Esta é uma amostra.
+          </p>
+          @if (preview.items_preview.length) {
+            @for (group of itemGroups(); track $index) {
+              <h3 class="h6 mt-3">NF-e {{ group.number }} · Série {{ group.series }}</h3>
+              @if (group.issuer) {
+                <p class="small">{{ group.issuer }}</p>
+              }
+              <p class="small">{{ group.items.length }} itens na amostra</p>
+              <div class="preview-scroll" tabindex="0" role="region" aria-labelledby="items-title">
+                <table aria-describedby="items-count">
+                  <caption class="visually-hidden">
+                    Amostra dos produtos processados
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">NF-e / Série</th>
+                      <th scope="col">Código</th>
+                      <th scope="col">Produto</th>
+                      <th scope="col">Qtd</th>
+                      <th scope="col">Unitário</th>
+                      <th scope="col">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of group.items; track $index) {
+                      <tr>
+                        <td>{{ item.note_number }} / {{ item.series }}</td>
+                        <td>{{ item.code }}</td>
+                        <td class="product-cell">{{ item.product }}</td>
+                        <td class="numeric">{{ decimal(item.quantity) }}</td>
+                        <td class="numeric">{{ decimal(item.unit_value, true) }}</td>
+                        <td class="numeric">{{ decimal(item.total_value, true) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          } @else {
+            <p class="small">
+              A amostra de itens não está disponível para este resultado. Consulte os produtos no
+              Excel.
+            </p>
+          }
+        </section>
+      }
+    }
+  }
+
+  @if (processing(); as batch) {
+    @if (batch.failed_files_count && !deleted() && !expired()) {
+      <button
+        type="button"
+        class="btn btn-outline-secondary mb-3"
+        [disabled]="failuresLoading()"
+        [attr.aria-expanded]="failuresVisible()"
+        aria-controls="failed-files"
+        (click)="showFailures()"
+      >
+        {{
+          failuresLoading()
+            ? 'Consultando arquivos…'
+            : 'Ver arquivos que não puderam ser processados'
+        }}
+      </button>
+      <div id="failed-files" [hidden]="!failuresVisible()">
+        @if (failuresError()) {
+          <p class="text-danger" role="alert">{{ failuresError() }}</p>
+        }
+        <ul class="list-group mb-3">
+          @for (file of visibleFailures(); track file.id) {
+            <li class="list-group-item">
+              <strong class="file-name">{{ file.original_name }}</strong>
+              <p class="small mb-0">{{ file.error_message }}</p>
+            </li>
+          }
+        </ul>
+        @if (failedFiles().length > 10) {
+          <div class="d-flex gap-2 mb-3">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              [disabled]="failurePage() === 0"
+              (click)="failurePage.set(failurePage() - 1)"
+            >
+              Anteriores
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              [disabled]="(failurePage() + 1) * 10 >= failedFiles().length"
+              (click)="failurePage.set(failurePage() + 1)"
+            >
+              Próximos
+            </button>
+          </div>
+        }
+      </div>
+    }
+    @if (!busy()) {
+      <div class="d-flex flex-wrap gap-2">
+        @if (!deleted()) {
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="downloading()"
+            (click)="deleteFiles()"
+          >
+            Excluir arquivos
+          </button>
+        }
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          [disabled]="downloading()"
+          (click)="reset()"
+        >
+          Selecionar outros arquivos
+        </button>
+        @if (state() === 'error' && (batch.status === 'queued' || batch.status === 'processing')) {
+          <button type="button" class="btn btn-outline-primary" (click)="refresh()">
+            Consultar novamente
+          </button>
+        }
+      </div>
+    }
+  }
+  @if (error()) {
+    <p class="feedback feedback-error mt-3" role="alert">{{ error() }}</p>
+  }
+</section>
+
+<section class="public-section tool-explainer">
+  @if (productsMode) {
+    <h2>Como funciona</h2>
+    <ol class="how-it-works">
+      <li>
+        <app-tool-icon name="xml" /><strong>Envie os XMLs</strong><span>NF-e modelo 55.</span>
+      </li>
+      <li>
+        <app-tool-icon name="product" /><strong>Confira os produtos</strong
+        ><span>Totais e itens por nota.</span>
+      </li>
+      <li>
+        <app-tool-icon name="download" /><strong>Baixe o resultado</strong
+        ><span>Excel completo ou PDF resumido.</span>
+      </li>
+    </ol>
+    <details>
+      <summary>Como os produtos são consolidados?</summary>
+      <ul>
+        <li>Agrupamento por emitente, código, NCM e unidade.</li>
+        <li>Sem código, usamos a descrição preservando acentos.</li>
+        <li>Quantidades e valores são somados; a média é ponderada pela quantidade.</li>
+      </ul>
+    </details>
+  } @else {
+    <h2>Notas e itens, sem organizar tudo à mão</h2>
+    <p>
+      O Excel reúne os documentos válidos em duas abas: <strong>Notas</strong>, com o resumo de cada
+      NF-e, e <strong>Itens</strong>, com os produtos. Chaves e documentos são preservados como
+      texto.
+    </p>
+  }
+  <h2>Dúvidas rápidas</h2>
+  <details>
+    <summary>Quais arquivos posso enviar?</summary>
+    <p>
+      XMLs de NF-e modelo 55. PDF, DANFE e outros documentos fiscais não são convertidos nesta
+      ferramenta.
+    </p>
+  </details>
+  <details>
+    <summary>E se um XML tiver erro?</summary>
+    <p>
+      Os documentos válidos entram no Excel. Você pode consultar quais arquivos não puderam ser
+      processados, sem perder os demais.
+    </p>
+  </details>
+  <details>
+    <summary>Preciso criar uma conta?</summary>
+    <p>
+      Você pode selecionar arquivos antes de entrar. O processamento e o download exigem uma conta,
+      que pode ser criada gratuitamente.
+    </p>
+  </details>
+  <details>
+    <summary>Por quanto tempo meus arquivos ficam disponíveis?</summary>
+    <p>
+      O prazo aparece na área de envio e no resultado. Depois dele, o acesso é bloqueado e a rotina
+      de limpeza exclui os arquivos. Você também pode excluí-los ao terminar.
+    </p>
+  </details>
+  <a routerLink="/seguranca">Mais sobre segurança e exclusão</a>
+</section>

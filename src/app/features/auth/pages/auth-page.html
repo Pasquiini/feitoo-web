@@ -1,0 +1,185 @@
+<section class="auth-layout" aria-labelledby="auth-title">
+  <aside class="auth-story">
+    <span class="eyebrow">Uma tarefa a menos</span>
+    <h2>Escolheu o arquivo.<br />O próximo passo é Feitoo.</h2>
+    <p>Uma conta para processar seus XMLs, acompanhar o resultado e baixar sua planilha.</p>
+    <div class="auth-value">
+      <span aria-hidden="true">✓</span>
+      <p><strong>Arquivos privados</strong><br />Seu resultado fica disponível só para você.</p>
+    </div>
+    <div class="auth-value">
+      <span aria-hidden="true">✓</span>
+      <p><strong>Sem organizar tudo à mão</strong><br />Notas e itens em uma planilha só.</p>
+    </div>
+    <a routerLink="/seguranca">Entenda como cuidamos dos arquivos →</a>
+  </aside>
+  <div class="auth-card">
+    <a routerLink="/" class="brand auth-brand" aria-label="Feitoo, início"
+      >feitoo<span aria-hidden="true">.</span></a
+    >
+    <h1 id="auth-title">{{ registering ? 'Crie sua conta' : 'Bom ter você aqui' }}</h1>
+    <p class="auth-subtitle">
+      {{
+        returnTo === '/conta'
+          ? 'Entre para acessar sua conta.'
+          : returnTo
+            ? registering
+              ? 'Crie uma conta gratuita para processar seus XMLs.'
+              : 'Entre para continuar seu processamento de XMLs.'
+            : registering
+              ? 'Comece com uma conta gratuita.'
+              : 'Entre na sua conta e resolva sua próxima tarefa.'
+      }}
+    </p>
+    <button class="btn btn-google" type="button" [disabled]="busy()" (click)="google()">
+      {{ action() === 'google' ? 'Conectando com Google…' : 'Continuar com Google' }}
+    </button>
+    <div class="auth-divider"><span>ou continue com e-mail</span></div>
+    <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()" novalidate>
+      <fieldset [disabled]="busy()">
+        @if (registering) {
+          <div class="auth-field">
+            <label for="name" class="form-label">Nome</label
+            ><input
+              id="name"
+              class="form-control"
+              formControlName="name"
+              autocomplete="name"
+              placeholder="Como podemos chamar você?"
+              maxlength="120"
+              required
+              [attr.aria-invalid]="!!fieldError('name')"
+              aria-describedby="name-error"
+            />
+            <p id="name-error" class="field-error">{{ fieldError('name') }}</p>
+          </div>
+        }
+        <div class="auth-field">
+          <label for="email" class="form-label">E-mail</label
+          ><input
+            id="email"
+            class="form-control"
+            formControlName="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            placeholder="voce@exemplo.com"
+            maxlength="255"
+            required
+            [attr.aria-invalid]="!!fieldError('email')"
+            aria-describedby="email-error"
+          />
+          <p id="email-error" class="field-error">{{ fieldError('email') }}</p>
+        </div>
+        <div class="auth-field">
+          <label for="password" class="form-label">Senha</label>
+          <div class="password-input">
+            <input
+              id="password"
+              class="form-control"
+              formControlName="password"
+              [type]="passwordVisible() ? 'text' : 'password'"
+              [attr.autocomplete]="registering ? 'new-password' : 'current-password'"
+              placeholder="Sua senha"
+              maxlength="72"
+              required
+              [attr.aria-invalid]="!!fieldError('password')"
+              [attr.aria-describedby]="
+                registering ? 'password-error password-hint' : 'password-error'
+              "
+            /><button
+              class="password-toggle"
+              type="button"
+              aria-controls="password"
+              [attr.aria-label]="passwordVisible() ? 'Ocultar senha' : 'Mostrar senha'"
+              [attr.aria-pressed]="passwordVisible()"
+              (click)="passwordVisible.set(!passwordVisible())"
+            >
+              {{ passwordVisible() ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+          <p id="password-error" class="field-error">{{ fieldError('password') }}</p>
+          @if (registering) {
+            <p id="password-hint" class="field-hint">Use pelo menos 12 caracteres.</p>
+          }
+        </div>
+        @if (registering) {
+          <div class="auth-field">
+            <label for="confirmation" class="form-label">Confirmar senha</label>
+            <div class="password-input">
+              <input
+                id="confirmation"
+                class="form-control"
+                formControlName="password_confirmation"
+                [type]="confirmationVisible() ? 'text' : 'password'"
+                autocomplete="new-password"
+                placeholder="Repita sua senha"
+                maxlength="72"
+                required
+                [attr.aria-invalid]="!!fieldError('password_confirmation')"
+                aria-describedby="confirmation-error"
+              /><button
+                class="password-toggle"
+                type="button"
+                aria-controls="confirmation"
+                [attr.aria-label]="
+                  confirmationVisible()
+                    ? 'Ocultar confirmação da senha'
+                    : 'Mostrar confirmação da senha'
+                "
+                [attr.aria-pressed]="confirmationVisible()"
+                (click)="confirmationVisible.set(!confirmationVisible())"
+              >
+                {{ confirmationVisible() ? 'Ocultar' : 'Mostrar' }}
+              </button>
+            </div>
+            <p id="confirmation-error" class="field-error">
+              {{ fieldError('password_confirmation') }}
+            </p>
+          </div>
+        }
+        @if (error()) {
+          <p class="feedback feedback-error" role="alert">{{ error() }}</p>
+        }
+        <button class="btn btn-primary auth-submit" type="submit" [disabled]="busy()">
+          {{
+            action() === 'email'
+              ? registering
+                ? 'Criando conta…'
+                : 'Entrando…'
+              : registering
+                ? 'Criar conta gratuita'
+                : 'Entrar'
+          }}
+        </button>
+      </fieldset>
+    </form>
+    @if (busy()) {
+      <p class="field-hint" role="status">
+        {{
+          action() === 'google'
+            ? 'Abrindo o acesso com Google…'
+            : registering
+              ? 'Criando sua conta…'
+              : 'Verificando seu acesso…'
+        }}
+      </p>
+    }
+    <p class="auth-switch">
+      {{ registering ? 'Já tem uma conta?' : 'Ainda não tem uma conta?' }}
+      <a [routerLink]="registering ? '/login' : '/cadastro'" [queryParams]="{ returnTo }">{{
+        registering ? 'Entrar' : 'Criar conta'
+      }}</a>
+    </p>
+    <a class="auth-back" [routerLink]="returnTo ?? '/'"
+      >←
+      {{
+        returnTo === '/conta'
+          ? 'Voltar para Minha conta'
+          : returnTo
+            ? 'Voltar para XML para Excel'
+            : 'Voltar ao início'
+      }}</a
+    >
+  </div>
+</section>

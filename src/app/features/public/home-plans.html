@@ -1,0 +1,35 @@
+<div class="plans-grid">
+  <article class="plan-card">
+    <h3>Free</h3>
+    <p>Para começar.</p>
+    <ul>
+      <li>20 XMLs por processamento</li>
+      <li>50 XMLs por dia</li>
+      <li>Sem cartão para começar</li>
+    </ul>
+    <a class="btn btn-outline-primary" routerLink="/" fragment="ferramentas">Usar grátis</a>
+  </article>
+  <article class="plan-card">
+    <h3>Avulso</h3>
+    <p>Para um lote maior.</p>
+    <ul>
+      <li>Pagamento único</li>
+      <li>Sem assinatura</li>
+      <li>Escolha ao enviar seus XMLs</li>
+    </ul>
+    <a class="btn btn-outline-primary" routerLink="/xml-para-excel">Processar um lote</a>
+  </article>
+  <article class="plan-card plan-pro">
+    <span class="plan-label">Para a sua rotina</span>
+    <h3>Pro</h3>
+    <p>Para quem usa com frequência.</p>
+    <ul>
+      <li>250 XMLs por processamento</li>
+      <li>500 XMLs por dia</li>
+      <li>Maior retenção: 24 horas</li>
+    </ul>
+    <a class="btn btn-primary" routerLink="/conta">{{
+      auth.user() ? 'Ver Pro na minha conta' : 'Conhecer o Pro'
+    }}</a>
+  </article>
+</div>

@@ -36,7 +36,7 @@ export class AuthService {
     this.restoreRequest = this.http.get<UserResponse>(`${environment.apiUrl}/me`).pipe(
       map((response) => {
         if (response.signup_method === 'google')
-          this.analytics.track('google_signup_completed', { auth_method: 'google' });
+          this.analytics.funnel('signup_completed', { auth_method: 'google' });
         return response.data;
       }),
       tap((user) => this.userState.set(user)),
@@ -67,11 +67,11 @@ export class AuthService {
   }
 
   register(payload: RegisterPayload): Observable<UserResponse> {
-    this.analytics.track('signup_started', { auth_method: 'email' });
+    this.analytics.track('signup_started', { auth_method: 'password' });
     return this.csrf().pipe(
       switchMap(() => this.http.post<UserResponse>(`${environment.apiUrl}/auth/register`, payload)),
       tap((response) => {
-        this.analytics.track('signup_completed', { auth_method: 'email' });
+        this.analytics.funnel('signup_completed', { auth_method: 'password' });
         this.userState.set(response.data);
         this.readyState.set(true);
       }),

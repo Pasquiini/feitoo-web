@@ -445,9 +445,10 @@ export class XmlToExcelPage {
       )
       .subscribe({
         next: (response) => {
-          this.analytics.track('processing_started', {
+          this.analytics.funnel('processing_started', {
             tool: this.tool.id,
-            files_count: response.data.files_count,
+            file_count: response.data.files_count,
+            plan: this.usage()?.plan ?? 'free',
           });
           this.files.set([]);
           this.update(response.data);
@@ -679,22 +680,12 @@ export class XmlToExcelPage {
           if (r.data.status === 'paid') {
             this.paymentBusy.set(false);
             this.paymentMessage.set('Pagamento confirmado. Processando seus XMLs…');
-            if (this.analytics.choice() === 'granted') {
-              try {
-                const key = 'feitoo-purchase-tracked-' + r.data.id;
-                if (!sessionStorage.getItem(key)) {
-                  this.analytics.track('single_purchase_completed', {
-                    tool: this.tool.id,
-                    package_code: r.data.package_code,
-                    amount: r.data.amount,
-                    currency: r.data.currency,
-                  });
-                  sessionStorage.setItem(key, '1');
-                }
-              } catch {
-                /* Storage unavailable: do not risk duplicate purchase analytics. */
-              }
-            }
+            this.analytics.trackOnce('single_purchase_completed', r.data.id, {
+              purchase_type: 'single',
+              tool: this.tool.id,
+              value: r.data.amount / 100,
+              currency: 'BRL',
+            });
             this.start(undefined, true);
           } else if (r.data.status !== 'pending') {
             this.paymentMessage.set(
@@ -786,7 +777,12 @@ export class XmlToExcelPage {
           failure_count: processing.failed_files_count,
           processing_duration_bucket: durationBucket(Date.now() - this.beganAt),
         };
-        this.analytics.track('processing_completed', properties);
+        this.analytics.funnel('processing_completed', {
+          tool: this.tool.id,
+          file_count: processing.files_count,
+          plan: this.usage()?.plan ?? 'free',
+          processing_result: processing.failed_files_count > 0 ? 'partial' : 'success',
+        });
         this.analytics.track('result_viewed', properties);
       }
       this.state.set('completed');

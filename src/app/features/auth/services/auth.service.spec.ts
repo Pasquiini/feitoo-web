@@ -1,3 +1,4 @@
+import { AnalyticsService } from '../../../core/analytics.service';
 import {
   HttpClient,
   HttpXsrfTokenExtractor,
@@ -54,12 +55,25 @@ describe('AuthService and API session interceptor', () => {
   }
 
   it('logs in after CSRF initialization and keeps only user metadata', () => {
+    const track = vi.spyOn(TestBed.inject(AnalyticsService), 'track');
     login();
+    expect(track).not.toHaveBeenCalledWith('signup_completed', expect.anything());
     expect(auth.user()).toEqual(user);
     expect(auth.ready()).toBe(true);
   });
 
+  it('tracks Google signup only when backend reports newly created account', () => {
+    const track = vi.spyOn(TestBed.inject(AnalyticsService), 'track');
+    auth.restore().subscribe();
+    http.expectOne(`${environment.apiUrl}/me`).flush({ data: user, signup_method: 'google' });
+    expect(track).toHaveBeenCalledWith('signup_completed', { auth_method: 'google' });
+    auth.restore().subscribe();
+    http.expectOne(`${environment.apiUrl}/me`).flush({ data: user });
+    expect(track).toHaveBeenCalledTimes(1);
+  });
+
   it('registers and logs out through the session', () => {
+    const track = vi.spyOn(TestBed.inject(AnalyticsService), 'track');
     auth
       .register({
         name: user.name,
@@ -70,6 +84,7 @@ describe('AuthService and API session interceptor', () => {
       .subscribe();
     csrf();
     http.expectOne(`${environment.apiUrl}/auth/register`).flush({ data: user });
+    expect(track).toHaveBeenCalledWith('signup_completed', { auth_method: 'password' });
     expect(auth.user()).toEqual(user);
     auth.logout().subscribe();
     csrf();

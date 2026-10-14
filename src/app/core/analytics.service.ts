@@ -15,6 +15,7 @@ export type AnalyticsEvent =
   | 'single_purchase_started'
   | 'single_purchase_completed'
   | 'single_purchase_failed'
+  | 'subscription_completed'
   | 'page_view'
   | 'tool_view'
   | 'files_selected'
@@ -29,7 +30,36 @@ export type AnalyticsEvent =
   | 'signup_completed'
   | 'google_signup_completed'
   | 'files_deleted';
+export interface FunnelEvents {
+  tool_view: { tool: import('../features/processing/models/processing').ProcessingTool };
+  processing_started: {
+    tool: import('../features/processing/models/processing').ProcessingTool;
+    file_count: number;
+    plan: 'free' | 'pro';
+  };
+  processing_completed: FunnelEvents['processing_started'] & {
+    processing_result: 'success' | 'partial';
+  };
+  signup_completed: { auth_method: 'password' | 'google' };
+  single_purchase_completed: {
+    purchase_type: 'single';
+    tool: import('../features/processing/models/processing').ProcessingTool;
+    value?: number;
+    currency?: 'BRL';
+  };
+  subscription_completed: {
+    purchase_type: 'subscription';
+    plan: 'pro';
+    value: number;
+    currency: 'BRL';
+  };
+}
 export interface EventProperties {
+  file_count?: number;
+  plan?: 'free' | 'pro';
+  processing_result?: 'success' | 'partial';
+  purchase_type?: 'single' | 'subscription';
+  value?: number;
   files_count_bucket?: string;
   package_code?: string;
   amount?: number;
@@ -39,7 +69,7 @@ export interface EventProperties {
   total_size_bucket?: string;
   processing_duration_bucket?: string;
   authenticated?: boolean;
-  auth_method?: 'email' | 'google';
+  auth_method?: 'password' | 'google';
   success_count?: number;
   failure_count?: number;
 }
@@ -74,8 +104,10 @@ export class AnalyticsService {
   readonly choice = signal<Choice>('unknown');
   readonly preferences = signal(false);
   private loaded = false;
+  private initialized = false;
   initialize(): void {
-    if (!this.browser || !this.enabled) return;
+    if (!this.browser || !this.enabled || this.initialized) return;
+    this.initialized = true;
     try {
       const saved: unknown = JSON.parse(localStorage.getItem('feitoo-consent-v1') ?? 'null');
       if (
@@ -135,8 +167,23 @@ export class AnalyticsService {
       }
     }
   }
+  funnel<E extends keyof FunnelEvents>(event: E, properties: FunnelEvents[E]): void {
+    this.track(event, properties);
+  }
   track(event: AnalyticsEvent, properties: EventProperties = {}): void {
     if (!this.browser || !this.enabled || this.choice() !== 'granted') return;
+    if (
+      ![
+        'page_view',
+        'tool_view',
+        'processing_started',
+        'processing_completed',
+        'signup_completed',
+        'single_purchase_completed',
+        'subscription_completed',
+      ].includes(event)
+    )
+      return;
     // Build a new allowlisted payload. Never spread caller objects into GA.
     const payload: Record<string, string | number | boolean> = {
       page_location: this.config.origin + safePage(this.router.url),
@@ -144,45 +191,82 @@ export class AnalyticsService {
       page_title: 'Feitoo',
     };
     if (properties.tool === 'xml-to-excel' || properties.tool === 'products-from-xml')
-      payload['tool'] = properties.tool;
+      payload['tool'] = properties.tool === 'xml-to-excel' ? 'xml_to_excel' : 'products_from_xml';
+    if (properties.plan === 'free' || properties.plan === 'pro') payload['plan'] = properties.plan;
     if (
-      ['1_to_20', '21_to_100', '101_to_250', '250_plus'].includes(
-        properties.files_count_bucket ?? '',
-      )
+      Number.isInteger(properties.file_count) &&
+      properties.file_count! >= 0 &&
+      properties.file_count! <= 10000
     )
-      payload['files_count_bucket'] = properties.files_count_bucket!;
-    if (/^xml_(100|250|500|1000)$/.test(properties.package_code ?? ''))
-      payload['package_code'] = properties.package_code!;
-    if (
-      Number.isInteger(properties.amount) &&
-      properties.amount! > 0 &&
-      properties.amount! <= 1000000
-    )
-      payload['amount'] = properties.amount!;
-    if (properties.currency === 'brl') payload['currency'] = 'brl';
-    if (properties.auth_method === 'email' || properties.auth_method === 'google')
+      payload['file_count'] = properties.file_count!;
+    if (properties.auth_method === 'password' || properties.auth_method === 'google')
       payload['auth_method'] = properties.auth_method;
-    if (typeof properties.authenticated === 'boolean')
-      payload['authenticated'] = properties.authenticated;
-    for (const key of ['files_count', 'success_count', 'failure_count'] as const) {
-      const value = properties[key];
-      if (typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 10000)
-        payload[key] = value;
+    if (properties.processing_result === 'success' || properties.processing_result === 'partial')
+      payload['processing_result'] = properties.processing_result;
+    if (properties.purchase_type === 'single' || properties.purchase_type === 'subscription')
+      payload['purchase_type'] = properties.purchase_type;
+    if (
+      Number.isFinite(properties.value) &&
+      properties.value! > 0 &&
+      properties.value! <= 10000 &&
+      properties.currency === 'BRL'
+    ) {
+      payload['value'] = properties.value!;
+      payload['currency'] = 'BRL';
     }
-    if (
-      ['under_1mb', '1_to_10mb', '10_to_50mb', '50mb_plus'].includes(
-        properties.total_size_bucket ?? '',
-      )
-    )
-      payload['total_size_bucket'] = properties.total_size_bucket!;
-    if (
-      ['under_10s', '10_to_60s', '1_to_5min', '5min_plus'].includes(
-        properties.processing_duration_bucket ?? '',
-      )
-    )
-      payload['processing_duration_bucket'] = properties.processing_duration_bucket!;
-    (this.document.defaultView as AnalyticsWindow | null)?.gtag?.('event', event, payload);
+    try {
+      (this.document.defaultView as AnalyticsWindow | null)?.gtag?.('event', event, payload);
+    } catch {
+      /* Analytics must never interrupt user flows. */
+    }
   }
+  private readonly seen = new Set<string>();
+  trackOnce(event: AnalyticsEvent, key: string, properties: EventProperties): void {
+    if (!this.browser || !this.enabled || this.choice() !== 'granted') return;
+    const storageKey = `feitoo-analytics-v1:${event}:${key}`;
+    try {
+      if (this.seen.has(storageKey) || localStorage.getItem(storageKey)) return;
+      // IDs are used exclusively for local deduplication, never in the payload.
+      localStorage.setItem(storageKey, '1');
+      this.seen.add(storageKey);
+      this.track(event, properties);
+    } catch {
+      /* Fail closed when durable deduplication is unavailable. */
+    }
+  }
+  beginSubscriptionCheckout(): void {
+    if (!this.browser || !this.enabled || this.choice() !== 'granted') return;
+    try {
+      localStorage.setItem('feitoo-analytics-subscription-pending', '1');
+    } catch {
+      /* Optional analytics. */
+    }
+  }
+  confirmSubscription(
+    summary: import('../features/processing/services/billing.service').SubscriptionSummary,
+  ): void {
+    if (
+      !this.browser ||
+      !this.enabled ||
+      this.choice() !== 'granted' ||
+      summary.subscription?.status !== 'active' ||
+      !summary.subscription.grants_pro
+    )
+      return;
+    try {
+      if (!localStorage.getItem('feitoo-analytics-subscription-pending')) return;
+      localStorage.removeItem('feitoo-analytics-subscription-pending');
+      this.track('subscription_completed', {
+        purchase_type: 'subscription',
+        plan: 'pro',
+        value: summary.offer.amount / 100,
+        currency: 'BRL',
+      });
+    } catch {
+      /* Optional analytics. */
+    }
+  }
+
   private load(): void {
     const view = this.document.defaultView as AnalyticsWindow | null;
     if (!view) return;
@@ -193,9 +277,9 @@ export class AnalyticsService {
     });
     if (this.loaded) return;
     this.loaded = true;
-    view.dataLayer = [];
+    view.dataLayer ??= [];
     const consent = this.choice;
-    view.gtag = function (..._args: unknown[]) {
+    view.gtag ??= function (..._args: unknown[]) {
       if (consent() === 'granted') view.dataLayer?.push(arguments);
     };
     view.gtag('consent', 'default', {

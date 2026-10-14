@@ -1,3 +1,4 @@
+import { AnalyticsService } from '../../../core/analytics.service';
 import { HttpResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -235,15 +236,22 @@ describe('XmlToExcelPage', () => {
   });
 
   it('uses the purchase response as payment truth and waits for confirmation', async () => {
+    const track = vi.spyOn(TestBed.inject(AnalyticsService), 'trackOnce');
     page.processing.set({ ...batch, status: 'pending', files_count: 37 });
     billing.purchase.mockReturnValue(of({ data: purchase }));
     page.confirmPayment();
     await vi.advanceTimersByTimeAsync(1);
     expect(page.paymentMessage()).toContain('Confirmando');
     expect(api.start).not.toHaveBeenCalled();
+    expect(track).not.toHaveBeenCalled();
     billing.purchase.mockReturnValue(of({ data: { ...purchase, status: 'paid' } }));
     await vi.advanceTimersByTimeAsync(2000);
     expect(api.start).toHaveBeenCalledOnce();
+    expect(track).toHaveBeenCalledWith(
+      'single_purchase_completed',
+      purchase.id,
+      expect.objectContaining({ purchase_type: 'single', currency: 'BRL' }),
+    );
     expect(page.paymentMessage()).toContain('Pagamento confirmado');
   });
 
@@ -464,6 +472,7 @@ describe('XmlToExcelPage', () => {
   });
 
   it('finishes with partial errors and stops polling', async () => {
+    const track = vi.spyOn(TestBed.inject(AnalyticsService), 'track');
     api.get.mockReturnValue(
       of({
         data: {
@@ -484,6 +493,13 @@ describe('XmlToExcelPage', () => {
     expect(page.files()).toHaveLength(0);
     await vi.advanceTimersByTimeAsync(10000);
     expect(api.get).toHaveBeenCalledTimes(1);
+    page.refresh();
+    await vi.advanceTimersByTimeAsync(1000);
+    const completed = track.mock.calls.filter(([event]) => event === 'processing_completed');
+    expect(completed).toHaveLength(1);
+    expect(completed[0][1]).toEqual(
+      expect.objectContaining({ processing_result: 'partial', plan: 'free' }),
+    );
   });
 
   it('shows safe generation failure and stops polling', async () => {

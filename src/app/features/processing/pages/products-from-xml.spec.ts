@@ -97,7 +97,8 @@ describe('Produtos dos XMLs — shared processing page', () => {
     redirect: vi.fn(),
   };
   const auth = { user, startGoogle: vi.fn() };
-  const analytics = { track: vi.fn(), choice: signal('granted') };
+  const track = vi.fn();
+  const analytics = { track, funnel: track, choice: signal('granted') };
   let fixture: ComponentFixture<XmlToExcelPage>;
   let page: XmlToExcelPage;
   let element: HTMLElement;

@@ -21,6 +21,7 @@ const config: LaunchConfig = {
 describe('Public launch', () => {
   beforeEach(() => {
     localStorage.clear();
+    delete (window as Window & { gtag?: unknown }).gtag;
     document.getElementById('feitoo-ga4')?.remove();
     TestBed.configureTestingModule({
       providers: [
@@ -78,10 +79,10 @@ describe('Public launch', () => {
       access_key: '44digits',
       original_name: 'sensitive.xml',
     } as EventProperties;
-    analytics.track('files_selected', unsafe);
+    analytics.track('processing_started', unsafe);
     const entries = (window as unknown as { dataLayer: unknown[][] }).dataLayer;
     const payload = JSON.stringify(entries.at(-1));
-    expect(payload).toContain('files_count');
+    expect(payload).toContain('processing_started');
     for (const secret of [
       'secret@example.test',
       'sensitive.xml',
@@ -115,8 +116,8 @@ describe('Public launch', () => {
     const entries = (window as unknown as { dataLayer: unknown[][] }).dataLayer;
     const payload = JSON.stringify(entries.at(-1));
     expect(payload).toContain('single_purchase_completed');
-    expect(payload).toContain('xml_250');
-    expect(payload).toContain('690');
+    expect(payload).not.toContain('xml_250');
+    expect(payload).not.toContain('690');
     expect(payload).not.toContain('private-processing');
     expect(payload).not.toContain('private@example.test');
     analytics.choose('denied');

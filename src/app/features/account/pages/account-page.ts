@@ -140,6 +140,7 @@ export class AccountPage {
       .subscribe({
         next: (r) => {
           this.subscription.set(r.data);
+          this.analytics.confirmSubscription(r.data);
           const status = r.data.subscription?.status;
           if (status && status !== 'incomplete') this.stopSubscriptionPolling();
           if (
@@ -150,7 +151,6 @@ export class AccountPage {
             this.confirmingSubscription.set(false);
             this.subscriptionMessage.set('Feitoo Pro ativado.');
             this.loadUsage(true);
-            this.analytics.track('pro_subscription_activated');
           } else if (this.confirmingSubscription() && status && status !== 'incomplete') {
             this.confirmingSubscription.set(false);
             this.subscriptionMessage.set(
@@ -208,7 +208,10 @@ export class AccountPage {
           try {
             this.analytics.track(portal ? 'pro_portal_opened' : 'pro_checkout_started');
             if (portal) this.billing.portalRedirect(r.data.url);
-            else this.billing.redirect(r.data.url);
+            else {
+              this.analytics.beginSubscriptionCheckout();
+              this.billing.redirect(r.data.url);
+            }
           } catch {
             this.subscriptionError.set('Não foi possível abrir a Stripe.');
           }

@@ -1,7 +1,10 @@
 <section class="home-hero" aria-labelledby="home-title">
   <p class="home-eyebrow">Arquivos e dados. Resolvidos.</p>
-  <h1 id="home-title">Ferramentas simples para resolver arquivos e dados em minutos.</h1>
-  <p class="home-lead">Converta, extraia e organize seus arquivos sem instalar nada.</p>
+  <h1 id="home-title">Ferramentas online para XML, planilhas e arquivos.</h1>
+  <p class="home-lead">
+    No Feitoo, você transforma XMLs de NF-e em planilhas e reúne produtos de várias notas, direto no
+    navegador.
+  </p>
 </section>
 
 <section class="home-section catalog" id="ferramentas" aria-labelledby="tools-title">
@@ -127,7 +130,10 @@
   <div class="final-links">
     @for (tool of tools; track tool.route) {
       <a class="btn btn-outline-primary" [routerLink]="tool.route"
-        >{{ tool.title }} <app-home-icon name="arrow"
+        >{{
+          tool.route === '/xml-para-excel' ? 'Converter XML para Excel' : 'Extrair produtos de XMLs'
+        }}
+        <app-home-icon name="arrow"
       /></a>
     }
   </div>

@@ -162,7 +162,8 @@ describe('Produtos dos XMLs — shared processing page', () => {
   });
 
   it('is public, loads matching limits and allows selecting before authentication', () => {
-    expect(element.querySelector('h1')?.textContent).toBe('Produtos dos XMLs');
+    expect(element.querySelectorAll('h1')).toHaveLength(1);
+    expect(element.querySelector('h1')?.textContent?.trim()).toBe('Extrair produtos de XMLs NF-e');
     expect(api.configuration).toHaveBeenCalledWith('products-from-xml');
     page.add(files());
     fixture.detectChanges();

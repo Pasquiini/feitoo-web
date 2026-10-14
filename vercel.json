@@ -14,6 +14,11 @@
       },
       "continue": true
     },
+    {
+      "src": "/(xml-para-excel|produtos-dos-xmls|planos|seguranca|privacidade|termos)/",
+      "headers": { "Location": "/$1" },
+      "status": 308
+    },
     { "handle": "filesystem" },
     { "src": "/(?:conta|login|cadastro)/?", "dest": "/index.html" },
     { "src": "/.*", "dest": "/404.html", "status": 404 }

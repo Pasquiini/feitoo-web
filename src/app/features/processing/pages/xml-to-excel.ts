@@ -1,3 +1,4 @@
+import { toolFaqs } from '../../../core/tool-faqs';
 import { ToolIcon } from './tool-icon';
 import { productsPdf } from '../services/products-pdf';
 import { AnalyticsService, sizeBucket, durationBucket } from '../../../core/analytics.service';
@@ -73,6 +74,7 @@ export class XmlToExcelPage {
         ? 'products-from-xml'
         : 'xml-to-excel'
     ];
+  readonly faqs = toolFaqs[this.tool.path];
   readonly productsMode = this.tool.id === 'products-from-xml';
   readonly previewMode = signal<'consolidated' | 'detailed'>('consolidated');
   readonly usage = signal<Usage | null>(null);

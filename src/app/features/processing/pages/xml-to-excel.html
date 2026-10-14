@@ -1,8 +1,16 @@
 <section class="tool mt-3" [class.products-tool]="productsMode" aria-labelledby="tool-title">
+  <nav aria-label="Caminho da página" class="small mb-3">
+    <a routerLink="/">Feitoo</a> /
+    <span aria-current="page">{{
+      productsMode ? 'Extrair produtos de XMLs NF-e' : 'Converter XML para Excel'
+    }}</span>
+  </nav>
   @if (productsMode) {
     <p class="tool-eyebrow"><app-tool-icon name="xml" /> XML → produtos → Excel + PDF</p>
   }
-  <h1 id="tool-title">{{ tool.name }}</h1>
+  <h1 id="tool-title">
+    {{ productsMode ? 'Extrair produtos de XMLs NF-e' : 'Converter XML para Excel' }}
+  </h1>
   <p class="tool-subtitle">
     {{
       productsMode
@@ -743,66 +751,78 @@
   }
 </section>
 
-<section class="public-section tool-explainer">
+<section class="public-section tool-explainer" aria-label="Sobre a ferramenta">
   @if (productsMode) {
-    <h2>Como funciona</h2>
-    <ol class="how-it-works">
-      <li>
-        <app-tool-icon name="xml" /><strong>Envie os XMLs</strong><span>NF-e modelo 55.</span>
-      </li>
-      <li>
-        <app-tool-icon name="product" /><strong>Confira os produtos</strong
-        ><span>Totais e itens por nota.</span>
-      </li>
-      <li>
-        <app-tool-icon name="download" /><strong>Baixe o resultado</strong
-        ><span>Excel completo ou PDF resumido.</span>
-      </li>
-    </ol>
-    <details>
-      <summary>Como os produtos são consolidados?</summary>
-      <ul>
-        <li>Agrupamento por emitente, código, NCM e unidade.</li>
-        <li>Sem código, usamos a descrição preservando acentos.</li>
-        <li>Quantidades e valores são somados; a média é ponderada pela quantidade.</li>
-      </ul>
-    </details>
-  } @else {
-    <h2>Notas e itens, sem organizar tudo à mão</h2>
+    <h2>Como extrair produtos dos XMLs</h2>
     <p>
-      O Excel reúne os documentos válidos em duas abas: <strong>Notas</strong>, com o resumo de cada
-      NF-e, e <strong>Itens</strong>, com os produtos. Chaves e documentos são preservados como
-      texto.
+      Envie seus XMLs de NF-e modelo 55, acompanhe o processamento e confira os produtos
+      encontrados. Baixe a planilha Excel completa ou um PDF com o resumo dos resultados.
+    </p>
+    <h2>Como funciona a consolidação</h2>
+    <p>
+      Os itens são agrupados por emitente, código do produto, NCM e unidade. Quando o código não
+      está presente, a descrição identifica o produto. Quantidades e valores são somados dentro de
+      cada grupo; a média de preço é ponderada pela quantidade.
+    </p>
+    <p>
+      Produtos de fornecedores diferentes ou com unidades distintas ficam separados. A ferramenta
+      não faz equivalência entre códigos nem converte unidades.
+    </p>
+    <h2>O que aparece na planilha</h2>
+    <p>
+      O Excel reúne os produtos consolidados e os itens detalhados por nota. Você encontra código,
+      descrição, NCM, unidade, quantidade total, número de notas e valores mínimo, máximo e médio. O
+      PDF traz uma amostra visual; use o Excel para consultar o resultado completo.
+    </p>
+    <h2>Quando usar esta ferramenta</h2>
+    <p>
+      Use para reunir itens de várias notas de compra, comparar quantidades e consultar preços por
+      produto e fornecedor sem juntar planilhas manualmente.
+    </p>
+    <p>
+      Para consultar o resumo de cada nota sem consolidar produtos, use a ferramenta para
+      <a routerLink="/xml-para-excel">converter XML para Excel</a>.
+    </p>
+  } @else {
+    <h2>Como converter XML para Excel</h2>
+    <ol>
+      <li>Selecione os arquivos XML de NF-e modelo 55 que deseja transformar em planilha.</li>
+      <li>Entre na sua conta e inicie o processamento.</li>
+      <li>Confira as notas e os itens na prévia e baixe o Excel.</li>
+    </ol>
+    <h2>O que é extraído dos XMLs</h2>
+    <p>
+      A aba <strong>Notas</strong> reúne o resumo de cada NF-e válida, como número, série, data,
+      emitente, destinatário e valor total. A aba <strong>Itens</strong> organiza os produtos por
+      nota, com código, descrição, quantidade e valores disponíveis no XML. Chaves e documentos são
+      preservados como texto.
+    </p>
+    <h2>Para quem essa ferramenta é útil</h2>
+    <p>
+      Use para conferir lotes de notas, organizar compras e preparar dados para trabalhar no Excel.
+      A conversão evita copiar os campos de cada XML à mão; confira o resultado antes de usá-lo na
+      sua rotina.
+    </p>
+    <p>
+      Se você precisa somar quantidades e reunir itens de várias notas, use a ferramenta para
+      <a routerLink="/produtos-dos-xmls">extrair produtos de XMLs</a>.
     </p>
   }
-  <h2>Dúvidas rápidas</h2>
-  <details>
-    <summary>Quais arquivos posso enviar?</summary>
-    <p>
-      XMLs de NF-e modelo 55. PDF, DANFE e outros documentos fiscais não são convertidos nesta
-      ferramenta.
-    </p>
-  </details>
-  <details>
-    <summary>E se um XML tiver erro?</summary>
-    <p>
-      Os documentos válidos entram no Excel. Você pode consultar quais arquivos não puderam ser
-      processados, sem perder os demais.
-    </p>
-  </details>
-  <details>
-    <summary>Preciso criar uma conta?</summary>
-    <p>
-      Você pode selecionar arquivos antes de entrar. O processamento e o download exigem uma conta,
-      que pode ser criada gratuitamente.
-    </p>
-  </details>
-  <details>
-    <summary>Por quanto tempo meus arquivos ficam disponíveis?</summary>
-    <p>
-      O prazo aparece na área de envio e no resultado. Depois dele, o acesso é bloqueado e a rotina
-      de limpeza exclui os arquivos. Você também pode excluí-los ao terminar.
-    </p>
-  </details>
-  <a routerLink="/seguranca">Mais sobre segurança e exclusão</a>
+  <h2>Seus XMLs ficam seguros?</h2>
+  <p>
+    Os arquivos e resultados ficam em armazenamento privado, com acesso restrito à sua conta e
+    retenção temporária. Confira o prazo exibido na ferramenta e baixe o resultado antes do
+    vencimento. Você pode excluir os arquivos ao terminar.
+  </p>
+  <p>
+    Saiba mais sobre a <a routerLink="/seguranca">segurança dos seus arquivos</a> e compare os
+    <a routerLink="/planos">planos e limites de processamento</a>.
+  </p>
+  <h2>Perguntas frequentes</h2>
+  @for (faq of faqs; track faq.question) {
+    <details>
+      <summary>{{ faq.question }}</summary>
+      <p>{{ faq.answer }}</p>
+    </details>
+  }
 </section>

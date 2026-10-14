@@ -1,3 +1,4 @@
+import { toolFaqs } from './tool-faqs';
 import { DOCUMENT } from '@angular/common';
 import { inject, Injectable } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
@@ -39,6 +40,9 @@ export class SeoService {
       'og:locale': 'pt_BR',
     }))
       this.meta.updateTag({ property, content });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+    this.meta.updateTag({ name: 'twitter:title', content: page.title });
+    this.meta.updateTag({ name: 'twitter:description', content: page.description });
     this.document.querySelector('link[rel="canonical"]')?.remove();
     this.document.getElementById('feitoo-schema')?.remove();
     this.meta.removeTag('property="og:url"');
@@ -52,29 +56,43 @@ export class SeoService {
       const schema = this.document.createElement('script');
       schema.id = 'feitoo-schema';
       schema.type = 'application/ld+json';
-      schema.textContent = JSON.stringify(
+      const tool = path === '/xml-para-excel' || path === '/produtos-dos-xmls';
+      const main =
         path === '/'
-          ? { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Feitoo', url: canonical }
-          : path === '/xml-para-excel' || path === '/produtos-dos-xmls'
+          ? { '@type': 'WebSite', name: 'Feitoo', url: canonical, inLanguage: 'pt-BR' }
+          : tool
             ? {
-                '@context': 'https://schema.org',
                 '@type': 'WebApplication',
                 name:
-                  path === '/produtos-dos-xmls'
-                    ? 'Feitoo Produtos dos XMLs'
-                    : 'Feitoo XML para Excel',
+                  path === '/xml-para-excel'
+                    ? 'Converter XML para Excel'
+                    : 'Extrair produtos de XMLs NF-e',
                 url: canonical,
                 applicationCategory: 'UtilitiesApplication',
                 operatingSystem: 'Web',
                 description: page.description,
+                inLanguage: 'pt-BR',
               }
-            : {
-                '@context': 'https://schema.org',
-                '@type': 'WebPage',
-                name: page.title,
-                url: canonical,
-              },
-      );
+            : { '@type': 'WebPage', name: page.title, url: canonical };
+      const graph: object[] = [main];
+      if (path === '/xml-para-excel' || path === '/produtos-dos-xmls') {
+        graph.push({
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Feitoo', item: this.config.origin + '/' },
+            { '@type': 'ListItem', position: 2, name: main.name, item: canonical },
+          ],
+        });
+        graph.push({
+          '@type': 'FAQPage',
+          mainEntity: toolFaqs[path].map((faq) => ({
+            '@type': 'Question',
+            name: faq.question,
+            acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+          })),
+        });
+      }
+      schema.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
       this.document.head.appendChild(schema);
     }
   }

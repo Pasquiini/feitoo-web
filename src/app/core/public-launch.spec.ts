@@ -160,6 +160,30 @@ describe('Public launch', () => {
     seo.apply('/login');
     expect(TestBed.inject(Title).getTitle()).toBe('Sua conta | Feitoo');
   });
+  it('normaliza barra e query e substitui schema ao navegar entre ferramentas', () => {
+    const seo = TestBed.inject(SeoService);
+    for (const path of ['/xml-para-excel', '/produtos-dos-xmls'] as const) {
+      seo.apply(path + '/?origem=teste');
+      expect(document.querySelectorAll('link[rel="canonical"]')).toHaveLength(1);
+      expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+        config.origin + path,
+      );
+      expect(document.querySelectorAll('#feitoo-schema')).toHaveLength(1);
+      const graph = JSON.parse(document.getElementById('feitoo-schema')!.textContent!)['@graph'];
+      expect(graph.map((node: { '@type': string }) => node['@type'])).toEqual([
+        'WebApplication',
+        'BreadcrumbList',
+        'FAQPage',
+      ]);
+      expect(graph[1].itemListElement[1].item).toBe(config.origin + path);
+      expect(document.querySelector('meta[name="twitter:title"]')?.getAttribute('content')).toBe(
+        publicPages[path].title,
+      );
+    }
+    seo.apply('/');
+    const graph = JSON.parse(document.getElementById('feitoo-schema')!.textContent!)['@graph'];
+    expect(graph.map((node: { '@type': string }) => node['@type'])).toEqual(['WebSite']);
+  });
   it('build sem domínio não inventa canonical ou indexação', () => {
     TestBed.overrideProvider(LAUNCH_CONFIG, { useValue: { ...config, origin: '' } });
     TestBed.inject(SeoService).apply('/');
@@ -171,7 +195,7 @@ describe('Public launch', () => {
   it('home mostra as duas ferramentas e navegação funcional', async () => {
     const harness = await RouterTestingHarness.create('/');
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain(
-      'Ferramentas simples para resolver arquivos e dados em minutos.',
+      'Ferramentas online para XML, planilhas e arquivos.',
     );
     expect(harness.routeNativeElement?.querySelectorAll('.home-tool-card').length).toBe(2);
     expect(harness.routeNativeElement?.querySelector('a')?.getAttribute('href')).toBe(

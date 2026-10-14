@@ -4,18 +4,19 @@ export const publicPages = {
     description: 'Compare os planos Feitoo para processar seus XMLs.',
   },
   '/produtos-dos-xmls': {
-    title: 'Extrair produtos de XML NF-e para Excel | Feitoo',
-    description: 'Extraia e consolide produtos de vários XMLs de NF-e em uma planilha organizada.',
+    title: 'Extrair Produtos de XML NF-e para Excel | Feitoo',
+    description:
+      'Extraia e consolide produtos de vários XMLs de NF-e em uma planilha. Some quantidades e organize os itens automaticamente.',
   },
   '/': {
-    title: 'Feitoo — Ferramentas online para XML e arquivos',
+    title: 'Feitoo | Ferramentas online para XML, planilhas e arquivos',
     description:
-      'Converta XML de NF-e para Excel, consolide produtos e resolva tarefas com arquivos direto no navegador.',
+      'Ferramentas online rápidas para transformar XMLs, gerar planilhas e resolver tarefas com arquivos. Use direto no navegador com o Feitoo.',
   },
   '/xml-para-excel': {
-    title: 'XML para Excel: converta NF-e em planilha | Feitoo',
+    title: 'XML para Excel Online | Converter NF-e em Planilha | Feitoo',
     description:
-      'Converta XMLs de NF-e modelo 55 em Excel com abas Notas e Itens. Envie seus arquivos, acompanhe o processamento e baixe sua planilha.',
+      'Converta arquivos XML de NF-e para Excel online. Extraia dados das notas e gere uma planilha organizada em poucos passos.',
   },
   '/seguranca': {
     title: 'Segurança dos seus arquivos | Feitoo',

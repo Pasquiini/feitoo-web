@@ -168,7 +168,13 @@
           <div class="purchase-heading d-flex flex-wrap gap-2">
             <h3 class="item-title mb-1">
               {{
-                tools[item.tool === 'products-from-xml' ? 'products-from-xml' : 'xml-to-excel'].name
+                tools[
+                  item.tool === 'xml-to-pdf'
+                    ? 'xml-to-pdf'
+                    : item.tool === 'products-from-xml'
+                      ? 'products-from-xml'
+                      : 'xml-to-excel'
+                ].name
               }}
             </h3>
             <strong>{{ purchasePrice(item) }}</strong>
@@ -179,7 +185,13 @@
           @if (item.can_resume_processing) {
             <a
               [routerLink]="
-                tools[item.tool === 'products-from-xml' ? 'products-from-xml' : 'xml-to-excel'].path
+                tools[
+                  item.tool === 'xml-to-pdf'
+                    ? 'xml-to-pdf'
+                    : item.tool === 'products-from-xml'
+                      ? 'products-from-xml'
+                      : 'xml-to-excel'
+                ].path
               "
               [queryParams]="{ processing: item.processing_id, payment: 'success' }"
               >Retomar processamento pago</a

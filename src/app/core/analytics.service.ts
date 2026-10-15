@@ -190,8 +190,13 @@ export class AnalyticsService {
       page_referrer: '',
       page_title: 'Feitoo',
     };
-    if (properties.tool === 'xml-to-excel' || properties.tool === 'products-from-xml')
-      payload['tool'] = properties.tool === 'xml-to-excel' ? 'xml_to_excel' : 'products_from_xml';
+    if (
+      properties.tool === 'xml-to-excel' ||
+      properties.tool === 'products-from-xml' ||
+      properties.tool === 'xml-to-pdf' ||
+      properties.tool === 'xml-organizer' || properties.tool === 'xml-analyzer'
+    )
+      payload['tool'] = properties.tool.replaceAll('-', '_');
     if (properties.plan === 'free' || properties.plan === 'pro') payload['plan'] = properties.plan;
     if (
       Number.isInteger(properties.file_count) &&

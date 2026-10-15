@@ -1,5 +1,19 @@
 import { guidePages } from './guide-pages';
 export const publicPages = {
+  '/analisar-xml': {
+    title: 'Analisador de XML Online | Analisar Notas Fiscais | Feitoo',
+    description: 'Analise vários XMLs de notas fiscais online. Visualize valores, fornecedores, produtos e tributos em um dashboard e exporte relatórios para Excel.',
+  },
+  '/organizar-xml': {
+    title: 'Organizador de XML Online Grátis | Organizar Notas Fiscais | Feitoo',
+    description:
+      'Organize arquivos XML de notas fiscais automaticamente por fornecedor, CNPJ, mês ou ano. Envie seus XMLs e baixe tudo organizado em ZIP.',
+  },
+  '/xml-para-pdf': {
+    title: 'XML para PDF Grátis | Gerar DANFE Online | Feitoo',
+    description:
+      'Converta XML de nota fiscal em DANFE PDF online. Envie seu arquivo NF-e, visualize o documento e baixe o PDF.',
+  },
   ...guidePages,
   '/planos': {
     title: 'Planos Free, Avulso e Pro | Feitoo',

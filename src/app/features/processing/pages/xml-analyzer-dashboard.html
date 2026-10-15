@@ -1,0 +1,239 @@
+<section class="analysis" aria-labelledby="analysis-title" [attr.aria-busy]="loading()">
+  <div class="analysis-heading">
+    <div>
+      <p class="eyebrow">NF-e modelo 55 · dados do seu lote</p>
+      <h2 id="analysis-title">Análise dos seus XMLs</h2>
+    </div>
+    <button type="button" class="btn btn-primary" [disabled]="loading() || exporting() || !view()" (click)="export()">{{
+      exporting() ? 'Exportando…' : 'Exportar visão em Excel' }}</button>
+  </div>
+  <fieldset class="analysis-filters" [disabled]="exporting()">
+    <legend>Filtros dos documentos</legend>
+    <label>Emissão inicial<input class="form-control" type="date" [ngModel]="query().from ?? ''"
+        (ngModelChange)="set('from', $event)" /></label>
+    <label>Emissão final<input class="form-control" type="date" [ngModel]="query().to ?? ''"
+        (ngModelChange)="set('to', $event)" /></label>
+    <label>Emitente<select class="form-control" [ngModel]="query().issuer ?? ''"
+        (ngModelChange)="set('issuer', $event)">
+        <option value="">Todos os emitentes</option>@for (issuer of view()?.issuer_options ?? []; track issuer.id) {
+        <option [value]="issuer.id">{{ issuer.name }} · {{ issuer.document }}{{ issuer.trusted ? '' : ' (grupo isolado)'
+          }}</option> }
+      </select></label>
+    <label>Número ou trecho da chave<input class="form-control" type="search" maxlength="100"
+        placeholder="Pesquisar documento" [ngModel]="query().document_query ?? ''"
+        (ngModelChange)="set('document_query', $event)" /></label>
+    <button type="button" class="btn btn-outline-secondary" (click)="reset()">Limpar filtros</button>
+    <p class="scope">Datas, emitente e número/chave afetam os indicadores, gráficos e tabelas. A pesquisa de produtos
+      afeta somente a tabela de produtos. Contagens e inconsistências do lote completo permanecem visíveis. A exportação
+      usa os filtros atuais e inclui todas as páginas.</p>
+  </fieldset>
+  @if (loading()) { <p role="status">Carregando indicadores e tabelas…</p> }
+  @if (error()) { <p class="feedback feedback-error" role="alert">{{ error() }}</p><button type="button"
+    class="btn btn-outline-secondary" (click)="retry()">Consultar análise novamente</button> }
+  @if (view(); as data) {
+  <aside class="analysis-audit" aria-label="Conferência do lote completo">
+    <h3>Conferência do lote completo</h3>
+    <p>{{ data.audit.uploaded_files }} arquivos enviados · {{ data.audit.analyzed_files }} XMLs lidos com sucesso · {{
+      data.audit.considered_documents }} documentos considerados antes dos filtros.</p>
+    @if (data.audit.invalid_files) { <p class="warning" role="status">Conclusão parcial: {{ data.audit.invalid_files }}
+      arquivos com falha ficaram fora da análise e do consumo.</p> }
+    @if (data.audit.duplicates_ignored) { <p role="status">{{ data.audit.duplicates_ignored }} cópias idênticas
+      ignoradas nos indicadores.</p> }
+    @if (data.audit.conflict_files) { <p class="warning" role="status">{{ data.audit.conflict_files }} arquivos em
+      conflito em {{ data.audit.conflicting_keys }} chaves: todos foram excluídos da agregação. Confira os registros e
+      reenvie um lote resolvido.</p> }
+    <p class="scope">Consumo Free/Pro: {{ data.audit.analyzed_files }} XMLs lidos, inclusive cópias e conflitos
+      identificados. Isso é diferente dos documentos considerados. Retentativas do mesmo lote não consomem novamente.
+    </p>
+  </aside>
+  <div class="analysis-metrics" aria-label="Indicadores após filtros de documentos">
+    <article><span>Documentos considerados</span><strong>{{ data.summary.documents_count }}</strong></article>
+    <article><span>Total dos documentos (vNF)</span><strong>{{ decimal(data.summary.total_value, true)
+        }}</strong><small>{{ data.summary.documents_with_total }} documentos com valor informado</small></article>
+    <article><span>Emitentes identificados</span><strong>{{ data.summary.issuers_count }}</strong><small>{{
+        data.summary.untrusted_issuer_groups }} grupos isolados sem identificação confiável</small></article>
+    <article><span>Produtos distintos</span><strong>{{ data.summary.products_count }}</strong><small>Grupos por
+        emitente, identidade, NCM e unidade</small></article>
+    <article><span>Linhas de itens</span><strong>{{ data.summary.items_count }}</strong><small>Não é a soma de
+        quantidades comercializadas</small></article>
+    <article><span>Média por documento com vNF</span><strong>{{ decimal(data.summary.average_value, true)
+        }}</strong><small>Arredondada a 2 casas; documentos sem total ficam fora</small></article>
+    <article><span>Período de emissão</span><strong class="period">{{ date(data.summary.period_start) }} a {{
+        date(data.summary.period_end) }}</strong><small>Datas fiscais no fuso original</small></article>
+  </div>
+  @if (data.summary.documents_without_total) { <p class="scope">{{ data.summary.documents_without_total }} documentos
+    sem vNF não entraram na soma monetária nem na média. Os demais indicadores incluem esses documentos.</p> }
+  @if (!data.summary.documents_count) { <p class="feedback" role="status">Nenhum documento considerado neste recorte.
+    Confira os filtros, duplicados e conflitos; os registros continuam disponíveis abaixo.</p> }
+  <section class="analysis-section" aria-labelledby="monthly-title">
+    <h3 id="monthly-title">Evolução mensal</h3>
+    <p class="scope">Quantidade de notas e valores vNF por mês de emissão. Cada série é normalizada pelo seu maior valor
+      no período; compare os números informados.</p>
+    <div class="bar-legend"><span class="value-key">Valor dos documentos</span><span class="count-key">Quantidade de
+        notas</span></div>
+    <figure class="monthly-bars" aria-label="Gráfico de barras de valores e notas por mês">
+      @for (month of data.monthly; track month.month) {
+      <div class="month-row"><strong>{{ month.month }}</strong>
+        <div class="bar-pair">
+          <div class="track">
+            <div class="value-bar" [style.width.%]="month.value_bar"></div>
+          </div>
+          <div class="track">
+            <div class="count-bar" [style.width.%]="month.count_bar"></div>
+          </div>
+        </div><span>{{ decimal(month.total_value, true) }}<small>{{ month.documents_count }} notas · {{
+            month.documents_without_total }} sem vNF</small></span>
+      </div>
+      } @empty { <figcaption>Sem documentos para o gráfico neste recorte.</figcaption> }
+    </figure>
+  </section>
+  <section class="analysis-section" aria-labelledby="issuers-title">
+    <div class="table-heading">
+      <h3 id="issuers-title">Emitentes</h3><label>Ordenar emitentes<select class="form-control"
+          [ngModel]="query().issuer_sort" (ngModelChange)="set('issuer_sort', $event)">
+          <option value="value">Maior valor</option>
+          <option value="count">Mais notas</option>
+        </select></label>
+    </div>
+    <p class="scope">Emitente não equivale necessariamente a fornecedor do usuário. Agrupamento por documento com
+      formato/DV confiáveis; casos sem identificação ficam separados por nota. Percentual sobre o vNF conhecido neste
+      recorte.</p>
+    <div class="analysis-scroll" tabindex="0" role="region" aria-label="Tabela de emitentes">
+      <table>
+        <thead>
+          <tr>
+            <th>Emitente / CNPJ ou CPF</th>
+            <th>Notas</th>
+            <th>Valor informado</th>
+            <th>% do total</th>
+            <th>Última emissão</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (issuer of data.issuers.data; track issuer.id) { <tr>
+            <td>{{ issuer.name }}<small>{{ issuer.document }}{{ issuer.trusted ? '' : ' · identificação não confiável;
+                grupo isolado' }}</small></td>
+            <td>{{ issuer.documents_count }}</td>
+            <td>{{ decimal(issuer.total_value, true) }}<small>{{ issuer.documents_without_total }} sem vNF</small></td>
+            <td>{{ issuer.percentage === null ? 'Não informado' : decimal(issuer.percentage) + '%' }}</td>
+            <td>{{ date(issuer.last_issue_date) }}</td>
+          </tr> } @empty { <tr>
+            <td colspan="5">Nenhum emitente neste recorte.</td>
+          </tr> }
+        </tbody>
+      </table>
+    </div>
+    <app-analysis-pager [data]="data.issuers" label="Páginas de emitentes" [busy]="loading()"
+      (changed)="set('issuer_page', $event)" />
+  </section>
+  <section class="analysis-section" aria-labelledby="products-title">
+    <div class="table-heading">
+      <h3 id="products-title">Produtos</h3><label>Código ou descrição<input class="form-control" type="search"
+          maxlength="100" placeholder="Pesquisar somente produtos" [ngModel]="query().product_query ?? ''"
+          (ngModelChange)="set('product_query', $event)" /></label>
+    </div>
+    <p class="scope">A pesquisa afeta apenas esta tabela e a aba Produtos do Excel. Códigos iguais de emitentes
+      diferentes ou unidades/NCM diferentes permanecem separados. Sem código, usa descrição exata normalizada;
+      descrições parecidas não são equiparadas.</p>
+    <div class="analysis-scroll" tabindex="0" role="region" aria-label="Tabela de produtos">
+      <table>
+        <thead>
+          <tr>
+            <th>Código / descrição</th>
+            <th>Emitente</th>
+            <th>Unidade</th>
+            <th>Quantidade comercial</th>
+            <th>Valor dos produtos</th>
+            <th>Ocorrências (notas)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of data.products.data; track $index) { <tr>
+            <td>{{ product.code ?? 'Sem código' }}<small>{{ product.product }} · NCM {{ product.ncm }}</small></td>
+            <td>{{ product.issuer_name }}<small>{{ product.issuer_document }}</small></td>
+            <td>{{ product.unit }}</td>
+            <td>{{ decimal(product.total_quantity) }}</td>
+            <td>{{ decimal(product.total_value, true) }}</td>
+            <td>{{ product.invoice_count }}</td>
+          </tr> } @empty { <tr>
+            <td colspan="6">Nenhum produto corresponde à pesquisa.</td>
+          </tr> }
+        </tbody>
+      </table>
+    </div>
+    <app-analysis-pager [data]="data.products" label="Páginas de produtos" [busy]="loading()"
+      (changed)="set('product_page', $event)" />
+  </section>
+  <section class="analysis-section" aria-labelledby="taxes-title">
+    <h3 id="taxes-title">Tributos destacados nos XMLs</h3>
+    <p class="scope">Somente totais da nota em total/ICMSTot. Valores dos itens não são somados novamente. Não
+      representam recolhimento, créditos ou impostos devidos. Sem campo pode significar não informado ou não aplicável.
+    </p>
+    <div class="analysis-tax-grid">@for (tax of data.taxes | keyvalue; track tax.key) { <article>
+        <h4>{{ tax.key }}</h4><strong>{{ decimal(tax.value.total, true) }}</strong>
+        <p class="scope">{{ tax.value.documents_with_field }} notas com campo · {{ tax.value.documents_without_field }}
+          sem campo</p>
+      </article> }</div>
+  </section>
+  <section class="analysis-section" aria-labelledby="documents-title">
+    <div class="table-heading">
+      <h3 id="documents-title">Documentos</h3><label>Ordenar documentos<select class="form-control"
+          [ngModel]="query().document_sort" (ngModelChange)="set('document_sort', $event)">
+          <option value="date">Data de emissão</option>
+          <option value="number">Número</option>
+          <option value="value">Valor</option>
+          <option value="status">Status da análise</option>
+        </select></label><label>Direção<select class="form-control" [ngModel]="query().direction"
+          (ngModelChange)="set('direction', $event)">
+          <option value="desc">Decrescente</option>
+          <option value="asc">Crescente</option>
+        </select></label>
+    </div>
+    <p class="scope">O status abaixo descreve a análise. Não é a situação atual da NF-e na SEFAZ. A pesquisa por
+      número/chave está nos filtros de documentos acima.</p>
+    <div class="analysis-scroll" tabindex="0" role="region" aria-label="Tabela de documentos">
+      <table>
+        <thead>
+          <tr>
+            <th>Número / série / arquivo</th>
+            <th>Chave de acesso</th>
+            <th>Emissão original</th>
+            <th>Emitente / destinatário</th>
+            <th>Valor vNF</th>
+            <th>Status da análise</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (doc of data.documents.data; track doc.file_id) { <tr>
+            <td>{{ doc.number ?? 'Não informado' }} / {{ doc.series ?? '—' }}<small>{{ doc.file_name }}</small></td>
+            <td class="access-key">{{ doc.access_key ?? 'Não informada' }}</td>
+            <td>{{ date(doc.issued_at) }}<small>{{ doc.issued_at }}</small></td>
+            <td>{{ doc.issuer_name ?? 'Não informado' }}<small>Destinatário: {{ doc.recipient_name ?? 'Não informado'
+                }}</small></td>
+            <td>{{ decimal(doc.total_value, true) }}</td>
+            <td><span [class.warning]="!doc.included">{{ status(doc.analysis_status) }}</span>@for (note of doc.notes ??
+              []; track $index) { <small>{{ note }}</small> } @if (doc.error_message) { <small>{{ doc.error_message
+                }}</small> }</td>
+          </tr> } @empty { <tr>
+            <td colspan="6">Nenhum documento corresponde aos filtros.</td>
+          </tr> }
+        </tbody>
+      </table>
+    </div>
+    <app-analysis-pager [data]="data.documents" label="Páginas de documentos" [busy]="loading()"
+      (changed)="set('document_page', $event)" />
+  </section>
+  <details class="analysis-section">
+    <summary>Inconsistências e avisos do lote completo ({{ data.inconsistencies.total }})</summary>
+    <p class="scope">Inclui falhas, cópias ignoradas, conflitos e campos ausentes do lote inteiro, independentemente dos
+      filtros.</p>
+    <ul class="analysis-issues">@for (issue of data.inconsistencies.data; track $index) { <li><strong>{{ issue.file_name
+          }} · {{ status(issue.status) }}</strong>
+        <p>{{ issue.message }}</p>
+      </li> } @empty { <li>Nenhuma inconsistência registrada.</li> }</ul>
+    <app-analysis-pager [data]="data.inconsistencies" label="Páginas de inconsistências" [busy]="loading()"
+      (changed)="set('issue_page', $event)" />
+  </details>
+  <p class="scope analysis-notice">{{ data.notice }}</p>
+  }
+</section>

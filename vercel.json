@@ -15,7 +15,7 @@
       "continue": true
     },
     {
-      "src": "/(xml-para-excel|produtos-dos-xmls|planos|seguranca|privacidade|termos|como-converter-xml-nfe-para-excel|como-extrair-produtos-de-xml-nfe)/",
+      "src": "/(xml-para-excel|xml-para-pdf|organizar-xml|analisar-xml|produtos-dos-xmls|planos|seguranca|privacidade|termos|como-converter-xml-nfe-para-excel|como-extrair-produtos-de-xml-nfe)/",
       "headers": { "Location": "/$1" },
       "status": 308
     },

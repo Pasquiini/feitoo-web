@@ -3,6 +3,9 @@ export const serverRoutes: ServerRoute[] = [
   ...[
     '',
     'xml-para-excel',
+    'xml-para-pdf',
+    'organizar-xml',
+    'analisar-xml',
     'produtos-dos-xmls',
     'planos',
     'seguranca',

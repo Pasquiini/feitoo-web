@@ -1,4 +1,8 @@
 import { toolFaqs } from '../../../core/tool-faqs';
+import { OrganizerOptionsPanel } from './organizer-options';
+import { OrganizerResultPanel } from './organizer-result';
+import { XmlAnalyzerDashboard } from './xml-analyzer-dashboard';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToolIcon } from './tool-icon';
 import { productsPdf } from '../services/products-pdf';
 import { AnalyticsService, sizeBucket, durationBucket } from '../../../core/analytics.service';
@@ -37,7 +41,7 @@ type UiState =
 
 @Component({
   selector: 'app-xml-to-excel',
-  imports: [DatePipe, RouterLink, ToolIcon],
+  imports: [DatePipe, RouterLink, ToolIcon, OrganizerOptionsPanel, OrganizerResultPanel, XmlAnalyzerDashboard],
   templateUrl: './xml-to-excel.html',
   styleUrl: './xml-to-excel.scss',
 })
@@ -70,12 +74,86 @@ export class XmlToExcelPage {
   private readonly route = inject(ActivatedRoute);
   readonly tool =
     processingTools[
-      this.route.snapshot.data?.['tool'] === 'products-from-xml'
-        ? 'products-from-xml'
-        : 'xml-to-excel'
+      this.route.snapshot.data?.['tool'] === 'xml-analyzer' ? 'xml-analyzer' : this.route.snapshot.data?.['tool'] === 'xml-organizer'
+        ? 'xml-organizer'
+        : this.route.snapshot.data?.['tool'] === 'xml-to-pdf'
+          ? 'xml-to-pdf'
+          : this.route.snapshot.data?.['tool'] === 'products-from-xml'
+            ? 'products-from-xml'
+            : 'xml-to-excel'
     ];
   readonly faqs = toolFaqs[this.tool.path];
   readonly productsMode = this.tool.id === 'products-from-xml';
+  readonly pdfMode = this.tool.id === 'xml-to-pdf';
+  readonly organizerMode = this.tool.id === 'xml-organizer';
+  readonly analyzerMode = this.tool.id === 'xml-analyzer';
+  readonly organizerOptions = inject(XmlSelectionService).organizerOptions;
+  readonly pageTitle = this.analyzerMode ? 'Analisador de XMLs Online' : this.organizerMode
+    ? 'Organizador de XMLs Online'
+    : this.pdfMode
+      ? 'Converter XML em PDF'
+      : this.productsMode
+        ? 'Extrair produtos de XMLs NF-e'
+        : 'Converter XML para Excel';
+  readonly documentFiles = signal<readonly ProcessingFile[]>([]);
+  readonly pdfPreview = signal<SafeResourceUrl | null>(null);
+  readonly pdfBusy = signal(false);
+  private readonly sanitizer = inject(DomSanitizer);
+  private pdfUrl: string | null = null;
+
+  private clearPdf(): void {
+    if (this.pdfUrl) URL.revokeObjectURL(this.pdfUrl);
+    this.pdfUrl = null;
+    this.pdfPreview.set(null);
+  }
+
+  viewDanfe(file: ProcessingFile, download = false): void {
+    const batch = this.processing();
+    if (!batch || this.pdfBusy() || file.status !== 'completed' || this.expired() || this.deleted())
+      return;
+    this.pdfBusy.set(true);
+    this.api
+      .pdf(batch.id, file.id)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.pdfBusy.set(false)),
+      )
+      .subscribe({
+        next: (blob) => {
+          if (this.expired() || this.deleted() || this.processing()?.id !== batch.id) return;
+          const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+          if (download) {
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `DANFE-${file.document?.access_key ?? file.id}.pdf`;
+            anchor.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+          } else {
+            this.clearPdf();
+            this.pdfUrl = url;
+            // Trust only an authenticated PDF response represented by a locally created blob URL.
+            this.pdfPreview.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+          }
+        },
+        error: () => this.error.set('Não foi possível abrir o PDF. O resultado pode ter expirado.'),
+      });
+  }
+
+  loadDocumentFiles(): void {
+    const batch = this.processing();
+    if ((!this.pdfMode && !this.organizerMode && !this.analyzerMode) || !batch || this.deleted() || this.expired())
+      return;
+    this.api
+      .listFiles(batch.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (r) => {
+          if (!this.deleted() && !this.expired() && this.processing()?.id === batch.id)
+            this.documentFiles.set(r.data);
+        },
+        error: () => this.error.set('Não foi possível consultar os arquivos do lote.'),
+      });
+  }
   readonly previewMode = signal<'consolidated' | 'detailed'>('consolidated');
   readonly usage = signal<Usage | null>(null);
   readonly paymentBusy = signal(false);
@@ -231,6 +309,7 @@ export class XmlToExcelPage {
       this.loadConfig();
     }
     this.destroyRef.onDestroy(() => {
+      this.clearPdf();
       clearTimeout(this.expiryTimer);
       clearTimeout(this.usageResetTimer);
     });
@@ -351,6 +430,8 @@ export class XmlToExcelPage {
     this.paymentMessage.set('');
     this.paywallTracked = false;
     this.processing.set(null);
+    this.clearPdf();
+    this.documentFiles.set([]);
     this.failedFiles.set([]);
     this.failuresVisible.set(false);
     this.failuresError.set('');
@@ -484,7 +565,7 @@ export class XmlToExcelPage {
   loadUsage(): void {
     if (!this.auth.user()) return;
     this.billing
-      .usage(this.productsMode ? this.tool.id : undefined)
+      .usage(this.productsMode || this.pdfMode || this.organizerMode || this.analyzerMode ? this.tool.id : undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (r) => {
@@ -518,7 +599,11 @@ export class XmlToExcelPage {
         ? throwError(() => new Error('incomplete_upload'))
         : of({ data: this.processing()! });
     this.uploaded.set(0);
-    return this.api.create(this.tool.id).pipe(
+    return (
+      this.organizerMode
+        ? this.api.create(this.tool.id, this.organizerOptions())
+        : this.api.create(this.tool.id)
+    ).pipe(
       switchMap((r) => {
         this.processing.set(r.data);
         const batches: File[][] = [];
@@ -636,12 +721,18 @@ export class XmlToExcelPage {
             return;
           }
           this.processing.set(r.data);
+          if (this.organizerMode && r.data.organizer)
+            this.organizerOptions.set(r.data.organizer.options);
           if (r.data.status !== 'pending') {
             this.update(r.data);
             if (['queued', 'processing'].includes(r.data.status)) this.poll(id);
             return;
           }
           this.state.set('files-selected');
+          if (this.organizerMode || this.analyzerMode) {
+            this.paymentMessage.set('Seu envio foi recuperado. Você pode iniciar a organização.');
+            return;
+          }
           if (this.route.snapshot.queryParamMap.get('payment') === 'cancelled') {
             this.paymentMessage.set(
               'Pagamento não concluído. Seus arquivos ainda não foram processados.',
@@ -769,6 +860,9 @@ export class XmlToExcelPage {
 
   private update(processing: Processing): void {
     this.processing.set(processing);
+    if (this.organizerMode && processing.organizer)
+      this.organizerOptions.set(processing.organizer.options);
+    if (this.pdfMode || this.organizerMode || this.analyzerMode) this.loadDocumentFiles();
     if (processing.status === 'completed') {
       if (!this.terminalTracked) {
         this.terminalTracked = true;
@@ -790,9 +884,11 @@ export class XmlToExcelPage {
       this.state.set('completed');
       this.files.set([]);
       this.watchExpiry(processing);
+      if (this.pdfMode || this.organizerMode || this.analyzerMode) this.loadUsage();
     } else if (processing.status === 'queued' || processing.status === 'processing') {
       this.state.set(processing.status);
     } else {
+      if ((this.organizerMode || this.analyzerMode) && processing.status === 'failed') this.loadUsage();
       if (processing.status === 'failed' && !this.terminalTracked) {
         this.terminalTracked = true;
         this.analytics.track('processing_failed', {
@@ -817,7 +913,14 @@ export class XmlToExcelPage {
     const remaining = processing.expires_at ? Date.parse(processing.expires_at) - Date.now() : 0;
     this.expired.set(!processing.result.available || remaining <= 0);
     if (remaining > 0)
-      this.expiryTimer = setTimeout(() => this.expired.set(true), Math.min(remaining, 2147483647));
+      this.expiryTimer = setTimeout(
+        () => {
+          this.expired.set(true);
+          this.clearPdf();
+          this.documentFiles.set([]);
+        },
+        Math.min(remaining, 2147483647),
+      );
   }
 
   showFailures(): void {
@@ -859,6 +962,8 @@ export class XmlToExcelPage {
           clearTimeout(this.expiryTimer);
           this.analytics.track('files_deleted', { tool: this.tool.id });
           this.deleted.set(true);
+          this.clearPdf();
+          this.documentFiles.set([]);
           this.processing.update((current) => (current ? { ...current, preview: null } : null));
           this.expired.set(true);
           this.failedFiles.set([]);

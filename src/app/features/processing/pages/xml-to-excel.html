@@ -1,16 +1,12 @@
 <section class="tool mt-3" [class.products-tool]="productsMode" aria-labelledby="tool-title">
   <nav aria-label="Caminho da página" class="small mb-3">
     <a routerLink="/">Feitoo</a> /
-    <span aria-current="page">{{
-      productsMode ? 'Extrair produtos de XMLs NF-e' : 'Converter XML para Excel'
-    }}</span>
+    <span aria-current="page">{{ pageTitle }}</span>
   </nav>
   @if (productsMode) {
     <p class="tool-eyebrow"><app-tool-icon name="xml" /> XML → produtos → Excel + PDF</p>
   }
-  <h1 id="tool-title">
-    {{ productsMode ? 'Extrair produtos de XMLs NF-e' : 'Converter XML para Excel' }}
-  </h1>
+  <h1 id="tool-title">{{ pageTitle }}</h1>
   <p class="tool-subtitle">
     {{
       productsMode
@@ -18,6 +14,21 @@
         : tool.subtitle
     }}
   </p>
+  @if (analyzerMode) {
+    <p class="small text-secondary">Análise informativa de NF-e modelo 55. Não é auditoria tributária nem consulta oficial à SEFAZ. Cada XML lido com sucesso consome uma unidade Free/Pro, inclusive cópias e conflitos; os indicadores eliminam repetições e excluem conflitos.</p>
+  }
+  @if (organizerMode) {
+    <app-organizer-options
+      [options]="organizerOptions()"
+      [disabled]="busy() || !!processing()"
+      (changed)="organizerOptions.set($event)"
+    />
+    <p class="small text-secondary">
+      Cada XML fiscal organizado com sucesso consome uma unidade Free/Pro, inclusive cópias que você
+      escolher manter. Arquivos com falha não consomem o limite. O volume fica reservado enquanto o
+      lote é processado.
+    </p>
+  }
   @if (config()?.free; as free) {
     <p class="small text-secondary">
       {{ usage()?.plan === 'pro' ? 'Feitoo Pro' : 'Plano gratuito' }} ·
@@ -117,7 +128,10 @@
         </button>
       }
       <p class="small text-secondary">
-        Limite técnico: {{ config()?.max_processing_items }} itens e
+        Limite técnico:
+        @if (!organizerMode) {
+          {{ config()?.max_processing_items }} itens e
+        }
         {{ size((config()?.max_total_size_kb ?? 40960) * 1024) }} por lote.
       </p>
     </section>
@@ -180,8 +194,10 @@
       />
       @if (config(); as limits) {
         <p class="small text-secondary mt-3 mb-0">
-          Somente XML de NF-e modelo 55 · Até
-          {{ limits.max_processing_files ?? limits.max_files }} arquivos por lote ·
+          {{
+            organizerMode ? 'XML de NF-e 55 e NFC-e 65 em UTF-8' : 'Somente XML de NF-e modelo 55'
+          }}
+          · Até {{ limits.max_processing_files ?? limits.max_files }} arquivos por lote ·
           {{ size(limits.max_file_size_kb * 1024) }} por arquivo
         </p>
       } @else {
@@ -264,7 +280,15 @@
     }
     @if (!busy() && (!auth.user() || (!needsPurchase() && !purchase()))) {
       <button type="button" class="btn btn-primary" [disabled]="!config()" (click)="start()">
-        {{ auth.user() ? 'Processar XMLs' : 'Entre para continuar' }}
+        {{
+          auth.user()
+            ? analyzerMode ? 'Analisar XMLs' : organizerMode
+              ? 'Organizar XMLs'
+              : pdfMode
+                ? 'Gerar DANFE'
+                : 'Processar XMLs'
+            : 'Entre para continuar'
+        }}
       </button>
     }
     @if (authPrompt() && !auth.user()) {
@@ -299,7 +323,15 @@
     role="status"
   >
     @if (deleting()) {
-      <p>Excluindo seus arquivos e o Excel…</p>
+      <p>
+        {{
+          analyzerMode ? 'Excluindo XMLs e resultados da análise…' : organizerMode
+            ? 'Excluindo seus XMLs e o ZIP…'
+            : pdfMode
+              ? 'Excluindo seus XMLs e PDFs…'
+              : 'Excluindo seus arquivos e o Excel…'
+        }}
+      </p>
     }
     @if (state() === 'uploading') {
       <h2 class="h4">Preparando seus arquivos</h2>
@@ -308,14 +340,24 @@
     }
     @if (state() === 'queued') {
       <h2 class="h4">Preparando seus arquivos</h2>
-      <p>Recebemos seus XMLs. Vamos organizar as notas e os produtos para você.</p>
+      <p>
+        {{
+          analyzerMode ? 'Recebemos seus XMLs. Vamos analisar os documentos e consolidar os dados.' : organizerMode
+            ? 'Recebemos seus XMLs. Vamos organizar as pastas para você.'
+            : 'Recebemos seus XMLs. Vamos organizar as notas e os produtos para você.'
+        }}
+      </p>
     }
     @if (processing(); as batch) {
       @if (state() === 'processing') {
         <h2 class="h4">
           {{
             batch.processed_files_count === batch.files_count
-              ? 'Gerando seu Excel'
+              ? analyzerMode ? 'Consolidando sua análise' : organizerMode
+                ? 'Gerando seu ZIP'
+                : pdfMode
+                  ? 'Preparando seus DANFEs'
+                  : 'Gerando seu Excel'
               : 'Processando XMLs'
           }}
         </h2>
@@ -335,13 +377,25 @@
         <p>
           {{
             batch.processed_files_count === batch.files_count
-              ? 'Gerando seu Excel…'
+              ? analyzerMode ? 'Consolidando sua análise…' : organizerMode
+                ? 'Gerando seu ZIP…'
+                : pdfMode
+                  ? 'Preparando seus DANFEs…'
+                  : 'Gerando seu Excel…'
               : 'Processando XMLs…'
           }}
         </p>
       }
       @if (deleted()) {
-        <p>Seus arquivos e o Excel foram excluídos.</p>
+        <p>
+          {{
+            analyzerMode ? 'Seus XMLs e resultados da análise foram excluídos.' : organizerMode
+              ? 'Seus XMLs e o ZIP foram excluídos.'
+              : pdfMode
+                ? 'Seus XMLs e PDFs foram excluídos.'
+                : 'Seus arquivos e o Excel foram excluídos.'
+          }}
+        </p>
       } @else if (state() === 'completed') {
         @if (!expired()) {
           <span class="result-check" aria-hidden="true">
@@ -352,9 +406,25 @@
             }
           </span>
           <h2 class="h4">
-            {{ productsMode ? 'Seus produtos estão prontos' : 'Seu Excel está pronto' }}
+            {{
+              analyzerMode ? 'Sua análise está pronta' : organizerMode
+                ? 'Seu ZIP está pronto'
+                : pdfMode
+                  ? 'Seus DANFEs estão prontos'
+                  : productsMode
+                    ? 'Seus produtos estão prontos'
+                    : 'Seu Excel está pronto'
+            }}
           </h2>
-          @if (!batch.failed_files_count) {
+          @if (analyzerMode) {
+            <p>{{ batch.successful_files_count }} XMLs lidos com sucesso · {{ batch.failed_files_count }} com falha. Confira abaixo os documentos considerados, cópias e conflitos.</p>
+          } @else if (organizerMode) {
+            <p>
+              {{ batch.files_count }} XMLs recebidos ·
+              {{ batch.successful_files_count }} organizados. Confira o resumo e os originais
+              preservados no ZIP.
+            </p>
+          } @else if (!batch.failed_files_count) {
             <p>
               {{ batch.successful_files_count }}
               {{ batch.successful_files_count === 1 ? 'XML processado' : 'XMLs processados' }} com
@@ -362,7 +432,7 @@
             </p>
           } @else {
             <p>
-              {{ batch.files_count }} XMLs enviados. Seu Excel foi gerado com
+              {{ batch.files_count }} XMLs enviados. O resultado foi gerado com
               {{ batch.successful_files_count }}
               {{ batch.successful_files_count === 1 ? 'documento' : 'documentos' }}.
             </p>
@@ -428,7 +498,15 @@
             @if (productsMode) {
               <app-tool-icon name="spreadsheet" />
             }
-            {{ downloading() ? 'Baixando…' : 'Baixar Excel' }}
+            {{
+              downloading()
+                ? 'Baixando…'
+                : analyzerMode ? 'Baixar Excel completo do lote' : organizerMode
+                  ? 'Baixar ZIP organizado'
+                  : pdfMode
+                    ? 'Baixar PDFs em ZIP'
+                    : 'Baixar Excel'
+            }}
           </button>
           @if (productsMode && batch.preview) {
             <button
@@ -454,6 +532,98 @@
       }
     }
   </div>
+
+  @if (analyzerMode && processing() && !expired() && !deleted()) {
+    @if (state() === 'completed') {
+      <p class="small text-secondary">O download acima contém o lote completo, sem filtros. Para exportar o recorte atual, use Exportar visão em Excel no dashboard.</p>
+      <app-xml-analyzer-dashboard [id]="processing()!.id" />
+    } @else {
+      <section class="my-3" aria-label="Status individual dos XMLs">
+        <h2 class="h5">Status de leitura dos arquivos</h2>
+        <ul class="list-group" style="max-height:18rem;overflow:auto">
+          @for (file of documentFiles(); track file.id) {
+            <li class="list-group-item"><strong style="overflow-wrap:anywhere">{{ file.original_name }}</strong> · {{ file.status === 'completed' ? 'Lido com sucesso' : file.status === 'failed' ? 'Falha' : 'Aguardando análise' }} @if (file.error_message) { <p class="small">{{ file.error_message }}</p> }</li>
+          }
+        </ul>
+      </section>
+    }
+  }
+  @if (organizerMode && processing() && !expired() && !deleted()) {
+    <app-organizer-result
+      [summary]="processing()?.organizer?.summary ?? null"
+      [files]="documentFiles()"
+    />
+  }
+  @if (pdfMode) {
+    <p class="feedback">
+      Status atual na SEFAZ não consultado. O protocolo é informado no XML; a assinatura digital não
+      foi verificada. Documentos de homologação não têm valor fiscal.
+    </p>
+    <p class="small">
+      O volume fica reservado durante o processamento. Somente PDFs concluídos com sucesso consomem
+      seu limite Free ou Pro.
+    </p>
+    @if (processing() && !deleted() && !expired()) {
+      <section aria-label="Arquivos e DANFEs" class="mt-3">
+        <h2 class="h5">Arquivos do lote</h2>
+        <button type="button" class="btn btn-outline-secondary" (click)="loadDocumentFiles()">
+          Atualizar arquivos
+        </button>
+        <ul class="list-group my-3">
+          @for (file of documentFiles(); track file.id) {
+            <li class="list-group-item">
+              <strong class="file-name">{{ file.original_name }}</strong> ·
+              <span>{{
+                file.status === 'completed'
+                  ? 'PDF gerado'
+                  : file.status === 'failed'
+                    ? 'Falha'
+                    : file.status === 'processing'
+                      ? 'Processando'
+                      : 'Aguardando'
+              }}</span>
+              @if (file.error_message) {
+                <p>{{ file.error_message }}</p>
+              }
+              @if (file.document; as note) {
+                <p>
+                  NF-e {{ note.number }} · Série {{ note.series }} ·
+                  {{ decimal(note.total_value, true) }}
+                </p>
+                <p>{{ note.issuer_name }} → {{ note.recipient_name }}</p>
+                <p class="small access-key">Chave: {{ note.access_key }}</p>
+                @if (state() === 'completed') {
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    [disabled]="pdfBusy() || deleting()"
+                    (click)="viewDanfe(file)"
+                  >
+                    Visualizar PDF
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    [disabled]="pdfBusy() || deleting()"
+                    (click)="viewDanfe(file, true)"
+                  >
+                    Baixar PDF
+                  </button>
+                }
+              }
+            </li>
+          }
+        </ul>
+        @if (pdfBusy()) {
+          <p role="status">Carregando PDF…</p>
+        }
+        @if (pdfPreview(); as source) {
+          <iframe class="danfe-preview" [src]="source" title="Visualização do DANFE PDF"></iframe>
+          <p class="small">Se o navegador não exibir o documento, use Baixar PDF.</p>
+        }
+      </section>
+    }
+  }
 
   @if (state() === 'completed' && !expired() && !deleted()) {
     @if (processing()?.preview; as preview) {
@@ -752,7 +922,80 @@
 </section>
 
 <section class="public-section tool-explainer" aria-label="Sobre a ferramenta">
-  @if (productsMode) {
+  @if (analyzerMode) {
+    <h2>Como analisar XMLs de notas fiscais</h2>
+    <ol><li>Selecione arquivos XML individuais de NF-e modelo 55.</li><li>Entre na sua conta e clique em Analisar XMLs.</li><li>Consulte os indicadores reais, filtre os dados e exporte o Excel.</li></ol>
+    <h2>Documentos, emitentes, produtos e tributos</h2>
+    <p>O dashboard apresenta valores dos documentos, emitentes identificados, grupos de produtos, linhas de itens, evolução por mês de emissão e tributos destacados. Emitente não equivale necessariamente a fornecedor do usuário, e documentos fiscais não confirmam compras ou pagamentos.</p>
+    <h2>Sem dupla contagem de notas</h2>
+    <p>Cópias idênticas entram uma vez nos indicadores. Quando uma chave tem conteúdos diferentes, todos os participantes ficam fora da agregação até você reenviar um lote resolvido. Os registros e observações permanecem visíveis e no relatório.</p>
+    <h2>Entenda o escopo dos valores</h2>
+    <p>Valores dos documentos usam o campo vNF; valores de produtos são apresentados separadamente. Quantidades só são somadas dentro da mesma unidade e grupo de produto. Tributos vêm dos totais fiscais da nota, sem somar novamente os itens, e não representam recolhimento, crédito ou imposto devido.</p>
+    <p>Datas preservam o fuso original. Campos ausentes são informados sem inventar valores. O MVP lê NF-e 55; NFC-e 65, PDF e ZIP não são aceitos para análise. A situação atual na SEFAZ e a assinatura digital não são verificadas.</p>
+    <p>Veja também <a routerLink="/xml-para-excel">XML para Excel</a>, <a routerLink="/produtos-dos-xmls">Produtos dos XMLs</a>, <a routerLink="/organizar-xml">Organizador de XMLs</a> e <a routerLink="/xml-para-pdf">XML para DANFE PDF</a>.</p>
+  } @else if (organizerMode) {
+    <h2>Como organizar vários arquivos XML</h2>
+    <ol>
+      <li>Selecione seus arquivos XML de NF-e 55 ou NFC-e 65.</li>
+      <li>Escolha como separar os documentos, os nomes e o tratamento de duplicados.</li>
+      <li>Entre na sua conta, clique em Organizar XMLs e baixe o ZIP.</li>
+    </ol>
+    <h2>Separar XMLs por fornecedor, CNPJ ou mês</h2>
+    <p>
+      Use o emitente como fornecedor, o CNPJ/CPF, a data de emissão ou o modelo da nota para criar
+      pastas. Combine ano/mês e fornecedor para consultar suas notas por período. Fornecedores são
+      identificados também pelo documento para evitar misturar emitentes com nomes iguais.
+    </p>
+    <h2>Originais preservados e duplicados visíveis</h2>
+    <p>
+      O conteúdo interno dos XMLs permanece intacto. A ferramenta compara hashes para identificar
+      arquivos idênticos e verifica chaves confiáveis para apontar documentos com a mesma chave e
+      conteúdo divergente. Você escolhe manter ou separar os duplicados; nenhum documento é
+      descartado silenciosamente.
+    </p>
+    <p>
+      O relatório Excel opcional contém nomes, pastas, dados extraídos e observações. Documentos
+      desconhecidos são classificados como Outros; XMLs problemáticos seguros ficam separados em
+      Arquivos_Com_Problemas. Campos ausentes permanecem não informados. Formatos como CT-e, MDF-e e
+      CF-e ainda não têm leitura fiscal implementada.
+    </p>
+    <p>
+      A organização não consulta a SEFAZ, não verifica assinatura digital e não confirma autorização
+      fiscal.
+    </p>
+    <p>
+      Veja também <a routerLink="/xml-para-excel">XML para Excel</a>,
+      <a routerLink="/produtos-dos-xmls">Produtos dos XMLs</a> e
+      <a routerLink="/xml-para-pdf">XML para DANFE PDF</a>.
+    </p>
+  } @else if (pdfMode) {
+    <h2>Como converter XML em DANFE PDF</h2>
+    <ol>
+      <li>Selecione os XMLs processados de NF-e modelo 55.</li>
+      <li>Entre na sua conta e clique em Gerar DANFE.</li>
+      <li>Confira cada PDF e baixe individualmente ou em ZIP.</li>
+    </ol>
+    <h2>O que é o DANFE?</h2>
+    <p>
+      O DANFE é a representação auxiliar da NF-e. Ele apresenta chave de acesso, emitente,
+      destinatário, produtos, impostos e totais conforme o XML enviado. A conversão não emite notas
+      fiscais nem modifica dados tributários.
+    </p>
+    <h2>Protocolo e situação da nota</h2>
+    <p>
+      Esta versão exige um protocolo de autorização consistente com a NF-e. O status atual na SEFAZ
+      não foi consultado e a assinatura digital não é verificada. Um protocolo no XML não confirma
+      que a nota continua autorizada: podem existir eventos posteriores, como cancelamento.
+    </p>
+    <p>
+      Arquivos inválidos e repetidos no lote são identificados individualmente. Os demais documentos
+      continuam sendo processados.
+    </p>
+    <p>
+      Veja também <a routerLink="/xml-para-excel">XML para Excel</a> e
+      <a routerLink="/produtos-dos-xmls">Produtos dos XMLs</a>.
+    </p>
+  } @else if (productsMode) {
     <h2>Como extrair produtos dos XMLs</h2>
     <p>
       Envie seus XMLs de NF-e modelo 55, acompanhe o processamento e confira os produtos
@@ -822,7 +1065,7 @@
   <p>
     @if (productsMode) {
       <a routerLink="/como-extrair-produtos-de-xml-nfe">Veja como extrair produtos de XMLs NF-e</a>.
-    } @else {
+    } @else if (!pdfMode && !organizerMode && !analyzerMode) {
       <a routerLink="/como-converter-xml-nfe-para-excel">Veja como converter XML NF-e para Excel</a
       >.
     }

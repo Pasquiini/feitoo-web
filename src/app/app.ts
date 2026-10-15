@@ -84,9 +84,16 @@ export class App {
       });
   }
 
-  get loginContext(): { returnTo: '/xml-para-excel' | '/produtos-dos-xmls' | '/conta' } | null {
+  get loginContext(): {
+    returnTo:
+      '/analisar-xml' | '/organizar-xml' | '/xml-para-excel' | '/xml-para-pdf' | '/produtos-dos-xmls' | '/conta';
+  } | null {
     const path = this.router.url.split(/[?#]/)[0];
-    return path === '/xml-para-excel' || path === '/produtos-dos-xmls' || path === '/conta'
+    return path === '/analisar-xml' || path === '/organizar-xml' ||
+      path === '/xml-para-pdf' ||
+      path === '/xml-para-excel' ||
+      path === '/produtos-dos-xmls' ||
+      path === '/conta'
       ? { returnTo: path }
       : null;
   }

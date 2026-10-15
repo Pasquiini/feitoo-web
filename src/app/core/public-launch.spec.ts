@@ -212,12 +212,12 @@ describe('Public launch', () => {
       'noindex,follow',
     );
   });
-  it('home mostra as duas ferramentas e navegação funcional', async () => {
+  it('home mostra as três ferramentas e navegação funcional', async () => {
     const harness = await RouterTestingHarness.create('/');
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain(
       'Ferramentas online para XML, planilhas e arquivos.',
     );
-    expect(harness.routeNativeElement?.querySelectorAll('.home-tool-card').length).toBe(2);
+    expect(harness.routeNativeElement?.querySelectorAll('.home-tool-card').length).toBe(5);
     expect(harness.routeNativeElement?.querySelector('a')?.getAttribute('href')).toBe(
       '/xml-para-excel',
     );

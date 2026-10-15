@@ -5,6 +5,9 @@ import { JSDOM } from 'jsdom';
 export const paths = [
   '/',
   '/xml-para-excel',
+  '/xml-para-pdf',
+  '/organizar-xml',
+  '/analisar-xml',
   '/produtos-dos-xmls',
   '/planos',
   '/seguranca',
@@ -97,7 +100,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         assert.ok(document.querySelector('article.guide'));
       }
       if (path === '/') assert.ok(graph.some((node) => node['@type'] === 'WebSite'));
-      if (path === '/xml-para-excel' || path === '/produtos-dos-xmls') {
+      if (
+        path === '/xml-para-excel' ||
+        path === '/produtos-dos-xmls' ||
+        path === '/analisar-xml' || path === '/organizar-xml' ||
+        path === '/xml-para-pdf'
+      ) {
         assert.ok(graph.some((node) => node['@type'] === 'WebApplication'));
         const breadcrumbs = graph.find((node) => node['@type'] === 'BreadcrumbList');
         assert.equal(breadcrumbs.itemListElement[1].item, config.origin + path);

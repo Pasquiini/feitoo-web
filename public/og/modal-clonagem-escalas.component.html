@@ -1,0 +1,472 @@
+<div class="clone-modal">
+
+  <div class="clone-header">
+    <div class="clone-header__icon">
+      <mat-icon>content_copy</mat-icon>
+    </div>
+
+    <div class="clone-header__text">
+      <h2>Pré-visualização da clonagem</h2>
+      <p>
+        Confira as escalas antes de cadastrar no próximo mês.
+      </p>
+    </div>
+
+    <button type="button" mat-icon-button (click)="fechar()" [disabled]="loading" aria-label="Fechar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-progress-bar *ngIf="loading" mode="indeterminate">
+  </mat-progress-bar>
+
+  <div class="clone-body">
+
+    <div *ngIf="erro" class="clone-error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ erro }}</span>
+      <button type="button" mat-stroked-button (click)="carregarPreview()" [disabled]="loading">
+        Tentar novamente
+      </button>
+    </div>
+
+    <ng-container *ngIf="resultado">
+
+<div class="clone-steps">
+  <button type="button" class="clone-step" [class.active]="currentStep === 1" [class.done]="currentStep > 1"
+    [disabled]="loading" (click)="goToStep(1)">
+    <span>1</span>
+    <strong>Visão geral</strong>
+  </button>
+
+  <button type="button" class="clone-step" [class.active]="currentStep === 2" [class.done]="currentStep > 2"
+    [disabled]="loading" (click)="goToStep(2)">
+    <span>2</span>
+    <strong>Calendário</strong>
+  </button>
+
+  <button type="button" class="clone-step" [class.active]="currentStep === 3" [class.done]="currentStep > 3"
+    [disabled]="loading" (click)="goToStep(3)">
+    <span>3</span>
+    <strong>Orçamento e avisos</strong>
+  </button>
+
+  <button type="button" class="clone-step" [class.active]="currentStep === 4" [disabled]="loading" (click)="goToStep(4)">
+    <span>4</span>
+    <strong>Revisão</strong>
+  </button>
+</div>
+
+      <section class="clone-step-content" *ngIf="currentStep === 1">
+
+      <div class="clone-period">
+        <div>
+          <span>Mês de origem</span>
+          <strong>{{ getTituloMes(mesOrigem) }}</strong>
+        </div>
+
+        <mat-icon>arrow_forward</mat-icon>
+
+        <div>
+          <span>Mês de destino</span>
+          <strong>{{ getTituloMes(mesDestino) }}</strong>
+        </div>
+
+        <span class="clone-mode" [class.clone-mode--adjusted]="modo === 'ajustado'">
+          {{ modo === 'ajustado'
+          ? 'Ajuste automático'
+          : 'Prévia original' }}
+        </span>
+      </div>
+
+      <div class="clone-filters">
+        <div class="clone-section-heading">
+          <mat-icon>filter_alt</mat-icon>
+          <strong>Filtros aplicados</strong>
+        </div>
+
+        <div class="clone-chips">
+          <span>
+            Serviço: {{ filtros.servico || 'Todos' }}
+          </span>
+          <span>
+            Período: {{ filtros.periodo || 'Todos' }}
+          </span>
+          <span>
+            Tipo: {{ filtros.tipo || 'Todos' }}
+          </span>
+          <span>
+            Situação: {{ getFiltroSituacao() }}
+          </span>
+          <span *ngIf="filtros.busca">
+            Busca: {{ filtros.busca }}
+          </span>
+          <span *ngIf="resultado.contract_id">
+            Contrato: #{{ resultado.contract_id }}
+          </span>
+        </div>
+      </div>
+
+      <div class="clone-summary">
+        <div class="clone-stat">
+          <span>Escalas de origem</span>
+          <strong>{{ resumo.escalas_origem || 0 }}</strong>
+        </div>
+
+        <div class="clone-stat">
+          <span>Propostas</span>
+          <strong>{{ resumo.escalas_propostas || 0 }}</strong>
+        </div>
+
+        <div class="clone-stat" [class.clone-stat--warning]="quantidadeConflitos > 0">
+          <span>Conflitos</span>
+          <strong>{{ quantidadeConflitos }}</strong>
+        </div>
+
+        <div class="clone-stat clone-stat--moved">
+          <span>Movimentadas</span>
+          <strong>{{ quantidadeMovimentadas }}</strong>
+        </div>
+      </div>
+
+      </section>
+
+      <section class="clone-step-content" *ngIf="currentStep === 2">
+      <div class="clone-actions">
+        <div>
+          <h3>Distribuição das escalas</h3>
+          <p>
+            O ajuste prioriza a data livre mais próxima,
+            preservando profissional e horário.
+          </p>
+        </div>
+
+        <div class="clone-actions__buttons">
+          <button type="button" mat-stroked-button *ngIf="modo === 'ajustado'" (click)="restaurarOriginal()"
+            [disabled]="loading">
+            <mat-icon>restore</mat-icon>
+            Restaurar original
+          </button>
+
+          <button type="button" mat-flat-button class="clone-adjust-button" (click)="ajustarAutomaticamente()"
+            [disabled]="loading || !previewOriginal">
+
+            <mat-icon>
+              {{ modo === 'ajustado' ? 'refresh' : 'auto_fix_high' }}
+            </mat-icon>
+
+            {{ modo === 'ajustado'
+            ? 'Refazer ajuste'
+            : 'Ajustar automaticamente' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="clone-calendars">
+
+        <div class="clone-calendar">
+          <div class="clone-calendar__title">
+            <mat-icon>calendar_today</mat-icon>
+            <div>
+              <strong>{{ getTituloMes(mesOrigem) }}</strong>
+              <span>Escalas do calendário atual</span>
+            </div>
+          </div>
+
+          <div class="clone-calendar__grid">
+            <span class="clone-weekday" *ngFor="let dia of diasSemana">
+              {{ dia }}
+            </span>
+
+            <div *ngFor="let dia of calendarioOrigem; trackBy: trackByData" class="clone-day"
+              [class.clone-day--empty]="dia.foraMes" [class.clone-day--filled]="dia.quantidade > 0">
+
+              <ng-container *ngIf="!dia.foraMes">
+                <strong>{{ dia.numero }}</strong>
+
+                <span class="clone-day__count" *ngIf="dia.quantidade > 0">
+                  {{ dia.quantidade }}
+                </span>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <div class="clone-calendar">
+          <div class="clone-calendar__title">
+            <mat-icon>event_available</mat-icon>
+            <div>
+              <strong>{{ getTituloMes(mesDestino) }}</strong>
+              <span>Escalas propostas para criação</span>
+            </div>
+          </div>
+
+          <div class="clone-calendar__grid">
+            <span class="clone-weekday" *ngFor="let dia of diasSemana">
+              {{ dia }}
+            </span>
+
+            <button type="button" *ngFor="let dia of calendarioDestino; trackBy: trackByData"
+              class="clone-day clone-day--clickable" [class.clone-day--empty]="dia.foraMes"
+              [class.clone-day--filled]="dia.quantidade > 0" [class.clone-day--warning]="dia.conflitos > 0"
+              [class.clone-day--moved]="dia.movimentadas > 0" [class.clone-day--selected]="diaSelecionado === dia.data"
+              [disabled]="dia.foraMes" (click)="selecionarDia(dia.data, dia.foraMes)">
+
+              <ng-container *ngIf="!dia.foraMes">
+                <strong>{{ dia.numero }}</strong>
+
+                <span class="clone-day__count" *ngIf="dia.quantidade > 0">
+                  {{ dia.quantidade }}
+                </span>
+
+                <span class="clone-day__marker" *ngIf="dia.conflitos > 0">
+                </span>
+              </ng-container>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="clone-legend">
+        <span>
+          <i class="clone-legend__dot clone-legend__dot--filled"></i>
+          Com escalas
+        </span>
+        <span>
+          <i class="clone-legend__dot clone-legend__dot--moved"></i>
+          Ajustada
+        </span>
+        <span>
+          <i class="clone-legend__dot clone-legend__dot--warning"></i>
+          Com conflito
+        </span>
+      </div>
+
+      <div class="clone-day-details" *ngIf="diaSelecionado">
+        <div class="clone-section-heading">
+          <mat-icon>today</mat-icon>
+          <strong>
+            Propostas de {{ formatarData(diaSelecionado) }}
+          </strong>
+          <span>{{ propostasDia.length }} escala(s)</span>
+        </div>
+
+        <div *ngIf="!propostasDia.length" class="clone-empty">
+          Nenhuma escala proposta para esta data.
+        </div>
+
+        <div *ngFor="let escala of propostasDia; trackBy: trackByEscala" class="clone-proposal"
+          [class.clone-proposal--warning]="escala.conflito">
+
+          <div class="clone-proposal__time">
+            {{ escala.horaentrada }}
+            <span>até</span>
+            {{ escala.horasaida }}
+          </div>
+
+          <div class="clone-proposal__info">
+            <strong>{{ escala.prestador || 'Sem profissional' }}</strong>
+            <span>{{ escala.paciente || 'Sem paciente' }}</span>
+            <small>{{ escala.servico || 'Sem serviço' }}</small>
+            <small>
+              Contrato #{{ escala.contract_id }}
+              · Escala original #{{ escala.escala_origem_id }}
+            </small>
+
+            <div class="clone-proposal__errors" *ngIf="escala.conflito">
+
+              <span *ngFor="let motivo of escala.motivos_conflito">
+                <mat-icon>warning</mat-icon>
+                {{ motivo }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="clone-section" *ngIf="ajustesRealizados.length">
+        <div class="clone-section-heading">
+          <mat-icon>swap_horiz</mat-icon>
+          <strong>Datas movimentadas automaticamente</strong>
+        </div>
+
+        <div class="clone-movements">
+          <div *ngFor="let ajuste of ajustesRealizados">
+            <strong>Escala #{{ ajuste.escala_origem_id }}</strong>
+            <span>{{ formatarData(ajuste.data_anterior) }}</span>
+            <mat-icon>arrow_forward</mat-icon>
+            <span>{{ formatarData(ajuste.data_nova) }}</span>
+          </div>
+        </div>
+      </div>
+
+      </section>
+
+      <section class="clone-step-content" *ngIf="currentStep === 3">
+      <div class="clone-section">
+        <div class="clone-section-heading">
+          <mat-icon>assessment</mat-icon>
+          <strong>Comparação com o orçamento</strong>
+        </div>
+
+        <div class="clone-table-wrapper">
+          <table class="clone-table">
+            <thead>
+              <tr>
+                <th>Contrato / Serviço</th>
+                <th>Previsto</th>
+                <th>Proposto</th>
+                <th>Situação</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let item of servicos">
+                <td>
+                  <strong>{{ item.servico || 'Serviço #' + item.servico_id }}</strong>
+                  <small>Contrato #{{ item.contract_id }}</small>
+                </td>
+
+                <td>
+                  {{ item.quantidade_prevista === null
+                  ? 'Não localizado'
+                  : item.quantidade_prevista }}
+                </td>
+
+                <td>{{ item.quantidade_proposta }}</td>
+
+                <td>
+                  <span class="clone-status"
+                    [class.clone-status--warning]="item.status_orcamento !== 'encontrado' || item.diferenca !== 0"
+                    [class.clone-status--ok]="item.status_orcamento === 'encontrado' && item.diferenca === 0">
+
+                    <ng-container *ngIf="item.status_orcamento !== 'encontrado'">
+                      Sem previsão localizada
+                    </ng-container>
+
+                    <ng-container *ngIf="item.status_orcamento === 'encontrado' && item.diferenca !== null">
+
+                      {{ item.diferenca === 0
+                      ? 'Quantidade correspondente'
+                      : (item.diferenca > 0
+                      ? 'Diferença: ' + item.diferenca
+                      : 'Excede: ' + (item.diferenca * -1)) }}
+                    </ng-container>
+
+                    <ng-container *ngIf="item.status_orcamento === 'encontrado' && item.diferenca === null">
+                      Comparação indisponível
+                    </ng-container>
+                  </span>
+                </td>
+              </tr>
+
+              <tr *ngIf="!servicos.length">
+                <td colspan="4">
+                  Nenhum serviço disponível para comparação.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="clone-note">
+          A quantidade prevista corresponde ao orçamento mensal.
+          A quantidade proposta considera somente os filtros
+          utilizados na clonagem.
+        </p>
+      </div>
+
+      <div class="clone-section" *ngIf="avisos.length">
+        <div class="clone-section-heading">
+          <mat-icon>report_problem</mat-icon>
+          <strong>Avisos e pendências</strong>
+          <span>{{ avisos.length }}</span>
+        </div>
+
+        <div class="clone-warning" *ngFor="let aviso of avisos">
+
+          <mat-icon>info_outline</mat-icon>
+
+          <div>
+            <strong>{{ identificarAviso(aviso.tipo) }}</strong>
+            <p *ngFor="let mensagem of mensagensAviso(aviso)">
+              {{ mensagem }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      </section>
+
+      <section class="clone-step-content" *ngIf="currentStep === 4">
+        <div class="clone-section clone-review">
+          <div class="clone-section-heading">
+            <mat-icon>fact_check</mat-icon>
+            <strong>Revisão final</strong>
+          </div>
+          <p class="clone-note">Revise as informações antes de concluir. Nenhuma escala foi cadastrada.</p>
+          <div class="clone-review-grid">
+            <div class="clone-stat"><span>Escalas propostas</span><strong>{{ resumo.escalas_propostas || 0 }}</strong></div>
+            <div class="clone-stat"><span>Movimentadas</span><strong>{{ resumo.movimentadas || 0 }}</strong></div>
+            <div class="clone-stat" [class.clone-stat--warning]="quantidadeConflitos > 0"><span>Conflitos</span><strong>{{ quantidadeConflitos }}</strong></div>
+            <div class="clone-stat"><span>Avisos</span><strong>{{ avisos.length }}</strong></div>
+          </div>
+          <div class="clone-review-period">
+            <span>{{ getTituloMes(mesOrigem) }}</span>
+            <mat-icon>arrow_forward</mat-icon>
+            <strong>{{ getTituloMes(mesDestino) }}</strong>
+          </div>
+          <div class="clone-warning" *ngIf="quantidadeConflitos > 0">
+            <mat-icon>block</mat-icon>
+            <div><strong>Existem conflitos não resolvidos</strong><p>Retorne ao calendário e revise as datas antes de confirmar.</p></div>
+          </div>
+          <div class="clone-warning" *ngIf="avisos.length > 0">
+            <mat-icon>info_outline</mat-icon>
+            <div>
+              <strong>{{ avisos.length }} aviso(s) para ciência</strong>
+              <p>Avisos de orçamento e serviços sem previsão não impedem a confirmação por si só.</p>
+            </div>
+          </div>
+          <div class="clone-review-notices" *ngIf="avisos.length > 0">
+            <div *ngFor="let aviso of avisos">
+              <strong>{{ identificarAviso(aviso.tipo) }}</strong>
+              <p *ngFor="let mensagem of mensagensAviso(aviso)">{{ mensagem }}</p>
+            </div>
+          </div>
+          <label class="clone-acknowledgment" *ngIf="avisos.length > 0">
+            <input type="checkbox" [disabled]="loading" />
+            <span>Estou ciente das divergências e desejo continuar.</span>
+          </label>
+          <div class="clone-readonly-note">
+            <mat-icon>lock_outline</mat-icon>
+            A confirmação será habilitada quando o endpoint seguro de cadastro estiver implementado.
+          </div>
+        </div>
+      </section>
+
+    </ng-container>
+  </div>
+
+  <div class="clone-footer">
+    <div class="clone-footer__buttons">
+      <button type="button" class="labi-action-btn labi-action-btn--ghost" (click)="fechar()"
+        [disabled]="loading">
+        Fechar
+      </button>
+
+      <button type="button" class="labi-action-btn labi-action-btn--ghost" *ngIf="currentStep > 1" (click)="prevStep()"
+        [disabled]="loading">
+        Voltar
+      </button>
+
+      <button type="button" class="labi-action-btn labi-action-btn--primary" *ngIf="currentStep < totalSteps"
+        (click)="nextStep()" [disabled]="loading">
+        Próximo
+      </button>
+
+      <button type="button" class="labi-action-btn labi-action-btn--primary" *ngIf="currentStep === totalSteps" disabled title="A confirmação será habilitada após implementar o endpoint seguro de cadastro">Confirmar clonagem</button>
+    </div>
+  </div>
+
+</div>

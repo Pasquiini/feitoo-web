@@ -350,3 +350,14 @@ tbody tr:nth-child(even) {
     align-items: flex-start;
   }
 }
+.danfe-preview {
+  width: 100%;
+  height: min(80vh, 900px);
+  min-height: 360px;
+  border: 1px solid #dce2e8;
+  border-radius: 12px;
+  margin-top: 1rem;
+}
+.access-key {
+  overflow-wrap: anywhere;
+}

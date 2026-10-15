@@ -72,7 +72,11 @@ export class SeoService {
       const schema = this.document.createElement('script');
       schema.id = 'feitoo-schema';
       schema.type = 'application/ld+json';
-      const tool = path === '/xml-para-excel' || path === '/produtos-dos-xmls';
+      const tool =
+        path === '/xml-para-excel' ||
+        path === '/produtos-dos-xmls' ||
+        path === '/analisar-xml' || path === '/organizar-xml' ||
+        path === '/xml-para-pdf';
       const main =
         path === '/'
           ? { '@type': 'WebSite', name: 'Feitoo', url: canonical, inLanguage: 'pt-BR' }
@@ -96,9 +100,13 @@ export class SeoService {
               ? {
                   '@type': 'WebApplication',
                   name:
-                    path === '/xml-para-excel'
-                      ? 'Converter XML para Excel'
-                      : 'Extrair produtos de XMLs NF-e',
+                    path === '/analisar-xml' ? 'Analisador de XMLs Online' : path === '/organizar-xml'
+                      ? 'Organizador de XMLs Online'
+                      : path === '/xml-para-pdf'
+                        ? 'Converter XML em PDF'
+                        : path === '/xml-para-excel'
+                          ? 'Converter XML para Excel'
+                          : 'Extrair produtos de XMLs NF-e',
                   url: canonical,
                   applicationCategory: 'UtilitiesApplication',
                   operatingSystem: 'Web',
@@ -122,7 +130,12 @@ export class SeoService {
           ],
         });
       }
-      if (path === '/xml-para-excel' || path === '/produtos-dos-xmls') {
+      if (
+        path === '/xml-para-excel' ||
+        path === '/produtos-dos-xmls' ||
+        path === '/analisar-xml' || path === '/organizar-xml' ||
+        path === '/xml-para-pdf'
+      ) {
         graph.push({
           '@type': 'BreadcrumbList',
           itemListElement: [

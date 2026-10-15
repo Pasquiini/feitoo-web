@@ -1,0 +1,382 @@
+<section class="monitor-filter-card">
+  <div class="monitor-filter-header">
+    <div class="monitor-filter-heading">
+      <mat-icon>filter_alt</mat-icon>
+      <strong>FILTROS</strong>
+    </div>
+    <span>Refine o monitoramento dos atendimentos e profissionais.</span>
+  </div>
+
+<form [formGroup]="formulario" class="monitor-filter-form" (ngSubmit)="pesquisarEscalas()">
+  <div class="row mb-2">
+    <div class="col-12 col-lg-3">
+      <label>Paciente</label>
+      <ng-select
+        formControlName="contract_id"
+        notFoundText="Nenhum Paciente encontrado"
+        [placeholder]="loadingContracts ? 'Carregando Pacientes...' : 'Selecione um Paciente.'"
+        (change)="fillServices()"
+        [appendTo]="'body'"
+      >
+        <ng-option *ngFor="let c of patients" [value]="c.id">
+          {{ c.contract_number }} - {{ c.paciente.pessoa.nome }} - {{ c.cliente.code || '' }} - {{ c.cliente.pessoa.nome | titlecase }}
+        </ng-option>
+      </ng-select>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <label>Tipo do Paciente</label>
+      <ng-select
+        formControlName="patient_type"
+        [items]="tiposPaciente"
+        bindLabel="label"
+        bindValue="value"
+        groupBy="type"
+        [searchable]="false"
+        placeholder="Informe o tipo do paciente."
+        [appendTo]="'body'"
+      >
+        <ng-template ng-optgroup-tmp let-item="item">
+          {{ item.type || 'Não identificado' }}
+        </ng-template>
+      </ng-select>
+    </div>
+
+    <div class="col-12 col-lg-3">
+      <label>Serviço</label>
+      <ng-select
+        formControlName="service_id"
+        notFoundText="Nenhum Serviço encontrado"
+        [placeholder]="
+          loadingServices
+            ? 'Carregando Serviços...'
+            : !formulario.value.contract_id
+              ? 'Selecione um Paciente'
+              : !servicos.length
+                ? 'Nenhum Serviço encontrado.'
+                : 'Selecione um Serviço.'
+        "
+      >
+        <ng-option *ngFor="let s of servicos" [value]="s.value">
+          {{ s.label | titlecase }}
+        </ng-option>
+      </ng-select>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <label>Prestador</label>
+      <ng-select
+        formControlName="provider_id"
+        [items]="arrayPrestador"
+        bindLabel="name"
+        bindValue="prestador_id"
+        [placeholder]="loadingPrestadores ? 'Carregando Prestadores...' : 'Selecione um Prestador.'"
+        notFoundText="Nenhum Prestador encontrado"
+        [appendTo]="'body'"
+      >
+        <ng-template ng-label-tmp let-item="item">
+          {{ item.name | titlecase }}
+        </ng-template>
+        <ng-template ng-option-tmp let-item="item">
+          <strong>{{ item.name | titlecase }}</strong><br />
+          <span *ngIf="item.formation"><strong>Formação: </strong>{{ item.formation | titlecase }}</span><br />
+          <span *ngIf="item.council; else semConselho">{{ item.council | uppercase }}</span>
+          <ng-template #semConselho>Sem Conselho</ng-template>
+        </ng-template>
+      </ng-select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12 col-md-6 col-lg-3">
+      <label>Data Início</label>
+      <div class="input-group mb-3">
+        <div class="input-group-prepend"><span class="input-group-text">De</span></div>
+        <input type="date" class="form-control" formControlName="start_date" />
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <label>Data Final</label>
+      <div class="input-group mb-3">
+        <div class="input-group-prepend"><span class="input-group-text">Até</span></div>
+        <input type="date" class="form-control" formControlName="end_date" />
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <label>Formação</label>
+      <ng-select
+        formControlName="formation_id"
+        notFoundText="Nenhuma Formação encontrada"
+        placeholder="Selecione uma Formação."
+        [appendTo]="'body'"
+      >
+        <ng-option *ngFor="let f of formacoes" [value]="f.id">
+          {{ f.descricao | titlecase }}
+        </ng-option>
+      </ng-select>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <label>Cliente/Tomador</label>
+      <ng-select formControlName="cliente_id" placeholder="Selecione um Cliente." [appendTo]="'body'">
+        <ng-option *ngFor="let client of clientes$ | async" [value]="client.id">
+          {{ client.code ? client.code : '' }} - {{ client.pessoa.nome }}
+        </ng-option>
+      </ng-select>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <label>Cooperativa</label>
+      <ng-select formControlName="cooperative_id" placeholder="Selecione uma Cooperativa." [appendTo]="'body'">
+        <ng-option *ngFor="let cooperative of cooperatives" [value]="cooperative.id">
+          {{ cooperative.name }}
+        </ng-option>
+      </ng-select>
+    </div>
+
+    <div class="col-12">
+      <div class="monitor-filter-footer">
+        <div class="monitor-filter-segments" role="group" aria-label="Filtrar escalas por atribuição">
+          <button type="button" class="labi-btn monitor-filter-segment"
+            [class.monitor-filter-segment--active]="filtroAtribuicao === 'todos'"
+            [attr.aria-pressed]="filtroAtribuicao === 'todos'"
+            (click)="filtraTodos()">Todos</button>
+          <button type="button" class="labi-btn monitor-filter-segment"
+            [class.monitor-filter-segment--active]="filtroAtribuicao === 'atribuidos'"
+            [attr.aria-pressed]="filtroAtribuicao === 'atribuidos'"
+            (click)="filtraAtribuidos()">Atribuídos</button>
+          <button type="button" class="labi-btn monitor-filter-segment"
+            [class.monitor-filter-segment--active]="filtroAtribuicao === 'naoAtribuidos'"
+            [attr.aria-pressed]="filtroAtribuicao === 'naoAtribuidos'"
+            (click)="filtraNaoAtribuidos()">Não atribuídos</button>
+        </div>
+
+        <div class="monitor-filter-actions">
+          <button type="button" class="labi-btn labi-btn-export" [matMenuTriggerFor]="matMenu2" [disabled]="loadingData">
+            <mat-icon>file_download</mat-icon>
+            Exportar
+            <mat-icon>expand_more</mat-icon>
+          </button>
+          <mat-menu #matMenu2="matMenu">
+            <button mat-menu-item (click)="generateScalePdf('all')">
+              <mat-icon>picture_as_pdf</mat-icon><span>Gerar Todos</span>
+            </button>
+            <button mat-menu-item (click)="generateScalePdf('assigned')">
+              <mat-icon>picture_as_pdf</mat-icon><span>Gerar atribuídos</span>
+            </button>
+            <button mat-menu-item (click)="generateScalePdf('unassigned')">
+              <mat-icon>picture_as_pdf</mat-icon><span>Gerar não atribuídos</span>
+            </button>
+          </mat-menu>
+          <button type="submit" class="labi-btn labi-btn-search" [disabled]="loadingData || formulario.invalid">
+            <mat-icon>search</mat-icon>
+            {{ loadingData ? 'Pesquisando...' : 'Pesquisar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+</section>
+
+<div *ngIf="loadingData" class="monitor-loading">
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  <span>Carregando escalas...</span>
+</div>
+
+<div *ngIf="!loadingData">
+  <section class="monitor-results">
+    <div class="monitor-kpi-grid">
+      <mat-card class="monitor-kpi">
+        <div class="monitor-kpi__info">
+          <span>Atribuídos</span>
+          <strong>{{ porcentosEscalas?.atribuidos || 0 }}%</strong>
+          <small>Das escalas carregadas nesta página</small>
+        </div>
+        <div class="monitor-kpi__icon"><mat-icon>assignment_turned_in</mat-icon></div>
+      </mat-card>
+      <mat-card class="monitor-kpi">
+        <div class="monitor-kpi__info">
+          <span>Não atribuídos</span>
+          <strong>{{ porcentosEscalas?.naoAtribuidos || 0 }}%</strong>
+          <small>Das escalas carregadas nesta página</small>
+        </div>
+        <div class="monitor-kpi__icon"><mat-icon>assignment_late</mat-icon></div>
+      </mat-card>
+    </div>
+
+    <div class="monitor-table-card">
+      <div class="monitor-table-card__header">
+        <div class="monitor-table-card__heading">
+          <mat-icon>view_list</mat-icon>
+          <div><h3>Monitoramento de escalas</h3><p>Acompanhe atribuições, horários e registros de check-in e check-out.</p></div>
+        </div>
+        <span class="monitor-table-card__total">{{ (data$ | async)?.length || 0 }} registros nesta página</span>
+      </div>
+    <div class="table-responsive-vertical monitor-table-scroll">
+      <table
+        class="table table-filter table-hover monitor-table"
+        [svData]="data$ | async"
+        #sv="svDataTable"
+        [svRowsOnPage]="pagination.perPage"
+      >
+        <thead class="table-sticky">
+          <tr class="text-primary">
+            <th style="width: 10%">
+              <sv-default-sorter svSortBy="periodo" svSortOrder="asc" by="periodo">
+                Data
+              </sv-default-sorter>
+            </th>
+
+            <th style="width: 23%">
+              <sv-default-sorter svSortBy="prestador.pessoa.nome" svSortOrder="asc" by="prestador.pessoa.nome">
+                Prestador
+              </sv-default-sorter>
+            </th>
+
+            <th style="width: 23%">
+              <sv-default-sorter svSortBy="contract.paciente.pessoa.nome" svSortOrder="asc" by="contract.paciente.pessoa.nome">
+                Paciente
+              </sv-default-sorter>
+            </th>
+
+            <th style="width: 10%; text-align: center">
+              <sv-default-sorter svSortBy="service_value" svSortOrder="asc" by="service_value">
+                Valor
+              </sv-default-sorter>
+            </th>
+
+            <th style="width: 12%; text-align: -webkit-center;">Status</th>
+            <th style="width: 10%">Check-in</th>
+            <th style="width: 10%">Check-out</th>
+            <th style="width: 8%">Ações</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngIf="!sv?.data?.length">
+            <td colspan="8">
+              <div class="empty">
+                <img src="assets/images/vazio.svg" width="120" class="mb-2" alt="Vazio" />
+                <p class="mb-1 font-weight-600">Nenhuma escala encontrada</p>
+                <small class="text-muted">Ajuste os filtros ou período para ver resultados.</small>
+              </div>
+            </td>
+          </tr>
+
+          <tr
+            *ngFor="let item of sv.data"
+            [ngClass]="{
+              'row-accent': true,
+              'atribuido': isProviderNative(item),
+              'naoAtribuido': !isProviderNative(item)
+            }"
+          >
+            <td>
+              <div>
+                <div class="font-weight-bold">{{ item?.dataentrada | date:'dd/MM/yyyy' }}</div>
+                <div class="text-muted tiny">{{ item?.horaentrada }} - {{ item?.horasaida }}</div>
+                <div class="d-flex align-items-center tiny mt-1">
+                  <i class="fas" [ngClass]="{
+                    'fa-sun': item.periodo === 'DIURNO',
+                    'fa-moon': item.periodo === 'NOTURNO'
+                  }"></i>
+                  <span class="ml-1">{{ item?.periodo | titlecase }}</span>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="avatar-initial mr-2" [matTooltip]="item?.prestador?.pessoa?.nome">
+                  {{ (item?.prestador?.pessoa?.nome || '?') | slice:0:1 }}
+                </div>
+
+                <div class="w-75">
+                  <div class="d-flex align-items-center">
+                    <div class="font-weight-bold mr-2 cell-ellipsis" [matTooltip]="item?.prestador?.pessoa?.nome">
+                      {{ item?.prestador?.pessoa?.nome | titlecase }}
+                    </div>
+                  </div>
+
+                  <small class="text-muted d-block cell-ellipsis">
+                    {{ getFormacaoDescricao(item) }}
+                  </small>
+                </div>
+
+                <div>
+                  <button mat-button (click)="openChangeProviderDialog(item)" *ngIf="canChangeProvider(item)">
+                    <i class="bi bi-arrow-left-right text-primary" style="font-weight: bold; text-shadow: 0 0 1px currentColor;"></i>
+                  </button>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="font-weight-bold cell-ellipsis" [matTooltip]="item?.contract?.paciente?.pessoa?.nome">
+                {{ item?.contract?.paciente?.pessoa?.nome | titlecase }}
+              </div>
+              <small class="text-muted cell-ellipsis" [matTooltip]="item?.servico?.descricao">
+                {{ item?.servico?.descricao | titlecase }}
+              </small>
+            </td>
+
+            <td class="text-center">
+              <div class="monitor-money">
+                {{ item?.service_value | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+              </div>
+            </td>
+
+            <td class="text-center">
+              <span class="monitor-status"
+                [class.monitor-status--assigned]="isProviderNative(item)"
+                [class.monitor-status--unassigned]="!isProviderNative(item)">
+                {{ statusText(item) }}
+              </span>
+            </td>
+
+            <td class="text-center tiny">
+              {{ item?.checkin?.data | date:'dd/MM/yyyy' }}
+              <br *ngIf="item?.checkin?.hora" />
+              {{ item?.checkin?.hora }}
+            </td>
+
+            <td class="text-center tiny">
+              {{ item?.checkout?.data | date:'dd/MM/yyyy' }}
+              <br *ngIf="item?.checkout?.hora" />
+              {{ item?.checkout?.hora }}
+            </td>
+
+            <td class="acao-btn-tabela text-center">
+              <button type="button" class="monitor-action-btn" [matMenuTriggerFor]="menu" aria-label="Abrir ações da escala" matTooltip="Outras ações">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="openHistoryDialog(item)">
+                  <mat-icon>history</mat-icon>
+                  <span>Histórico</span>
+                </button>
+              </mat-menu>
+            </td>
+          </tr>
+        </tbody>
+
+        <tfoot>
+          <tr>
+            <td colspan="8">
+              <sv-bootstrap-paginator
+                [rowsOnPageSet]="[5,10,25]"
+                (pageChange)="onPageChange($event)"
+                (rowsOnPageChange)="onPerPageChange($event)"
+              >
+              </sv-bootstrap-paginator>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    </div>
+  </section>
+</div>

@@ -18,6 +18,11 @@ export interface XmlToExcelConfig {
 export type ProcessingFileKind = 'input' | 'output';
 
 export interface Processing {
+  readonly analyzer?: { readonly summary: import('./analysis').AnalysisSummary | null; readonly audit: import('./analysis').AnalysisAudit | null };
+  readonly organizer?: {
+    readonly options: OrganizerOptions;
+    readonly summary: OrganizerSummary | null;
+  };
   readonly preview?: ProcessingPreview | null;
   readonly id: string;
   readonly tool: ProcessingTool;
@@ -97,6 +102,10 @@ export interface ProcessingResponse {
 
 export type ProcessingFileStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'removed';
 export type ProcessingFileError =
+  | 'analysis_capacity'
+  | 'invalid_protocol'
+  | 'duplicate_document'
+  | 'pdf_error'
   | 'invalid_xml'
   | 'unsupported_document'
   | 'missing_required_field'
@@ -104,6 +113,23 @@ export type ProcessingFileError =
   | 'storage_error';
 
 export interface ProcessingFile {
+  readonly organization?: {
+    readonly archive_path: string | null;
+    readonly final_name: string | null;
+    readonly folder: string | null;
+    readonly duplicate_kind: string | null;
+    readonly key_conflict: boolean;
+    readonly notes: readonly string[];
+  } | null;
+  readonly document?: {
+    access_key: string;
+    number: string;
+    series: string;
+    issuer_name: string | null;
+    recipient_name: string | null;
+    total_value: string | null;
+    notice: string;
+  } | null;
   readonly id: string;
   readonly original_name: string | null;
   readonly status: ProcessingFileStatus;
@@ -115,4 +141,32 @@ export interface ProcessingFile {
 
 export interface ProcessingFilesResponse {
   readonly data: readonly ProcessingFile[];
+}
+
+export interface OrganizerOptions {
+  criterion: 'year_month' | 'supplier' | 'issuer_document' | 'year_month_supplier' | 'model';
+  detect_duplicates: boolean;
+  duplicate_action: 'keep' | 'separate';
+  report: boolean;
+  standardize_names: boolean;
+}
+export const defaultOrganizerOptions: OrganizerOptions = {
+  criterion: 'year_month',
+  detect_duplicates: true,
+  duplicate_action: 'separate',
+  report: true,
+  standardize_names: true,
+};
+export interface OrganizerSummary {
+  readonly total_files: number;
+  readonly organized_count: number;
+  readonly duplicates_count: number;
+  readonly invalid_count: number;
+  readonly suppliers_count: number;
+  readonly preserved_count: number;
+  readonly conflicting_keys_count: number;
+  readonly warnings_count: number;
+  readonly duplicate_detection: boolean;
+  readonly documents_by_month: Readonly<Record<string, number>>;
+  readonly notice: string;
 }

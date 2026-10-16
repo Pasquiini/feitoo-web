@@ -15,7 +15,11 @@
     }}
   </p>
   @if (analyzerMode) {
-    <p class="small text-secondary">Análise informativa de NF-e modelo 55. Não é auditoria tributária nem consulta oficial à SEFAZ. Cada XML lido com sucesso consome uma unidade Free/Pro, inclusive cópias e conflitos; os indicadores eliminam repetições e excluem conflitos.</p>
+    <p class="small text-secondary">
+      Análise informativa de NF-e modelo 55. Não é auditoria tributária nem consulta oficial à
+      SEFAZ. Cada XML lido com sucesso consome uma unidade Free/Pro, inclusive cópias e conflitos;
+      os indicadores eliminam repetições e excluem conflitos.
+    </p>
   }
   @if (organizerMode) {
     <app-organizer-options
@@ -282,11 +286,13 @@
       <button type="button" class="btn btn-primary" [disabled]="!config()" (click)="start()">
         {{
           auth.user()
-            ? analyzerMode ? 'Analisar XMLs' : organizerMode
-              ? 'Organizar XMLs'
-              : pdfMode
-                ? 'Gerar DANFE'
-                : 'Processar XMLs'
+            ? analyzerMode
+              ? 'Analisar XMLs'
+              : organizerMode
+                ? 'Organizar XMLs'
+                : pdfMode
+                  ? 'Gerar DANFE'
+                  : 'Processar XMLs'
             : 'Entre para continuar'
         }}
       </button>
@@ -325,11 +331,13 @@
     @if (deleting()) {
       <p>
         {{
-          analyzerMode ? 'Excluindo XMLs e resultados da análise…' : organizerMode
-            ? 'Excluindo seus XMLs e o ZIP…'
-            : pdfMode
-              ? 'Excluindo seus XMLs e PDFs…'
-              : 'Excluindo seus arquivos e o Excel…'
+          analyzerMode
+            ? 'Excluindo XMLs e resultados da análise…'
+            : organizerMode
+              ? 'Excluindo seus XMLs e o ZIP…'
+              : pdfMode
+                ? 'Excluindo seus XMLs e PDFs…'
+                : 'Excluindo seus arquivos e o Excel…'
         }}
       </p>
     }
@@ -342,9 +350,11 @@
       <h2 class="h4">Preparando seus arquivos</h2>
       <p>
         {{
-          analyzerMode ? 'Recebemos seus XMLs. Vamos analisar os documentos e consolidar os dados.' : organizerMode
-            ? 'Recebemos seus XMLs. Vamos organizar as pastas para você.'
-            : 'Recebemos seus XMLs. Vamos organizar as notas e os produtos para você.'
+          analyzerMode
+            ? 'Recebemos seus XMLs. Vamos analisar os documentos e consolidar os dados.'
+            : organizerMode
+              ? 'Recebemos seus XMLs. Vamos organizar as pastas para você.'
+              : 'Recebemos seus XMLs. Vamos organizar as notas e os produtos para você.'
         }}
       </p>
     }
@@ -353,11 +363,13 @@
         <h2 class="h4">
           {{
             batch.processed_files_count === batch.files_count
-              ? analyzerMode ? 'Consolidando sua análise' : organizerMode
-                ? 'Gerando seu ZIP'
-                : pdfMode
-                  ? 'Preparando seus DANFEs'
-                  : 'Gerando seu Excel'
+              ? analyzerMode
+                ? 'Consolidando sua análise'
+                : organizerMode
+                  ? 'Gerando seu ZIP'
+                  : pdfMode
+                    ? 'Preparando seus DANFEs'
+                    : 'Gerando seu Excel'
               : 'Processando XMLs'
           }}
         </h2>
@@ -377,11 +389,13 @@
         <p>
           {{
             batch.processed_files_count === batch.files_count
-              ? analyzerMode ? 'Consolidando sua análise…' : organizerMode
-                ? 'Gerando seu ZIP…'
-                : pdfMode
-                  ? 'Preparando seus DANFEs…'
-                  : 'Gerando seu Excel…'
+              ? analyzerMode
+                ? 'Consolidando sua análise…'
+                : organizerMode
+                  ? 'Gerando seu ZIP…'
+                  : pdfMode
+                    ? 'Preparando seus DANFEs…'
+                    : 'Gerando seu Excel…'
               : 'Processando XMLs…'
           }}
         </p>
@@ -389,11 +403,13 @@
       @if (deleted()) {
         <p>
           {{
-            analyzerMode ? 'Seus XMLs e resultados da análise foram excluídos.' : organizerMode
-              ? 'Seus XMLs e o ZIP foram excluídos.'
-              : pdfMode
-                ? 'Seus XMLs e PDFs foram excluídos.'
-                : 'Seus arquivos e o Excel foram excluídos.'
+            analyzerMode
+              ? 'Seus XMLs e resultados da análise foram excluídos.'
+              : organizerMode
+                ? 'Seus XMLs e o ZIP foram excluídos.'
+                : pdfMode
+                  ? 'Seus XMLs e PDFs foram excluídos.'
+                  : 'Seus arquivos e o Excel foram excluídos.'
           }}
         </p>
       } @else if (state() === 'completed') {
@@ -407,17 +423,23 @@
           </span>
           <h2 class="h4">
             {{
-              analyzerMode ? 'Sua análise está pronta' : organizerMode
-                ? 'Seu ZIP está pronto'
-                : pdfMode
-                  ? 'Seus DANFEs estão prontos'
-                  : productsMode
-                    ? 'Seus produtos estão prontos'
-                    : 'Seu Excel está pronto'
+              analyzerMode
+                ? 'Sua análise está pronta'
+                : organizerMode
+                  ? 'Seu ZIP está pronto'
+                  : pdfMode
+                    ? 'Seus DANFEs estão prontos'
+                    : productsMode
+                      ? 'Seus produtos estão prontos'
+                      : 'Seu Excel está pronto'
             }}
           </h2>
           @if (analyzerMode) {
-            <p>{{ batch.successful_files_count }} XMLs lidos com sucesso · {{ batch.failed_files_count }} com falha. Confira abaixo os documentos considerados, cópias e conflitos.</p>
+            <p>
+              {{ batch.successful_files_count }} XMLs lidos com sucesso ·
+              {{ batch.failed_files_count }} com falha. Confira abaixo os documentos considerados,
+              cópias e conflitos.
+            </p>
           } @else if (organizerMode) {
             <p>
               {{ batch.files_count }} XMLs recebidos ·
@@ -501,11 +523,13 @@
             {{
               downloading()
                 ? 'Baixando…'
-                : analyzerMode ? 'Baixar Excel completo do lote' : organizerMode
-                  ? 'Baixar ZIP organizado'
-                  : pdfMode
-                    ? 'Baixar PDFs em ZIP'
-                    : 'Baixar Excel'
+                : analyzerMode
+                  ? 'Baixar Excel completo do lote'
+                  : organizerMode
+                    ? 'Baixar ZIP organizado'
+                    : pdfMode
+                      ? 'Baixar PDFs em ZIP'
+                      : 'Baixar Excel'
             }}
           </button>
           @if (productsMode && batch.preview) {
@@ -535,14 +559,29 @@
 
   @if (analyzerMode && processing() && !expired() && !deleted()) {
     @if (state() === 'completed') {
-      <p class="small text-secondary">O download acima contém o lote completo, sem filtros. Para exportar o recorte atual, use Exportar visão em Excel no dashboard.</p>
+      <p class="small text-secondary">
+        O download acima contém o lote completo, sem filtros. Para exportar o recorte atual, use
+        Exportar visão em Excel no dashboard.
+      </p>
       <app-xml-analyzer-dashboard [id]="processing()!.id" />
     } @else {
       <section class="my-3" aria-label="Status individual dos XMLs">
         <h2 class="h5">Status de leitura dos arquivos</h2>
-        <ul class="list-group" style="max-height:18rem;overflow:auto">
+        <ul class="list-group" style="max-height: 18rem; overflow: auto">
           @for (file of documentFiles(); track file.id) {
-            <li class="list-group-item"><strong style="overflow-wrap:anywhere">{{ file.original_name }}</strong> · {{ file.status === 'completed' ? 'Lido com sucesso' : file.status === 'failed' ? 'Falha' : 'Aguardando análise' }} @if (file.error_message) { <p class="small">{{ file.error_message }}</p> }</li>
+            <li class="list-group-item">
+              <strong style="overflow-wrap: anywhere">{{ file.original_name }}</strong> ·
+              {{
+                file.status === 'completed'
+                  ? 'Lido com sucesso'
+                  : file.status === 'failed'
+                    ? 'Falha'
+                    : 'Aguardando análise'
+              }}
+              @if (file.error_message) {
+                <p class="small">{{ file.error_message }}</p>
+              }
+            </li>
           }
         </ul>
       </section>
@@ -924,15 +963,42 @@
 <section class="public-section tool-explainer" aria-label="Sobre a ferramenta">
   @if (analyzerMode) {
     <h2>Como analisar XMLs de notas fiscais</h2>
-    <ol><li>Selecione arquivos XML individuais de NF-e modelo 55.</li><li>Entre na sua conta e clique em Analisar XMLs.</li><li>Consulte os indicadores reais, filtre os dados e exporte o Excel.</li></ol>
+    <ol>
+      <li>Selecione arquivos XML individuais de NF-e modelo 55.</li>
+      <li>Entre na sua conta e clique em Analisar XMLs.</li>
+      <li>Consulte os indicadores reais, filtre os dados e exporte o Excel.</li>
+    </ol>
     <h2>Documentos, emitentes, produtos e tributos</h2>
-    <p>O dashboard apresenta valores dos documentos, emitentes identificados, grupos de produtos, linhas de itens, evolução por mês de emissão e tributos destacados. Emitente não equivale necessariamente a fornecedor do usuário, e documentos fiscais não confirmam compras ou pagamentos.</p>
+    <p>
+      O dashboard apresenta valores dos documentos, emitentes identificados, grupos de produtos,
+      linhas de itens, evolução por mês de emissão e tributos destacados. Emitente não equivale
+      necessariamente a fornecedor do usuário, e documentos fiscais não confirmam compras ou
+      pagamentos.
+    </p>
     <h2>Sem dupla contagem de notas</h2>
-    <p>Cópias idênticas entram uma vez nos indicadores. Quando uma chave tem conteúdos diferentes, todos os participantes ficam fora da agregação até você reenviar um lote resolvido. Os registros e observações permanecem visíveis e no relatório.</p>
+    <p>
+      Cópias idênticas entram uma vez nos indicadores. Quando uma chave tem conteúdos diferentes,
+      todos os participantes ficam fora da agregação até você reenviar um lote resolvido. Os
+      registros e observações permanecem visíveis e no relatório.
+    </p>
     <h2>Entenda o escopo dos valores</h2>
-    <p>Valores dos documentos usam o campo vNF; valores de produtos são apresentados separadamente. Quantidades só são somadas dentro da mesma unidade e grupo de produto. Tributos vêm dos totais fiscais da nota, sem somar novamente os itens, e não representam recolhimento, crédito ou imposto devido.</p>
-    <p>Datas preservam o fuso original. Campos ausentes são informados sem inventar valores. O MVP lê NF-e 55; NFC-e 65, PDF e ZIP não são aceitos para análise. A situação atual na SEFAZ e a assinatura digital não são verificadas.</p>
-    <p>Veja também <a routerLink="/xml-para-excel">XML para Excel</a>, <a routerLink="/produtos-dos-xmls">Produtos dos XMLs</a>, <a routerLink="/organizar-xml">Organizador de XMLs</a> e <a routerLink="/xml-para-pdf">XML para DANFE PDF</a>.</p>
+    <p>
+      Valores dos documentos usam o campo vNF; valores de produtos são apresentados separadamente.
+      Quantidades só são somadas dentro da mesma unidade e grupo de produto. Tributos vêm dos totais
+      fiscais da nota, sem somar novamente os itens, e não representam recolhimento, crédito ou
+      imposto devido.
+    </p>
+    <p>
+      Datas preservam o fuso original. Campos ausentes são informados sem inventar valores. O MVP lê
+      NF-e 55; NFC-e 65, PDF e ZIP não são aceitos para análise. A situação atual na SEFAZ e a
+      assinatura digital não são verificadas.
+    </p>
+    <p>
+      Veja também <a routerLink="/xml-para-excel">XML para Excel</a>,
+      <a routerLink="/produtos-dos-xmls">Produtos dos XMLs</a>,
+      <a routerLink="/organizar-xml">Organizador de XMLs</a> e
+      <a routerLink="/xml-para-pdf">XML para DANFE PDF</a>.
+    </p>
   } @else if (organizerMode) {
     <h2>Como organizar vários arquivos XML</h2>
     <ol>
@@ -1049,6 +1115,12 @@
     <p>
       Se você precisa somar quantidades e reunir itens de várias notas, use a ferramenta para
       <a routerLink="/produtos-dos-xmls">extrair produtos de XMLs</a>.
+    </p>
+  }
+  @if (!analyzerMode && !pdfMode) {
+    <p>
+      Explore valores, emitentes e tributos do lote com o
+      <a routerLink="/analisar-xml">Analisador de XMLs de NF-e</a>.
     </p>
   }
   <h2>Seus XMLs ficam seguros?</h2>

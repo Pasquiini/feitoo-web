@@ -2,8 +2,8 @@
   <p class="home-eyebrow">Arquivos e dados. Resolvidos.</p>
   <h1 id="home-title">Ferramentas online para XML, planilhas e arquivos.</h1>
   <p class="home-lead">
-    No Feitoo, você transforma XMLs de NF-e em planilhas e reúne produtos de várias notas, direto no
-    navegador.
+    Converta XMLs de NF-e em Excel ou DANFE PDF, extraia produtos, organize arquivos e analise
+    valores e tributos das notas fiscais, direto no navegador.
   </p>
 </section>
 
@@ -42,7 +42,7 @@
       {{ filteredTools().length }}
       {{ filteredTools().length === 1 ? 'ferramenta encontrada' : 'ferramentas encontradas' }}
     } @else {
-      Duas ferramentas prontas para usar.
+      {{ tools.length }} ferramentas prontas para usar.
     }
   </p>
   <div class="tools-grid" id="tool-results">
@@ -131,13 +131,15 @@
     @for (tool of tools; track tool.route) {
       <a class="btn btn-outline-primary" [routerLink]="tool.route"
         >{{
-          tool.route === '/analisar-xml' ? 'Analisar XMLs' : tool.route === '/organizar-xml'
-            ? 'Organizar XMLs'
-            : tool.route === '/xml-para-pdf'
-              ? 'Gerar DANFE PDF'
-              : tool.route === '/xml-para-excel'
-                ? 'Converter XML para Excel'
-                : 'Extrair produtos de XMLs'
+          tool.route === '/analisar-xml'
+            ? 'Analisar XMLs'
+            : tool.route === '/organizar-xml'
+              ? 'Organizar XMLs'
+              : tool.route === '/xml-para-pdf'
+                ? 'Gerar DANFE PDF'
+                : tool.route === '/xml-para-excel'
+                  ? 'Converter XML para Excel'
+                  : 'Extrair produtos de XMLs'
         }}
         <app-home-icon name="arrow"
       /></a>

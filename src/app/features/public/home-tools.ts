@@ -73,7 +73,29 @@ export const HOME_TOOLS: readonly ToolCard[] = [
     meta: 'NF-e + NFC-e · ZIP',
     cta: 'Organizar XMLs',
   },
-  { title: 'Analisador de XMLs', description: 'Analise valores, emitentes, produtos e tributos das notas fiscais.', benefit: 'Dashboard de NF-e com filtros, indicadores e relat?rio Excel.', route: '/analisar-xml', icon: 'product', badge: 'Novo', category: 'XML Fiscal', keywords: ['xml', 'analisar', 'analise', 'dashboard', 'nfe', 'nota fiscal', 'emitente', 'tributos', 'icms', 'relatorio'], meta: 'Dashboard + Excel', cta: 'Analisar XMLs' },
+  {
+    title: 'Analisador de XMLs',
+    description: 'Analise valores, emitentes, produtos e tributos das notas fiscais.',
+    benefit: 'Dashboard de NF-e com filtros, indicadores e relatório Excel.',
+    route: '/analisar-xml',
+    icon: 'product',
+    badge: 'Novo',
+    category: 'XML Fiscal',
+    keywords: [
+      'xml',
+      'analisar',
+      'analise',
+      'dashboard',
+      'nfe',
+      'nota fiscal',
+      'emitente',
+      'tributos',
+      'icms',
+      'relatorio',
+    ],
+    meta: 'Dashboard + Excel',
+    cta: 'Analisar XMLs',
+  },
 ];
 
 export function normalizeToolSearch(value: string): string {

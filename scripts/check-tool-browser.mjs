@@ -501,15 +501,16 @@ try {
     );
   await command('Page.navigate', { url: `http://127.0.0.1:${port}/` });
   await waitFor('!!document.querySelector("#tool-search")');
+  await waitFor('!!document.querySelector("app-home")?.__ngContext__');
   for (const [query, count] of [
-    ['excel', 2],
-    ['xml', 2],
-    ['produto', 1],
-    ['nota', 2],
-    ['nfe', 2],
+    ['excel', 4],
+    ['xml', 5],
+    ['produto', 2],
+    ['nota', 5],
+    ['nfe', 5],
     ['CONVERSÃO', 1],
     ['inexistente', 0],
-    ['', 2],
+    ['', 5],
   ]) {
     await evaluate(
       `(() => { const input = document.querySelector('#tool-search'); input.value = ${JSON.stringify(query)}; input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
@@ -522,11 +523,11 @@ try {
   await waitFor("!!document.querySelector('.search-field button')");
   await evaluate("document.querySelector('.search-field button').click()");
   await waitFor(
-    "document.querySelectorAll('.home-tool-card').length === 2 && document.activeElement.id === 'tool-search'",
+    "document.querySelectorAll('.home-tool-card').length === 5 && document.activeElement.id === 'tool-search'",
   );
   const publicChecks = [];
   for (const [path, heading] of [
-    ['/', 'Ferramentas simples para resolver arquivos e dados em minutos.'],
+    ['/', 'Ferramentas online para XML, planilhas e arquivos.'],
     ['/seguranca', 'Segurança sem promessas vazias'],
     ['/privacidade', 'Privacidade e cookies'],
     ['/termos', 'Termos de uso'],
@@ -548,7 +549,7 @@ try {
       assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'), false);
       publicChecks.push({ path, width, overflow: false });
       if (path === '/') {
-        assert.equal(await evaluate('document.querySelectorAll(".home-tool-card").length'), 2);
+        assert.equal(await evaluate('document.querySelectorAll(".home-tool-card").length'), 5);
         assert.equal(await evaluate('document.querySelectorAll(".plan-card").length'), 3);
         assert.ok(
           await evaluate('document.querySelector(".plan-pro a").getAttribute("href") === "/conta"'),
@@ -1128,9 +1129,7 @@ try {
   await waitFor(
     '!!document.querySelector(".account-menu") && document.querySelector(".plan-pro a")?.getAttribute("href") === "/conta"',
   );
-  assert.ok(
-    await evaluate('!!document.querySelector("#tool-search")'),
-  );
+  assert.ok(await evaluate('!!document.querySelector("#tool-search")'));
   const homeLayouts = [];
   for (const width of [320, 375, 768, 1024, 1440]) {
     await command('Emulation.setDeviceMetricsOverride', {
@@ -1156,7 +1155,9 @@ try {
   await waitFor(
     'location.hash === "#ferramentas" && document.querySelector("#ferramentas").getBoundingClientRect().top < 100',
   );
-  await evaluate('document.querySelector("app-tool-card:last-child a").click()');
+  await evaluate(
+    '[...document.querySelectorAll("app-tool-card a")].find(a => a.getAttribute("href") === "/produtos-dos-xmls").click()',
+  );
   await waitFor(
     'location.pathname === "/produtos-dos-xmls" && !!document.querySelector("#xml-files")',
   );
@@ -1198,7 +1199,7 @@ try {
   polls = 0;
   await command('Page.navigate', { url: `http://127.0.0.1:${port}/produtos-dos-xmls` });
   await waitFor(
-    'document.querySelector("h1")?.innerText === "Produtos dos XMLs" && !!document.querySelector("#xml-files") && !document.querySelector(".account-menu")',
+    'document.querySelector("h1")?.innerText === "Extrair produtos de XMLs NF-e" && !!document.querySelector("#xml-files") && !document.querySelector(".account-menu")',
   );
   const productsLayouts = [];
   for (const width of [320, 375, 768, 1024, 1440]) {

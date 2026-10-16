@@ -12,12 +12,12 @@
       </p>
     </div>
 
-    <button type="button" mat-icon-button (click)="fechar()" [disabled]="loading" aria-label="Fechar">
+    <button type="button" mat-icon-button (click)="fechar()" [disabled]="loading || salvando" aria-label="Fechar">
       <mat-icon>close</mat-icon>
     </button>
   </div>
 
-  <mat-progress-bar *ngIf="loading" mode="indeterminate">
+  <mat-progress-bar *ngIf="loading || salvando" mode="indeterminate">
   </mat-progress-bar>
 
   <div class="clone-body">
@@ -34,24 +34,24 @@
 
 <div class="clone-steps">
   <button type="button" class="clone-step" [class.active]="currentStep === 1" [class.done]="currentStep > 1"
-    [disabled]="loading" (click)="goToStep(1)">
+    [disabled]="loading || salvando" (click)="goToStep(1)">
     <span>1</span>
     <strong>Visão geral</strong>
   </button>
 
   <button type="button" class="clone-step" [class.active]="currentStep === 2" [class.done]="currentStep > 2"
-    [disabled]="loading" (click)="goToStep(2)">
+    [disabled]="loading || salvando" (click)="goToStep(2)">
     <span>2</span>
     <strong>Calendário</strong>
   </button>
 
   <button type="button" class="clone-step" [class.active]="currentStep === 3" [class.done]="currentStep > 3"
-    [disabled]="loading" (click)="goToStep(3)">
+    [disabled]="loading || salvando" (click)="goToStep(3)">
     <span>3</span>
     <strong>Orçamento e avisos</strong>
   </button>
 
-  <button type="button" class="clone-step" [class.active]="currentStep === 4" [disabled]="loading" (click)="goToStep(4)">
+  <button type="button" class="clone-step" [class.active]="currentStep === 4" [disabled]="loading || salvando" (click)="goToStep(4)">
     <span>4</span>
     <strong>Revisão</strong>
   </button>
@@ -435,12 +435,12 @@
             </div>
           </div>
           <label class="clone-acknowledgment" *ngIf="avisos.length > 0">
-            <input type="checkbox" [disabled]="loading" />
+            <input type="checkbox" [(ngModel)]="confirmarMesmoComAvisos" [disabled]="loading || salvando" />
             <span>Estou ciente das divergências e desejo continuar.</span>
           </label>
           <div class="clone-readonly-note">
             <mat-icon>lock_outline</mat-icon>
-            A confirmação será habilitada quando o endpoint seguro de cadastro estiver implementado.
+            A confirmação cria as escalas no mês de destino. Confira as datas e quantidades antes de continuar.
           </div>
         </div>
       </section>
@@ -451,21 +451,27 @@
   <div class="clone-footer">
     <div class="clone-footer__buttons">
       <button type="button" class="labi-action-btn labi-action-btn--ghost" (click)="fechar()"
-        [disabled]="loading">
+        [disabled]="loading || salvando">
         Fechar
       </button>
 
       <button type="button" class="labi-action-btn labi-action-btn--ghost" *ngIf="currentStep > 1" (click)="prevStep()"
-        [disabled]="loading">
+        [disabled]="loading || salvando">
         Voltar
       </button>
 
       <button type="button" class="labi-action-btn labi-action-btn--primary" *ngIf="currentStep < totalSteps"
-        (click)="nextStep()" [disabled]="loading">
+        (click)="nextStep()" [disabled]="loading || salvando">
         Próximo
       </button>
 
-      <button type="button" class="labi-action-btn labi-action-btn--primary" *ngIf="currentStep === totalSteps" disabled title="A confirmação será habilitada após implementar o endpoint seguro de cadastro">Confirmar clonagem</button>
+      <button type="button" class="labi-action-btn labi-action-btn--primary"
+        *ngIf="currentStep === totalSteps"
+        [disabled]="!podeConfirmar || loading || salvando"
+        (click)="confirmarClonagem()">
+        <mat-icon *ngIf="salvando" class="clone-saving-icon">hourglass_empty</mat-icon>
+        {{ salvando ? 'Confirmando...' : 'Confirmar clonagem' }}
+      </button>
     </div>
   </div>
 

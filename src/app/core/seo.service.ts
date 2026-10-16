@@ -75,7 +75,8 @@ export class SeoService {
       const tool =
         path === '/xml-para-excel' ||
         path === '/produtos-dos-xmls' ||
-        path === '/analisar-xml' || path === '/organizar-xml' ||
+        path === '/analisar-xml' ||
+        path === '/organizar-xml' ||
         path === '/xml-para-pdf';
       const main =
         path === '/'
@@ -100,13 +101,15 @@ export class SeoService {
               ? {
                   '@type': 'WebApplication',
                   name:
-                    path === '/analisar-xml' ? 'Analisador de XMLs Online' : path === '/organizar-xml'
-                      ? 'Organizador de XMLs Online'
-                      : path === '/xml-para-pdf'
-                        ? 'Converter XML em PDF'
-                        : path === '/xml-para-excel'
-                          ? 'Converter XML para Excel'
-                          : 'Extrair produtos de XMLs NF-e',
+                    path === '/analisar-xml'
+                      ? 'Analisador de XMLs Online'
+                      : path === '/organizar-xml'
+                        ? 'Organizador de XMLs Online'
+                        : path === '/xml-para-pdf'
+                          ? 'Converter XML em PDF'
+                          : path === '/xml-para-excel'
+                            ? 'Converter XML para Excel'
+                            : 'Extrair produtos de XMLs NF-e',
                   url: canonical,
                   applicationCategory: 'UtilitiesApplication',
                   operatingSystem: 'Web',
@@ -115,6 +118,14 @@ export class SeoService {
                 }
               : { '@type': 'WebPage', name: page.title, url: canonical };
       const graph: object[] = [main];
+      if (path === '/') {
+        graph.push({
+          '@type': 'Organization',
+          '@id': this.config.origin + '/#organization',
+          name: 'Feitoo',
+          url: canonical,
+        });
+      }
       if (guide) {
         graph.push({
           '@type': 'BreadcrumbList',
@@ -133,7 +144,8 @@ export class SeoService {
       if (
         path === '/xml-para-excel' ||
         path === '/produtos-dos-xmls' ||
-        path === '/analisar-xml' || path === '/organizar-xml' ||
+        path === '/analisar-xml' ||
+        path === '/organizar-xml' ||
         path === '/xml-para-pdf'
       ) {
         graph.push({

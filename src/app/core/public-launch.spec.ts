@@ -202,7 +202,10 @@ describe('Public launch', () => {
     }
     seo.apply('/');
     const graph = JSON.parse(document.getElementById('feitoo-schema')!.textContent!)['@graph'];
-    expect(graph.map((node: { '@type': string }) => node['@type'])).toEqual(['WebSite']);
+    expect(graph.map((node: { '@type': string }) => node['@type'])).toEqual([
+      'WebSite',
+      'Organization',
+    ]);
   });
   it('build sem domínio não inventa canonical ou indexação', () => {
     TestBed.overrideProvider(LAUNCH_CONFIG, { useValue: { ...config, origin: '' } });

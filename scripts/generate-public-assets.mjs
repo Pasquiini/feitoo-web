@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, copyFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
@@ -20,7 +20,7 @@ export function publicAssets(origin) {
   return {
     sitemap: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${origin ? paths.map((path) => `<url><loc>${origin + path}</loc></url>`).join('') : ''}</urlset>\n`,
     robots: origin
-      ? `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /sanctum/\nDisallow: /conta\nDisallow: /login\nDisallow: /cadastro\nDisallow: /404\nSitemap: ${origin}/sitemap.xml\n`
+      ? `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /sanctum/\nSitemap: ${origin}/sitemap.xml\n`
       : 'User-agent: *\nDisallow: /\n',
   };
 }
@@ -30,11 +30,22 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   );
   const output = new URL('../dist/feitoo-web/browser/', import.meta.url);
   const image = readFileSync(new URL('og/feitoo-og.png', output));
+  assert.ok(
+    readdirSync(new URL('og/', output)).every((file) => !/\.(html|pdf|zip)$/i.test(file)),
+    'Documentos temporários não devem ser publicados na pasta OG',
+  );
   assert.equal(image.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', 'OG deve ser PNG');
   const assets = publicAssets(config.origin);
   writeFileSync(new URL('robots.txt', output), assets.robots);
   writeFileSync(new URL('sitemap.xml', output), assets.sitemap);
   copyFileSync(new URL('404/index.html', output), new URL('404.html', output));
+  const privateShell = new JSDOM(readFileSync(new URL('index.csr.html', output), 'utf8')).window
+    .document;
+  assert.equal(privateShell.querySelector('meta[name="robots"]').content, 'noindex,follow');
+  assert.equal(
+    privateShell.querySelectorAll('link[rel="canonical"], #feitoo-schema, h1').length,
+    0,
+  );
   for (const path of paths) {
     const html = readFileSync(
       new URL(path === '/' ? 'index.html' : `${path.slice(1)}/index.html`, output),
@@ -59,6 +70,26 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         `Tag social incorreta: ${path} ${selector}`,
       );
     }
+    assert.ok(
+      document.querySelector('main').textContent.trim().length > 300,
+      `HTML sem conteudo: ${path}`,
+    );
+    assert.equal(document.querySelectorAll('title').length, 1);
+    assert.equal(document.querySelectorAll('meta[name="description"]').length, 1);
+    assert.equal(document.querySelectorAll('meta[name="robots"]').length, 1);
+    if (config.origin)
+      assert.equal(document.querySelector('link[rel="canonical"]').href, config.origin + path);
+    const contextual = {
+      '/xml-para-excel': ['/produtos-dos-xmls', '/analisar-xml'],
+      '/xml-para-pdf': ['/xml-para-excel'],
+      '/organizar-xml': ['/analisar-xml'],
+      '/analisar-xml': ['/produtos-dos-xmls'],
+    };
+    for (const target of contextual[path] ?? [])
+      assert.ok(
+        document.querySelector(`.tool-explainer a[href="${target}"]`),
+        `Link contextual ausente: ${path} -> ${target}`,
+      );
     assert.equal(document.querySelectorAll('h1').length, 1, `H1 deve ser único: ${path}`);
     assert.ok(document.querySelector('h1').textContent.trim(), `H1 vazio: ${path}`);
     for (const property of ['og:title', 'og:description', 'og:type', 'og:site_name'])
@@ -103,7 +134,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       if (
         path === '/xml-para-excel' ||
         path === '/produtos-dos-xmls' ||
-        path === '/analisar-xml' || path === '/organizar-xml' ||
+        path === '/analisar-xml' ||
+        path === '/organizar-xml' ||
         path === '/xml-para-pdf'
       ) {
         assert.ok(graph.some((node) => node['@type'] === 'WebApplication'));

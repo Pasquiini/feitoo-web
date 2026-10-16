@@ -73,6 +73,7 @@ export class SeoService {
       schema.id = 'feitoo-schema';
       schema.type = 'application/ld+json';
       const tool =
+        path === '/docx-para-pdf' ||
         path === '/xml-para-excel' ||
         path === '/produtos-dos-xmls' ||
         path === '/analisar-xml' ||
@@ -101,15 +102,17 @@ export class SeoService {
               ? {
                   '@type': 'WebApplication',
                   name:
-                    path === '/analisar-xml'
-                      ? 'Analisador de XMLs Online'
-                      : path === '/organizar-xml'
-                        ? 'Organizador de XMLs Online'
-                        : path === '/xml-para-pdf'
-                          ? 'Converter XML em PDF'
-                          : path === '/xml-para-excel'
-                            ? 'Converter XML para Excel'
-                            : 'Extrair produtos de XMLs NF-e',
+                    path === '/docx-para-pdf'
+                      ? 'Converter DOCX para PDF online'
+                      : path === '/analisar-xml'
+                        ? 'Analisador de XMLs Online'
+                        : path === '/organizar-xml'
+                          ? 'Organizador de XMLs Online'
+                          : path === '/xml-para-pdf'
+                            ? 'Converter XML em PDF'
+                            : path === '/xml-para-excel'
+                              ? 'Converter XML para Excel'
+                              : 'Extrair produtos de XMLs NF-e',
                   url: canonical,
                   applicationCategory: 'UtilitiesApplication',
                   operatingSystem: 'Web',
@@ -142,6 +145,7 @@ export class SeoService {
         });
       }
       if (
+        path === '/docx-para-pdf' ||
         path === '/xml-para-excel' ||
         path === '/produtos-dos-xmls' ||
         path === '/analisar-xml' ||

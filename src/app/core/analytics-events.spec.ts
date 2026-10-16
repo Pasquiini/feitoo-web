@@ -51,6 +51,7 @@ describe('Funnel analytics', () => {
   it.each([
     ['xml-to-excel', 'xml_to_excel'],
     ['products-from-xml', 'products_from_xml'],
+    ['docx_to_pdf', 'docx_to_pdf'],
   ] as const)('maps %s tool view', (tool, expected) => {
     grant();
     service.track('tool_view', { tool });
@@ -59,6 +60,28 @@ describe('Funnel analytics', () => {
       'tool_view',
       expect.objectContaining({ tool: expected }),
     );
+  });
+  it('DOCX exige consentimento e descarta conteúdo e nomes dos documentos', () => {
+    service.track('processing_started', { tool: 'docx_to_pdf', file_count: 2 });
+    expect(gtag).not.toHaveBeenCalled();
+    grant();
+    service.track('processing_completed', {
+      tool: 'docx_to_pdf',
+      file_count: 2,
+      plan: 'free',
+      processing_result: 'partial',
+      original_name: 'contrato-pessoal.docx',
+      text: 'conteúdo privado',
+      email: 'private@example.test',
+    } as EventProperties);
+    expect(gtag).toHaveBeenCalledWith(
+      'event',
+      'processing_completed',
+      expect.objectContaining({ tool: 'docx_to_pdf', processing_result: 'partial' }),
+    );
+    const payload = JSON.stringify(gtag.mock.calls);
+    for (const secret of ['contrato-pessoal', 'conteúdo privado', 'private@example.test'])
+      expect(payload).not.toContain(secret);
   });
   it('allowlists processing payload and contains no personal/fiscal/Stripe identifiers', () => {
     grant();

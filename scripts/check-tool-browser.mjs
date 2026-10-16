@@ -510,7 +510,7 @@ try {
     ['nfe', 5],
     ['CONVERSÃO', 1],
     ['inexistente', 0],
-    ['', 5],
+    ['', 6],
   ]) {
     await evaluate(
       `(() => { const input = document.querySelector('#tool-search'); input.value = ${JSON.stringify(query)}; input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
@@ -523,7 +523,7 @@ try {
   await waitFor("!!document.querySelector('.search-field button')");
   await evaluate("document.querySelector('.search-field button').click()");
   await waitFor(
-    "document.querySelectorAll('.home-tool-card').length === 5 && document.activeElement.id === 'tool-search'",
+    "document.querySelectorAll('.home-tool-card').length === 6 && document.activeElement.id === 'tool-search'",
   );
   const publicChecks = [];
   for (const [path, heading] of [
@@ -549,7 +549,7 @@ try {
       assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'), false);
       publicChecks.push({ path, width, overflow: false });
       if (path === '/') {
-        assert.equal(await evaluate('document.querySelectorAll(".home-tool-card").length'), 5);
+        assert.equal(await evaluate('document.querySelectorAll(".home-tool-card").length'), 6);
         assert.equal(await evaluate('document.querySelectorAll(".plan-card").length'), 3);
         assert.ok(
           await evaluate('document.querySelector(".plan-pro a").getAttribute("href") === "/conta"'),

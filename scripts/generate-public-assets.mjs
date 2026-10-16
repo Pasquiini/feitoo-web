@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 export const paths = [
   '/',
+  '/docx-para-pdf',
   '/xml-para-excel',
   '/xml-para-pdf',
   '/organizar-xml',
@@ -80,6 +81,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (config.origin)
       assert.equal(document.querySelector('link[rel="canonical"]').href, config.origin + path);
     const contextual = {
+      '/docx-para-pdf': ['/seguranca', '/planos'],
       '/xml-para-excel': ['/produtos-dos-xmls', '/analisar-xml'],
       '/xml-para-pdf': ['/xml-para-excel'],
       '/organizar-xml': ['/analisar-xml'],
@@ -132,6 +134,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       }
       if (path === '/') assert.ok(graph.some((node) => node['@type'] === 'WebSite'));
       if (
+        path === '/docx-para-pdf' ||
         path === '/xml-para-excel' ||
         path === '/produtos-dos-xmls' ||
         path === '/analisar-xml' ||
@@ -139,6 +142,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         path === '/xml-para-pdf'
       ) {
         assert.ok(graph.some((node) => node['@type'] === 'WebApplication'));
+        assert.equal(
+          graph.find((node) => node['@type'] === 'WebApplication').name,
+          document.querySelector('h1').textContent.trim(),
+        );
         const breadcrumbs = graph.find((node) => node['@type'] === 'BreadcrumbList');
         assert.equal(breadcrumbs.itemListElement[1].item, config.origin + path);
         const faqs = graph.find((node) => node['@type'] === 'FAQPage').mainEntity;
@@ -158,6 +165,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     }
     if (
       path === '/' ||
+      path === '/docx-para-pdf' ||
       path === '/xml-para-excel' ||
       path === '/produtos-dos-xmls' ||
       path.startsWith('/como-')

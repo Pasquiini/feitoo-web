@@ -23,12 +23,19 @@ describe('Home tool discovery', () => {
       Array.from(element.querySelectorAll('.home-tool-card > a')).map((a) =>
         a.getAttribute('href'),
       ),
-    ).toEqual(['/xml-para-excel', '/produtos-dos-xmls', '/xml-para-pdf', '/organizar-xml', '/analisar-xml']);
+    ).toEqual([
+      '/xml-para-excel',
+      '/produtos-dos-xmls',
+      '/xml-para-pdf',
+      '/organizar-xml',
+      '/analisar-xml',
+      '/docx-para-pdf',
+    ]);
     expect(element.querySelectorAll('.workflow-grid li')).toHaveLength(3);
     expect(element.querySelectorAll('.plan-card')).toHaveLength(3);
     expect(element.querySelector('.plan-pro')?.textContent).toContain('R$ 29,90');
     expect(element.querySelector('.security-block a')?.getAttribute('href')).toBe('/seguranca');
-    expect(element.querySelectorAll('.final-links a')).toHaveLength(5);
+    expect(element.querySelectorAll('.final-links a')).toHaveLength(6);
   });
   it('filters through the input using names, descriptions and keywords, ignoring accents and case', () => {
     const { fixture, element } = render();
@@ -42,7 +49,7 @@ describe('Home tool discovery', () => {
       ['  CONVERSÃO  ', 1],
       ['produto ncm', 1],
       ['inexistente', 0],
-      ['', 5],
+      ['', 6],
     ] as const) {
       input.value = query;
       input.dispatchEvent(new Event('input'));
@@ -61,6 +68,6 @@ describe('Home tool discovery', () => {
     element.querySelector<HTMLButtonElement>('.search-field button')!.click();
     fixture.detectChanges();
     expect(fixture.componentInstance.query()).toBe('');
-    expect(element.querySelectorAll('.home-tool-card')).toHaveLength(5);
+    expect(element.querySelectorAll('.home-tool-card')).toHaveLength(6);
   });
 });

@@ -1,5 +1,10 @@
 import { guidePages } from './guide-pages';
 export const publicPages = {
+  '/docx-para-pdf': {
+    title: 'DOCX para PDF Online | Converter Word em PDF | Feitoo',
+    description:
+      'Converta arquivos DOCX do Word para PDF online. Envie seus documentos e baixe os PDFs prontos em poucos passos.',
+  },
   '/analisar-xml': {
     title: 'Analisador de XML NF-e Online | Dashboard e Excel | Feitoo',
     description:

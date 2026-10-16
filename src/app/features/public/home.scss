@@ -277,3 +277,6 @@ h1 {
     flex: 1 1 100%;
   }
 }
+.tool-category + .tool-category {
+  margin-top: 2rem;
+}

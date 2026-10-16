@@ -191,10 +191,12 @@ export class AnalyticsService {
       page_title: 'Feitoo',
     };
     if (
+      properties.tool === 'docx_to_pdf' ||
       properties.tool === 'xml-to-excel' ||
       properties.tool === 'products-from-xml' ||
       properties.tool === 'xml-to-pdf' ||
-      properties.tool === 'xml-organizer' || properties.tool === 'xml-analyzer'
+      properties.tool === 'xml-organizer' ||
+      properties.tool === 'xml-analyzer'
     )
       payload['tool'] = properties.tool.replaceAll('-', '_');
     if (properties.plan === 'free' || properties.plan === 'pro') payload['plan'] = properties.plan;

@@ -3,7 +3,7 @@ export type ProcessingStatus =
 
 export type ProcessingTool = keyof typeof import('../tools').processingTools;
 
-export interface XmlToExcelConfig {
+export interface ProcessingConfig {
   readonly max_request_size_kb?: number;
   readonly max_processing_files?: number;
   readonly max_processing_items?: number;
@@ -15,10 +15,15 @@ export interface XmlToExcelConfig {
   readonly max_file_size_kb: number;
   readonly ttl_minutes: number;
 }
+// Compatibility for existing tool pages; configuration itself is format-neutral.
+export type XmlToExcelConfig = ProcessingConfig;
 export type ProcessingFileKind = 'input' | 'output';
 
 export interface Processing {
-  readonly analyzer?: { readonly summary: import('./analysis').AnalysisSummary | null; readonly audit: import('./analysis').AnalysisAudit | null };
+  readonly analyzer?: {
+    readonly summary: import('./analysis').AnalysisSummary | null;
+    readonly audit: import('./analysis').AnalysisAudit | null;
+  };
   readonly organizer?: {
     readonly options: OrganizerOptions;
     readonly summary: OrganizerSummary | null;
@@ -102,6 +107,14 @@ export interface ProcessingResponse {
 
 export type ProcessingFileStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'removed';
 export type ProcessingFileError =
+  | 'docx_invalid'
+  | 'docx_too_large'
+  | 'docx_corrupted'
+  | 'docx_archive_unsafe'
+  | 'document_converter_unavailable'
+  | 'document_conversion_timeout'
+  | 'document_conversion_failed'
+  | 'pdf_output_invalid'
   | 'analysis_capacity'
   | 'invalid_protocol'
   | 'duplicate_document'

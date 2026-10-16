@@ -4,7 +4,17 @@ import { authGuard } from './features/auth/guards/auth.guard';
 import { guidePages } from './core/guide-pages';
 
 export const routes: Routes = [
-  { path: 'analisar-xml', data: { tool: 'xml-analyzer' }, loadComponent: () => import('./features/processing/pages/xml-to-excel').then((m) => m.XmlToExcelPage) },
+  {
+    path: 'docx-para-pdf',
+    loadComponent: () =>
+      import('./features/processing/pages/docx-to-pdf').then((m) => m.DocxToPdfPage),
+  },
+  {
+    path: 'analisar-xml',
+    data: { tool: 'xml-analyzer' },
+    loadComponent: () =>
+      import('./features/processing/pages/xml-to-excel').then((m) => m.XmlToExcelPage),
+  },
   {
     path: 'organizar-xml',
     data: { tool: 'xml-organizer' },

@@ -86,10 +86,18 @@ export class App {
 
   get loginContext(): {
     returnTo:
-      '/analisar-xml' | '/organizar-xml' | '/xml-para-excel' | '/xml-para-pdf' | '/produtos-dos-xmls' | '/conta';
+      | '/docx-para-pdf'
+      | '/analisar-xml'
+      | '/organizar-xml'
+      | '/xml-para-excel'
+      | '/xml-para-pdf'
+      | '/produtos-dos-xmls'
+      | '/conta';
   } | null {
     const path = this.router.url.split(/[?#]/)[0];
-    return path === '/analisar-xml' || path === '/organizar-xml' ||
+    return path === '/analisar-xml' ||
+      path === '/organizar-xml' ||
+      path === '/docx-para-pdf' ||
       path === '/xml-para-pdf' ||
       path === '/xml-para-excel' ||
       path === '/produtos-dos-xmls' ||

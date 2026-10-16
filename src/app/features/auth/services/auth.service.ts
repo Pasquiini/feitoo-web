@@ -88,7 +88,13 @@ export class AuthService {
   startGoogle(
     intent: 'login' | 'link',
     returnTo?:
-      '/conta' | '/analisar-xml' | '/organizar-xml' | '/xml-para-excel' | '/xml-para-pdf' | '/produtos-dos-xmls',
+      | '/docx-para-pdf'
+      | '/conta'
+      | '/analisar-xml'
+      | '/organizar-xml'
+      | '/xml-para-excel'
+      | '/xml-para-pdf'
+      | '/produtos-dos-xmls',
   ): Observable<GoogleStartResponse> {
     return this.csrf().pipe(
       switchMap(() =>

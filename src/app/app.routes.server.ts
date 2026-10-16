@@ -2,6 +2,7 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
 export const serverRoutes: ServerRoute[] = [
   ...[
     '',
+    'docx-para-pdf',
     'xml-para-excel',
     'xml-para-pdf',
     'organizar-xml',

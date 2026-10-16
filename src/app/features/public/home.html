@@ -35,7 +35,7 @@
   </div>
   <div class="catalog-heading">
     <h2 id="tools-title">Escolha o que você precisa resolver</h2>
-    <span class="catalog-category">XML Fiscal</span>
+    <span class="catalog-category">XML e documentos</span>
   </div>
   <p class="search-status" role="status" aria-live="polite" aria-atomic="true">
     @if (query()) {
@@ -45,14 +45,24 @@
       {{ tools.length }} ferramentas prontas para usar.
     }
   </p>
-  <div class="tools-grid" id="tool-results">
-    @for (tool of filteredTools(); track tool.route) {
-      <app-tool-card [tool]="tool" />
+  <div id="tool-results">
+    @for (category of categories(); track category) {
+      <section
+        class="tool-category"
+        [attr.aria-label]="category === 'XML Fiscal' ? 'XML e documentos fiscais' : category"
+      >
+        <h3>{{ category === 'XML Fiscal' ? 'XML e documentos fiscais' : category }}</h3>
+        <div class="tools-grid">
+          @for (tool of categoryTools(category); track tool.route) {
+            <app-tool-card [tool]="tool" />
+          }
+        </div>
+      </section>
     } @empty {
       <div class="empty-state">
         <app-home-icon name="search" />
         <h3>Nenhuma ferramenta encontrada para essa busca.</h3>
-        <p>Tente buscar por XML, Excel ou produtos.</p>
+        <p>Tente buscar por XML, Excel, produtos, Word ou PDF.</p>
         <button class="btn btn-outline-primary" type="button" (click)="query.set('')">
           Ver todas as ferramentas
         </button>
@@ -131,15 +141,17 @@
     @for (tool of tools; track tool.route) {
       <a class="btn btn-outline-primary" [routerLink]="tool.route"
         >{{
-          tool.route === '/analisar-xml'
-            ? 'Analisar XMLs'
-            : tool.route === '/organizar-xml'
-              ? 'Organizar XMLs'
-              : tool.route === '/xml-para-pdf'
-                ? 'Gerar DANFE PDF'
-                : tool.route === '/xml-para-excel'
-                  ? 'Converter XML para Excel'
-                  : 'Extrair produtos de XMLs'
+          tool.route === '/docx-para-pdf'
+            ? 'Converter DOCX'
+            : tool.route === '/analisar-xml'
+              ? 'Analisar XMLs'
+              : tool.route === '/organizar-xml'
+                ? 'Organizar XMLs'
+                : tool.route === '/xml-para-pdf'
+                  ? 'Gerar DANFE PDF'
+                  : tool.route === '/xml-para-excel'
+                    ? 'Converter XML para Excel'
+                    : 'Extrair produtos de XMLs'
         }}
         <app-home-icon name="arrow"
       /></a>

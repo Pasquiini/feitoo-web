@@ -36,17 +36,82 @@ const common: readonly ToolFaq[] = [
 ];
 
 export const toolFaqs: Record<
-  '/xml-para-excel' | '/produtos-dos-xmls' | '/xml-para-pdf' | '/organizar-xml' | '/analisar-xml',
+  | '/docx-para-pdf'
+  | '/xml-para-excel'
+  | '/produtos-dos-xmls'
+  | '/xml-para-pdf'
+  | '/organizar-xml'
+  | '/analisar-xml',
   readonly ToolFaq[]
 > = {
+  '/docx-para-pdf': [
+    {
+      question: 'Posso converter vários DOCX ao mesmo tempo?',
+      answer:
+        'Sim, conforme os limites por arquivo, lote e dia exibidos na ferramenta. Os PDFs ficam disponíveis individualmente e em ZIP. Se um documento falhar, os demais podem ser convertidos.',
+    },
+    {
+      question: 'Funciona com arquivos .doc?',
+      answer:
+        'Não nesta versão. Somente arquivos .docx válidos são aceitos. DOC, DOCM, ODT, RTF, TXT e PDF não são convertidos.',
+    },
+    {
+      question: 'Preciso instalar o Microsoft Word?',
+      answer:
+        'Não. A conversão é feita no servidor, usando LibreOffice, e o envio e o download são feitos pelo navegador. É necessário entrar na sua conta para processar.',
+    },
+    {
+      question: 'O Feitoo altera meu arquivo original?',
+      answer:
+        'Não. Um PDF separado é gerado a partir de uma cópia temporária do DOCX. O arquivo original no seu dispositivo permanece intacto.',
+    },
+    {
+      question: 'Quanto tempo os arquivos ficam armazenados?',
+      answer:
+        'Documentos e PDFs ficam temporariamente em armazenamento privado, com acesso restrito à sua conta. O prazo aparece na ferramenta e no resultado. Após a expiração, o download é bloqueado e a rotina de limpeza remove os arquivos. Você também pode excluí-los ao terminar.',
+    },
+    {
+      question: 'Fontes e layout ficam exatamente iguais?',
+      answer:
+        'A conversão tenta preservar texto, estilos, tabelas, imagens, cabeçalhos, rodapés e quebras de página. Fontes ausentes e recursos específicos do Word podem alterar o resultado. Confira o PDF antes de compartilhar. Macros, objetos incorporados e campos dinâmicos não são aceitos nesta versão.',
+    },
+  ],
   '/analisar-xml': [
-    { question: 'Como analisar vários XMLs de notas fiscais?', answer: 'Selecione XMLs individuais de NF-e modelo 55, entre na sua conta e clique em Analisar XMLs. O backend processa o lote e apresenta indicadores, gráficos e tabelas. PDF, ZIP e NFC-e 65 não fazem parte desta versão.' },
-    { question: 'Quais informações posso extrair dos XMLs?', answer: 'Documentos, emitentes, destinatários, produtos, quantidades por unidade, valores e tributos destacados. Os dados são extraídos dos XMLs enviados; campos ausentes e falhas são informados, sem inventar valores.' },
-    { question: 'Posso identificar os produtos mais comprados?', answer: 'A tabela mostra os produtos e seus valores e quantidades nos documentos considerados. Isso não confirma compras: emitente não equivale necessariamente a fornecedor. Produtos de emitentes, NCM ou unidades diferentes ficam separados; descrições parecidas não são equiparadas.' },
-    { question: 'Como visualizar valores por fornecedor?', answer: 'Consulte a tabela de emitentes, ordene por valor ou quantidade de notas e use o filtro de emitente. O agrupamento utiliza CNPJ/CPF com formato e dígitos verificadores confiáveis; identificações não confiáveis são isoladas por nota.' },
-    { question: 'O Feitoo consulta a SEFAZ?', answer: 'Não. O status atual na SEFAZ não foi consultado e a assinatura digital não é verificada. O status da análise não representa autorização fiscal. Tributos destacados não significam recolhimento, crédito ou imposto devido.' },
-    { question: 'Posso exportar os resultados para Excel?', answer: 'Sim. O Excel tem Resumo, Documentos, Emitentes, Produtos, Tributos e Inconsistências. Exportar visão em Excel aplica os filtros atuais a todas as páginas; a pesquisa de produtos afeta somente os produtos. O download completo do lote fica disponível separadamente.' },
-    { question: 'Como duplicados e conflitos afetam os resultados e o limite?', answer: 'Cópias com SHA-256 idêntico entram uma vez nos indicadores. Mesma chave com conteúdo diferente exclui todos os participantes da agregação, preservando seus registros. Cada XML lido com sucesso consome uma unidade Free/Pro, inclusive cópias e conflitos identificados; falhas não consomem e retentativas não cobram novamente.' },
+    {
+      question: 'Como analisar vários XMLs de notas fiscais?',
+      answer:
+        'Selecione XMLs individuais de NF-e modelo 55, entre na sua conta e clique em Analisar XMLs. O backend processa o lote e apresenta indicadores, gráficos e tabelas. PDF, ZIP e NFC-e 65 não fazem parte desta versão.',
+    },
+    {
+      question: 'Quais informações posso extrair dos XMLs?',
+      answer:
+        'Documentos, emitentes, destinatários, produtos, quantidades por unidade, valores e tributos destacados. Os dados são extraídos dos XMLs enviados; campos ausentes e falhas são informados, sem inventar valores.',
+    },
+    {
+      question: 'Posso identificar os produtos mais comprados?',
+      answer:
+        'A tabela mostra os produtos e seus valores e quantidades nos documentos considerados. Isso não confirma compras: emitente não equivale necessariamente a fornecedor. Produtos de emitentes, NCM ou unidades diferentes ficam separados; descrições parecidas não são equiparadas.',
+    },
+    {
+      question: 'Como visualizar valores por fornecedor?',
+      answer:
+        'Consulte a tabela de emitentes, ordene por valor ou quantidade de notas e use o filtro de emitente. O agrupamento utiliza CNPJ/CPF com formato e dígitos verificadores confiáveis; identificações não confiáveis são isoladas por nota.',
+    },
+    {
+      question: 'O Feitoo consulta a SEFAZ?',
+      answer:
+        'Não. O status atual na SEFAZ não foi consultado e a assinatura digital não é verificada. O status da análise não representa autorização fiscal. Tributos destacados não significam recolhimento, crédito ou imposto devido.',
+    },
+    {
+      question: 'Posso exportar os resultados para Excel?',
+      answer:
+        'Sim. O Excel tem Resumo, Documentos, Emitentes, Produtos, Tributos e Inconsistências. Exportar visão em Excel aplica os filtros atuais a todas as páginas; a pesquisa de produtos afeta somente os produtos. O download completo do lote fica disponível separadamente.',
+    },
+    {
+      question: 'Como duplicados e conflitos afetam os resultados e o limite?',
+      answer:
+        'Cópias com SHA-256 idêntico entram uma vez nos indicadores. Mesma chave com conteúdo diferente exclui todos os participantes da agregação, preservando seus registros. Cada XML lido com sucesso consome uma unidade Free/Pro, inclusive cópias e conflitos identificados; falhas não consomem e retentativas não cobram novamente.',
+    },
     common[3],
   ],
   '/organizar-xml': [

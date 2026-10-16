@@ -14,6 +14,12 @@ import { HomePlans } from './home-plans';
 export class HomePage {
   readonly tools = HOME_TOOLS;
   readonly query = signal('');
+  readonly categories = computed(() => [
+    ...new Set(this.filteredTools().map((tool) => tool.category)),
+  ]);
+  categoryTools(category: string) {
+    return this.filteredTools().filter((tool) => tool.category === category);
+  }
   readonly filteredTools = computed(() => {
     const terms = normalizeToolSearch(this.query()).split(/\s+/).filter(Boolean);
     return this.tools.filter((tool) => {

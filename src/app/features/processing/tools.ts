@@ -1,7 +1,17 @@
 export const processingTools = {
+  docx_to_pdf: {
+    id: 'docx_to_pdf',
+    path: '/docx-para-pdf',
+    name: 'DOCX para PDF',
+    subtitle:
+      'Transforme documentos do Word em PDF direto no navegador. Envie seus arquivos DOCX e baixe os PDFs prontos em poucos passos.',
+  },
   'xml-analyzer': {
-    id: 'xml-analyzer', path: '/analisar-xml', name: 'Analisador de XMLs',
-    subtitle: 'Transforme seus XMLs de NF-e em informações sobre documentos, emitentes, produtos, valores e tributos. Analise seu lote e exporte para Excel.',
+    id: 'xml-analyzer',
+    path: '/analisar-xml',
+    name: 'Analisador de XMLs',
+    subtitle:
+      'Transforme seus XMLs de NF-e em informações sobre documentos, emitentes, produtos, valores e tributos. Analise seu lote e exporte para Excel.',
   },
   'xml-organizer': {
     id: 'xml-organizer',

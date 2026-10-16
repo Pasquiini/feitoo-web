@@ -443,7 +443,8 @@
               {{ batch.created_at | date: "dd/MM/yyyy 'às' HH:mm" }}
             </p>
             <p class="history-counts small">
-              {{ batch.files_count }} XMLs · {{ batch.successful_files_count }} concluídos ·
+              {{ batch.files_count }} {{ batch.tool === 'docx_to_pdf' ? 'documentos' : 'XMLs' }} ·
+              {{ batch.successful_files_count }} concluídos ·
               @if (batch.failed_files_count > 0) {
                 {{ batch.failed_files_count }} com erro
               }
@@ -461,7 +462,8 @@
             }
             @if (available(batch)) {
               <p class="small text-secondary">
-                Excel disponível até {{ batch.expires_at | date: 'dd/MM/yyyy HH:mm' }}.
+                {{ batch.tool === 'docx_to_pdf' ? 'PDFs disponíveis' : 'Resultado disponível' }} até
+                {{ batch.expires_at | date: 'dd/MM/yyyy HH:mm' }}.
               </p>
             } @else if (batch.status === 'completed' && !expired(batch) && !batch.files_deleted) {
               <p class="small text-secondary">Resultado indisponível.</p>
@@ -474,16 +476,27 @@
                 class="btn btn-primary"
                 [disabled]="!!action() || loading() || !!confirming()"
                 [attr.aria-label]="
-                  'Baixar Excel de ' + (batch.created_at | date: 'dd/MM/yyyy HH:mm')
+                  (batch.tool === 'docx_to_pdf' ? 'Baixar PDFs de ' : 'Baixar Excel de ') +
+                  (batch.created_at | date: 'dd/MM/yyyy HH:mm')
                 "
                 (click)="download(batch)"
               >
                 {{
                   action()?.id === batch.id && action()?.kind === 'download'
                     ? 'Baixando…'
-                    : 'Baixar Excel'
+                    : batch.tool === 'docx_to_pdf'
+                      ? 'Baixar PDFs (.zip)'
+                      : 'Baixar Excel'
                 }}
               </button>
+              @if (batch.tool === 'docx_to_pdf') {
+                <a
+                  class="btn btn-outline-primary"
+                  routerLink="/docx-para-pdf"
+                  [queryParams]="{ processing: batch.id }"
+                  >Ver PDFs</a
+                >
+              }
             }
             @if (batch.can_delete_files) {
               <button

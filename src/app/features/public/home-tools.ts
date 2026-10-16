@@ -96,6 +96,18 @@ export const HOME_TOOLS: readonly ToolCard[] = [
     meta: 'Dashboard + Excel',
     cta: 'Analisar XMLs',
   },
+  {
+    title: 'DOCX para PDF',
+    description: 'Converta documentos do Word em PDF direto no navegador.',
+    benefit: 'PDFs individuais e ZIP, com resultado por documento.',
+    route: '/docx-para-pdf',
+    icon: 'product',
+    badge: 'Novo',
+    category: 'Documentos',
+    keywords: ['docx', 'word', 'pdf', 'documento', 'converter'],
+    meta: 'DOCX → PDF',
+    cta: 'Converter DOCX',
+  },
 ];
 
 export function normalizeToolSearch(value: string): string {

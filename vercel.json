@@ -22,7 +22,7 @@
       "status": 308
     },
     {
-      "src": "/(xml-para-excel|xml-para-pdf|organizar-xml|analisar-xml|produtos-dos-xmls|planos|seguranca|privacidade|termos|como-converter-xml-nfe-para-excel|como-extrair-produtos-de-xml-nfe)/index.html",
+      "src": "/(docx-para-pdf|xml-para-excel|xml-para-pdf|organizar-xml|analisar-xml|produtos-dos-xmls|planos|seguranca|privacidade|termos|como-converter-xml-nfe-para-excel|como-extrair-produtos-de-xml-nfe)/index.html",
       "headers": {
         "Location": "/$1"
       },
@@ -43,7 +43,7 @@
       "continue": true
     },
     {
-      "src": "/(xml-para-excel|xml-para-pdf|organizar-xml|analisar-xml|produtos-dos-xmls|planos|seguranca|privacidade|termos|como-converter-xml-nfe-para-excel|como-extrair-produtos-de-xml-nfe)/",
+      "src": "/(docx-para-pdf|xml-para-excel|xml-para-pdf|organizar-xml|analisar-xml|produtos-dos-xmls|planos|seguranca|privacidade|termos|como-converter-xml-nfe-para-excel|como-extrair-produtos-de-xml-nfe)/",
       "headers": {
         "Location": "/$1"
       },

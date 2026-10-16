@@ -20,8 +20,11 @@ export class AuthPage {
   readonly registering = this.route.snapshot.data['mode'] === 'register';
   readonly returnTo = (() => {
     const path = this.route.snapshot.queryParamMap.get('returnTo');
-    return path === '/conta' ||
-      path === '/analisar-xml' || path === '/organizar-xml' ||
+    return path === '/docx-para-pdf' ||
+      path === '/conta' ||
+      path === '/analisar-xml' ||
+      path === '/organizar-xml' ||
+      path === '/docx-para-pdf' ||
       path === '/xml-para-pdf' ||
       path === '/xml-para-excel' ||
       path === '/produtos-dos-xmls'

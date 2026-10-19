@@ -1,3 +1,4 @@
+import { HOME_TOOLS, TOOL_CATEGORIES } from './features/public/home-tools';
 import { isPlatformBrowser } from '@angular/common';
 import { SeoService } from './core/seo.service';
 import { AnalyticsService } from './core/analytics.service';
@@ -23,6 +24,8 @@ interface HealthResponse {
   styleUrl: './app.scss',
 })
 export class App {
+  readonly tools = HOME_TOOLS;
+  readonly toolCategories = TOOL_CATEGORIES;
   readonly auth = inject(AuthService);
   readonly analytics = inject(AnalyticsService);
   readonly launch = inject(LAUNCH_CONFIG);
@@ -107,7 +110,13 @@ export class App {
   }
 
   closeAccountMenu(event: Event): void {
-    (event.target as HTMLElement).closest('details')?.removeAttribute('open');
+    const menu = (event.target as HTMLElement).closest('details');
+    const wasOpen = menu?.open;
+    menu?.removeAttribute('open');
+    if (event.type === 'keydown' && wasOpen) {
+      event.stopPropagation();
+      menu?.querySelector('summary')?.focus();
+    }
   }
 
   closeMobileMenu(event: Event): void {

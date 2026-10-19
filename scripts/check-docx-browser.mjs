@@ -166,12 +166,88 @@ await new Promise((done) => server.listen(0, '127.0.0.1', done));
 const port = server.address().port;
 try {
   await withBrowser('docx-edge', async ({ command, evaluate, waitFor, errors }) => {
+    await command('Page.navigate', { url: `http://127.0.0.1:${port}/` });
+    await waitFor(
+      '!!document.querySelector("app-home")?.__ngContext__ || !!document.querySelector("app-home")?.__ngContext__ === 0 || !!document.querySelector(".account-menu")',
+    );
+    const homeLayouts = [];
+    for (const width of [320, 375, 390, 768, 1024, 1440]) {
+      await command('Emulation.setDeviceMetricsOverride', {
+        width,
+        height: 900,
+        deviceScaleFactor: 1,
+        mobile: width < 768,
+      });
+      assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'), false);
+      assert.equal(
+        await evaluate('getComputedStyle(document.querySelector(".tools-grid")).display'),
+        'grid',
+      );
+      assert.equal(
+        await evaluate(
+          'getComputedStyle(document.querySelector(".tools-grid")).gridTemplateColumns.split(" ").length',
+        ),
+        width < 768 ? 1 : width <= 1024 ? 2 : 3,
+      );
+      if (width <= 640) {
+        await evaluate('document.querySelector(".mobile-menu-toggle").click()');
+        await waitFor(
+          'document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded") === "true"',
+        );
+      }
+      await evaluate('document.querySelector(".tools-menu summary").focus()');
+      await command('Input.dispatchKeyEvent', {
+        type: 'keyDown',
+        key: 'Enter',
+        code: 'Enter',
+        windowsVirtualKeyCode: 13,
+        text: '\r',
+        unmodifiedText: '\r',
+      });
+      await command('Input.dispatchKeyEvent', {
+        type: 'keyUp',
+        key: 'Enter',
+        code: 'Enter',
+        windowsVirtualKeyCode: 13,
+      });
+      await waitFor('document.querySelector(".tools-menu").open');
+      assert.equal(
+        await evaluate('document.querySelectorAll(".tools-dropdown section a").length'),
+        6,
+      );
+      assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'), false);
+      const menu = await command('Page.captureScreenshot', { format: 'png' });
+      await writeFile(
+        resolve(artifacts, `catalog-menu-${width}.png`),
+        Buffer.from(menu.data, 'base64'),
+      );
+      await command('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape' });
+      await waitFor('!document.querySelector(".tools-menu").open');
+      assert.ok(
+        await evaluate('document.activeElement === document.querySelector(".tools-menu summary")'),
+      );
+      if (width <= 640) {
+        await command('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape' });
+        await waitFor(
+          'document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded") === "false"',
+        );
+      }
+      const shot = await command('Page.captureScreenshot', {
+        format: 'png',
+        captureBeyondViewport: true,
+      });
+      await writeFile(
+        resolve(artifacts, `catalog-home-${width}.png`),
+        Buffer.from(shot.data, 'base64'),
+      );
+      homeLayouts.push({ width, overflow: false, dropdownKeyboard: true });
+    }
     await command('Page.navigate', { url: `http://127.0.0.1:${port}/docx-para-pdf` });
     await waitFor(
       '!!document.querySelector("#docx-files") && !document.querySelector("#docx-files").disabled && !!document.querySelector(".account-menu")',
     );
     const layouts = [];
-    for (const width of [320, 375, 390, 768, 1440]) {
+    for (const width of [320, 375, 390, 768, 1024, 1440]) {
       await command('Emulation.setDeviceMetricsOverride', {
         width,
         height: 900,
@@ -230,6 +306,7 @@ try {
     await waitFor('document.body.innerText.includes("Arquivos expirados ou excluídos")');
     assert.deepEqual(errors, []);
     const report = {
+      homeLayouts,
       layouts,
       pdfDownloads,
       zipDownloads,

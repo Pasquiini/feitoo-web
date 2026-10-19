@@ -6,6 +6,15 @@ import { OrganizerSummary, ProcessingFile } from '../models/processing';
   selector: 'app-organizer-result',
   imports: [KeyValuePipe],
   styles: `
+    .organization-result {
+      padding: 1.25rem;
+      background: #f1f5eb;
+      border-top: 3px solid #125d54;
+      margin: 1.5rem 0;
+    }
+    h2 {
+      font-size: 1.2rem;
+    }
     dl {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -13,6 +22,8 @@ import { OrganizerSummary, ProcessingFile } from '../models/processing';
     }
     dt {
       font-weight: 500;
+      color: #526158;
+      font-size: 0.85rem;
     }
     dd {
       margin: 0;
@@ -22,7 +33,7 @@ import { OrganizerSummary, ProcessingFile } from '../models/processing';
   `,
   template: `
     @if (summary(); as s) {
-      <section class="border rounded p-3 my-3" aria-labelledby="organizer-summary-title">
+      <section class="organization-result" aria-labelledby="organizer-summary-title">
         <h2 id="organizer-summary-title" class="h5">Resumo da organização</h2>
         @if (s.organized_count === 0) {
           <p role="status">

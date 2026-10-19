@@ -19,6 +19,12 @@ describe('Home tool discovery', () => {
   it('renders only real tools, destinations, plans and security', () => {
     const { element } = render();
     expect(element.querySelectorAll('h1')).toHaveLength(1);
+    expect(element.querySelector('h1')?.textContent).toBe(
+      'Ferramentas online para arquivos, documentos e planilhas.',
+    );
+    expect(element.querySelectorAll('.quick-links a')).toHaveLength(3);
+    expect(element.textContent).toContain('Documentos');
+    expect(element.textContent).toContain('XML e Fiscal');
     expect(
       Array.from(element.querySelectorAll('.home-tool-card > a')).map((a) =>
         a.getAttribute('href'),
@@ -42,6 +48,9 @@ describe('Home tool discovery', () => {
     const input = element.querySelector<HTMLInputElement>('#tool-search')!;
     for (const [query, count] of [
       ['excel', 4],
+      ['word', 1],
+      ['docx', 1],
+      ['pdf', 2],
       ['xml', 5],
       ['produto', 2],
       ['nota', 5],

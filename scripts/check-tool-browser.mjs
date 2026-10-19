@@ -504,6 +504,9 @@ try {
   await waitFor('!!document.querySelector("app-home")?.__ngContext__');
   for (const [query, count] of [
     ['excel', 4],
+    ['word', 1],
+    ['docx', 1],
+    ['pdf', 2],
     ['xml', 5],
     ['produto', 2],
     ['nota', 5],
@@ -527,7 +530,7 @@ try {
   );
   const publicChecks = [];
   for (const [path, heading] of [
-    ['/', 'Ferramentas online para XML, planilhas e arquivos.'],
+    ['/', 'Ferramentas online para arquivos, documentos e planilhas.'],
     ['/seguranca', 'Segurança sem promessas vazias'],
     ['/privacidade', 'Privacidade e cookies'],
     ['/termos', 'Termos de uso'],
@@ -535,7 +538,7 @@ try {
     ['/login?returnTo=/xml-para-excel', 'Bom ter você aqui'],
     ['/cadastro', 'Crie sua conta'],
   ]) {
-    for (const width of [320, 375, 768, 1024, 1440]) {
+    for (const width of [320, 375, 390, 768, 1024, 1440]) {
       await command('Emulation.setDeviceMetricsOverride', {
         width,
         height: 844,
@@ -578,7 +581,7 @@ try {
             resolve(artifacts, `home-menu-${width}.png`),
             Buffer.from(menuShot.data, 'base64'),
           );
-          await evaluate('document.querySelector("#primary-nav a").focus()');
+          await evaluate('document.querySelector(".tools-menu summary").focus()');
           await command('Input.dispatchKeyEvent', {
             type: 'keyDown',
             key: 'Escape',
@@ -799,7 +802,7 @@ try {
     '!!document.querySelector("#account-name") && document.querySelectorAll(".history-row").length === 10',
   );
   const accountLayouts = [];
-  for (const width of [320, 375, 768, 1024, 1440]) {
+  for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await command('Emulation.setDeviceMetricsOverride', {
       width,
       height: 900,
@@ -943,7 +946,7 @@ try {
   await selectSynthetic(37);
   await waitFor("document.body.innerText.includes('Processar 5 grátis')");
   const paywallLayouts = [];
-  for (const width of [320, 375, 768, 1024, 1440]) {
+  for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await command('Emulation.setDeviceMetricsOverride', {
       width,
       height: 900,
@@ -1099,7 +1102,7 @@ try {
           'document.body.innerText.includes("Depois disso, sua conta voltará ao plano Free.")',
         ),
       );
-    for (const width of [320, 375, 768, 1024, 1440]) {
+    for (const width of [320, 375, 390, 768, 1024, 1440]) {
       await command('Emulation.setDeviceMetricsOverride', {
         width,
         height: 900,
@@ -1131,7 +1134,7 @@ try {
   );
   assert.ok(await evaluate('!!document.querySelector("#tool-search")'));
   const homeLayouts = [];
-  for (const width of [320, 375, 768, 1024, 1440]) {
+  for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await command('Emulation.setDeviceMetricsOverride', {
       width,
       height: 900,
@@ -1202,7 +1205,7 @@ try {
     'document.querySelector("h1")?.innerText === "Extrair produtos de XMLs NF-e" && !!document.querySelector("#xml-files") && !document.querySelector(".account-menu")',
   );
   const productsLayouts = [];
-  for (const width of [320, 375, 768, 1024, 1440]) {
+  for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await command('Emulation.setDeviceMetricsOverride', {
       width,
       height: 900,
@@ -1251,7 +1254,7 @@ try {
       await evaluate('document.querySelectorAll(".preview-section tbody tr").length'),
       10,
     );
-    for (const width of [320, 375, 768, 1024, 1440]) {
+    for (const width of [320, 375, 390, 768, 1024, 1440]) {
       await command('Emulation.setDeviceMetricsOverride', {
         width,
         height: 900,

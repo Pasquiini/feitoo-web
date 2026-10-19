@@ -1,0 +1,27 @@
+.tool-related {
+  margin: 2.5rem 0;
+  border-top: 1px solid var(--tool-line);
+  padding-top: 1.5rem;
+}
+.tool-related h2 {
+  font-size: 1.15rem;
+}
+.tool-related > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+}
+.tool-related a {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f0f3eb;
+  text-decoration: none;
+  border-radius: 6px;
+}
+.tool-related a span {
+  font-size: 0.75rem;
+}
+.tool-related strong {
+  font-size: 0.9rem;
+}

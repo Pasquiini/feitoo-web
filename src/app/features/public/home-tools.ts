@@ -7,6 +7,10 @@ export interface ToolCard {
   badge: string;
   category: string;
   keywords: readonly string[];
+  aliases: readonly string[];
+  inputLabel: string;
+  outputLabel: string;
+  tags: readonly string[];
   meta: string;
   cta: string;
 }
@@ -17,9 +21,13 @@ export const HOME_TOOLS: readonly ToolCard[] = [
     description: 'Transforme várias NF-e em uma planilha organizada.',
     benefit: 'Notas, emitentes, valores e itens em um único arquivo.',
     route: '/xml-para-excel',
+    aliases: [],
+    inputLabel: 'XML',
+    outputLabel: 'XLSX',
+    tags: ['NF-e', 'Excel', 'Lote'],
     icon: 'excel',
     badge: 'Mais usado',
-    category: 'XML Fiscal',
+    category: 'XML e Fiscal',
     keywords: ['xml', 'excel', 'planilha', 'nota fiscal', 'nfe', 'nf-e', 'converter', 'conversão'],
     meta: 'Até 20 XMLs grátis',
     cta: 'Abrir ferramenta',
@@ -29,9 +37,13 @@ export const HOME_TOOLS: readonly ToolCard[] = [
     description: 'Extraia e consolide os produtos das suas notas fiscais.',
     benefit: 'Quantidades, valores, NCM, fornecedores e muito mais.',
     route: '/produtos-dos-xmls',
+    aliases: [],
+    inputLabel: 'XML',
+    outputLabel: 'XLSX',
+    tags: ['Produtos', 'Excel', 'Lote'],
     icon: 'product',
     badge: 'Novo',
-    category: 'XML Fiscal',
+    category: 'XML e Fiscal',
     keywords: ['xml', 'excel', 'produto', 'nota fiscal', 'nfe', 'nf-e', 'ncm', 'resumo', 'extrair'],
     meta: 'Excel + resumo',
     cta: 'Usar agora',
@@ -41,21 +53,29 @@ export const HOME_TOOLS: readonly ToolCard[] = [
     description: 'Transforme XMLs de NF-e em DANFE PDF.',
     benefit: 'Visualize cada documento e baixe PDFs individuais ou em ZIP.',
     route: '/xml-para-pdf',
+    aliases: [],
+    inputLabel: 'XML',
+    outputLabel: 'PDF',
+    tags: ['NF-e', 'DANFE', 'Lote'],
     icon: 'product',
     badge: 'Novo',
-    category: 'XML Fiscal',
+    category: 'XML e Fiscal',
     keywords: ['xml', 'pdf', 'danfe', 'nota fiscal', 'nfe', 'nf-e', 'converter'],
     meta: 'DANFE PDF + ZIP',
     cta: 'Gerar DANFE',
   },
   {
-    title: 'Organizador de XMLs',
+    title: 'Organizar XML',
     description: 'Separe notas fiscais por fornecedor, CNPJ ou período.',
     benefit: 'XMLs originais organizados em ZIP com relatório Excel opcional.',
     route: '/organizar-xml',
+    aliases: [],
+    inputLabel: 'XML',
+    outputLabel: 'ZIP',
+    tags: ['NF-e', 'Organização', 'Lote'],
     icon: 'product',
     badge: 'Novo',
-    category: 'XML Fiscal',
+    category: 'XML e Fiscal',
     keywords: [
       'xml',
       'organizar',
@@ -74,13 +94,17 @@ export const HOME_TOOLS: readonly ToolCard[] = [
     cta: 'Organizar XMLs',
   },
   {
-    title: 'Analisador de XMLs',
+    title: 'Analisar XML',
     description: 'Analise valores, emitentes, produtos e tributos das notas fiscais.',
     benefit: 'Dashboard de NF-e com filtros, indicadores e relatório Excel.',
     route: '/analisar-xml',
+    aliases: [],
+    inputLabel: 'XML',
+    outputLabel: 'Dados',
+    tags: ['NF-e', 'Análise', 'Excel'],
     icon: 'product',
     badge: 'Novo',
-    category: 'XML Fiscal',
+    category: 'XML e Fiscal',
     keywords: [
       'xml',
       'analisar',
@@ -98,9 +122,13 @@ export const HOME_TOOLS: readonly ToolCard[] = [
   },
   {
     title: 'DOCX para PDF',
-    description: 'Converta documentos do Word em PDF direto no navegador.',
+    description: 'Converta documentos do Word em PDF online.',
     benefit: 'PDFs individuais e ZIP, com resultado por documento.',
     route: '/docx-para-pdf',
+    aliases: ['word para pdf', 'transformar word em pdf'],
+    inputLabel: 'DOCX',
+    outputLabel: 'PDF',
+    tags: ['Word', 'PDF', 'Lote'],
     icon: 'product',
     badge: 'Novo',
     category: 'Documentos',
@@ -116,4 +144,23 @@ export function normalizeToolSearch(value: string): string {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
+}
+
+export const TOOL_CATEGORIES = [...new Set(HOME_TOOLS.map((tool) => tool.category))];
+
+export function searchTools(query: string, tools: readonly ToolCard[] = HOME_TOOLS) {
+  const terms = normalizeToolSearch(query).split(/\s+/).filter(Boolean);
+  return tools.filter((tool) => {
+    const text = normalizeToolSearch(
+      [
+        tool.title,
+        tool.description,
+        tool.benefit,
+        tool.category,
+        ...tool.keywords,
+        ...tool.aliases,
+      ].join(' '),
+    );
+    return terms.every((term) => text.includes(term));
+  });
 }

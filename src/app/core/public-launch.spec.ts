@@ -218,7 +218,7 @@ describe('Public launch', () => {
   it('home mostra as três ferramentas e navegação funcional', async () => {
     const harness = await RouterTestingHarness.create('/');
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain(
-      'Ferramentas online para XML, planilhas e arquivos.',
+      'Ferramentas online para arquivos, documentos e planilhas.',
     );
     expect(harness.routeNativeElement?.querySelectorAll('.home-tool-card').length).toBe(6);
     expect(harness.routeNativeElement?.querySelector('a')?.getAttribute('href')).toBe(

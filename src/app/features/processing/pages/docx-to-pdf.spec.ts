@@ -140,7 +140,7 @@ describe('DOCX para PDF', () => {
     expect(element.querySelector('h1')?.textContent).toBe('Converter DOCX para PDF online');
     expect(element.querySelectorAll('h1')).toHaveLength(1);
     expect(element.querySelector<HTMLInputElement>('#docx-files')?.multiple).toBe(true);
-    expect(element.querySelectorAll('.tool-explainer details')).toHaveLength(6);
+    expect(element.querySelectorAll('.tool-explainer details')).toHaveLength(7);
     expect(element.querySelector('.tool-explainer a[href="/seguranca"]')).not.toBeNull();
   });
   it('aceita vários DOCX, informa formato inválido e remove seleção', () => {
@@ -237,6 +237,10 @@ describe('DOCX para PDF', () => {
     expect(element.textContent).toContain('1 de 2 arquivos convertidos');
     expect(element.textContent).toContain('Não foi possível converter');
     expect(element.querySelectorAll('.document-list button')).toHaveLength(1);
+    expect(element.querySelector('.document-list .file-name')?.textContent?.trim()).toBe(
+      'exemplo.pdf',
+    );
+    expect(element.querySelector('.tool-status')?.getAttribute('data-state')).toBe('partial');
     expect(analytics.trackOnce).toHaveBeenCalledWith(
       'processing_completed',
       expect.any(String),

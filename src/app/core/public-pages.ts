@@ -31,9 +31,9 @@ export const publicPages = {
       'Extraia e consolide produtos de vários XMLs de NF-e em uma planilha. Some quantidades e organize os itens automaticamente.',
   },
   '/': {
-    title: 'Feitoo | Ferramentas online para XML, planilhas e arquivos',
+    title: 'Feitoo | Ferramentas Online para XML, Word, PDF e Planilhas',
     description:
-      'Ferramentas online rápidas para transformar XMLs, gerar planilhas e resolver tarefas com arquivos. Use direto no navegador com o Feitoo.',
+      'Converta XML, Word e outros arquivos online. Organize documentos, gere planilhas e PDFs e resolva tarefas em poucos passos com o Feitoo.',
   },
   '/xml-para-excel': {
     title: 'XML para Excel Online | Converter NF-e em Planilha | Feitoo',

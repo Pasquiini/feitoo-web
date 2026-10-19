@@ -1,41 +1,61 @@
 <section class="home-hero" aria-labelledby="home-title">
-  <p class="home-eyebrow">Arquivos e dados. Resolvidos.</p>
-  <h1 id="home-title">Ferramentas online para XML, planilhas e arquivos.</h1>
-  <p class="home-lead">
-    Converta XMLs de NF-e em Excel ou DANFE PDF, extraia produtos, organize arquivos e analise
-    valores e tributos das notas fiscais, direto no navegador.
-  </p>
-</section>
-
-<section class="home-section catalog" id="ferramentas" aria-labelledby="tools-title">
-  <div class="tool-search">
-    <label for="tool-search">Encontre sua ferramenta</label>
-    <div class="search-field">
-      <app-home-icon name="search" />
-      <input
-        #searchInput
-        id="tool-search"
-        type="search"
-        placeholder="O que você precisa fazer?"
-        autocomplete="off"
-        [value]="query()"
-        (input)="query.set($any($event.target).value)"
-        aria-controls="tool-results"
-      />
-      @if (query()) {
-        <button
-          type="button"
-          (click)="query.set(''); searchInput.focus()"
-          aria-label="Limpar busca"
-        >
-          ×
-        </button>
+  <div class="hero-copy">
+    <p class="home-eyebrow"><span></span> Menos tarefa repetitiva. Mais feito.</p>
+    <p class="hero-statement">Arquivos entram.<br /><span>Trabalho pronto sai.</span></p>
+    <h1 id="home-title">Ferramentas online para arquivos, documentos e planilhas.</h1>
+    <p class="home-lead">
+      Ferramentas online para converter, organizar e transformar arquivos sem complicação.
+    </p>
+    <div class="tool-search">
+      <label for="tool-search">Encontre sua ferramenta</label>
+      <div class="search-field">
+        <app-home-icon name="search" />
+        <input
+          #searchInput
+          id="tool-search"
+          type="search"
+          placeholder="Ex: converter Word para PDF..."
+          autocomplete="off"
+          [value]="query()"
+          (keydown.escape)="query.set('')"
+          (input)="query.set($any($event.target).value)"
+          aria-controls="tool-results"
+        />
+        @if (query()) {
+          <button
+            type="button"
+            (click)="query.set(''); searchInput.focus()"
+            aria-label="Limpar busca"
+          >
+            ×
+          </button>
+        }
+      </div>
+    </div>
+    <div class="quick-links" aria-label="Atalhos rápidos">
+      <span>Vá direto:</span>
+      @for (tool of shortcuts; track tool.route) {
+        <a [routerLink]="tool.route">{{ tool.title }} <span aria-hidden="true">↗</span></a>
       }
     </div>
   </div>
+  <div class="hero-transformations" aria-hidden="true">
+    <span class="transform-caption">SEU ARQUIVO, PRONTO PARA O PRÓXIMO PASSO</span>
+    @for (tool of shortcuts; track tool.route) {
+      <div class="transform-row">
+        <span class="file-format">{{ tool.inputLabel }}</span
+        ><span class="transform-arrow">→</span
+        ><strong class="file-format output">{{ tool.outputLabel }}</strong
+        ><span class="done-mark">✓</span>
+      </div>
+    }
+    <span class="transform-footnote">Envie. Transforme. Baixe.</span>
+  </div>
+</section>
+<section class="home-section catalog" id="ferramentas" aria-labelledby="tools-title">
   <div class="catalog-heading">
-    <h2 id="tools-title">Escolha o que você precisa resolver</h2>
-    <span class="catalog-category">XML e documentos</span>
+    <h2 id="tools-title">Uma tarefa a menos começa aqui.</h2>
+    <span class="catalog-category">Catálogo de ferramentas</span>
   </div>
   <p class="search-status" role="status" aria-live="polite" aria-atomic="true">
     @if (query()) {
@@ -47,11 +67,8 @@
   </p>
   <div id="tool-results">
     @for (category of categories(); track category) {
-      <section
-        class="tool-category"
-        [attr.aria-label]="category === 'XML Fiscal' ? 'XML e documentos fiscais' : category"
-      >
-        <h3>{{ category === 'XML Fiscal' ? 'XML e documentos fiscais' : category }}</h3>
+      <section class="tool-category" [attr.aria-label]="category">
+        <h3>{{ category }}</h3>
         <div class="tools-grid">
           @for (tool of categoryTools(category); track tool.route) {
             <app-tool-card [tool]="tool" />
@@ -75,6 +92,31 @@
   </p>
 </section>
 
+<section class="featured-tools" aria-label="Ferramentas em destaque">
+  @for (tool of featured; track tool.route; let first = $first) {
+    <article [class.feature-document]="first">
+      <span class="feature-label">{{
+        first ? 'Novo · Documentos' : 'Para sua rotina fiscal'
+      }}</span>
+      <h2>{{ tool.inputLabel }} → {{ tool.outputLabel }}</h2>
+      <p>
+        {{
+          first
+            ? 'Agora você também pode transformar documentos do Word em PDF direto no Feitoo.'
+            : tool.description
+        }}
+      </p>
+      <a
+        class="btn"
+        [class.btn-primary]="!first"
+        [class.btn-light]="first"
+        [routerLink]="tool.route"
+        >{{ first ? 'Converter DOCX' : 'Converter XML' }} <span aria-hidden="true">↗</span></a
+      >
+    </article>
+  }
+</section>
+
 <section class="home-section workflow" aria-labelledby="workflow-title">
   <h2 id="workflow-title">Resolva em poucos passos</h2>
   <ol class="workflow-grid">
@@ -88,7 +130,7 @@
     <li>
       <span class="step-icon"><app-home-icon name="speed" /></span>
       <div>
-        <h3><span>02</span> Feitoo processa</h3>
+        <h3><span>02</span> Processe</h3>
         <p>Os dados são organizados automaticamente.</p>
       </div>
     </li>
@@ -126,6 +168,7 @@
     <p>Uma tarefa ocasional, um lote maior ou parte da sua rotina.</p>
   </div>
   <app-home-plans />
+  <a class="plans-link" routerLink="/planos">Comparar planos e limites →</a>
   <p class="plans-note">
     Limites diários por ferramenta, conforme a configuração atual. Confira os limites e valores na
     ferramenta antes de processar.
@@ -140,20 +183,7 @@
   <div class="final-links">
     @for (tool of tools; track tool.route) {
       <a class="btn btn-outline-primary" [routerLink]="tool.route"
-        >{{
-          tool.route === '/docx-para-pdf'
-            ? 'Converter DOCX'
-            : tool.route === '/analisar-xml'
-              ? 'Analisar XMLs'
-              : tool.route === '/organizar-xml'
-                ? 'Organizar XMLs'
-                : tool.route === '/xml-para-pdf'
-                  ? 'Gerar DANFE PDF'
-                  : tool.route === '/xml-para-excel'
-                    ? 'Converter XML para Excel'
-                    : 'Extrair produtos de XMLs'
-        }}
-        <app-home-icon name="arrow"
+        >{{ tool.cta }} <app-home-icon name="arrow"
       /></a>
     }
   </div>

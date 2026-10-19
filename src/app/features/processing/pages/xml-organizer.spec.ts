@@ -172,7 +172,7 @@ describe('Organizador de XMLs shared flow', () => {
 
   it('exposes five criteria, preserves selection and options through email login, supports drop and removal', () => {
     expect(element.querySelector('h1')?.textContent?.trim()).toBe('Organizador de XMLs Online');
-    expect(element.querySelectorAll('#organizer-criterion option')).toHaveLength(5);
+    expect(element.querySelectorAll('#organizer-criterion input[type=radio]')).toHaveLength(5);
     expect(element.textContent).toContain('NF-e 55 e NFC-e 65 em UTF-8');
     expect(api.configuration).toHaveBeenCalledWith('xml-organizer');
     expect(billing.usage).toHaveBeenCalledWith('xml-organizer');
@@ -183,9 +183,10 @@ describe('Organizador de XMLs shared flow', () => {
     expect(page.files()).toHaveLength(2);
     page.remove(0);
     expect(page.files()[0].name).toBe('b.xml');
-    const criterion = element.querySelector<HTMLSelectElement>('#organizer-criterion')!;
-    criterion.value = 'supplier';
-    criterion.dispatchEvent(new Event('change'));
+    const criterion = element.querySelector<HTMLInputElement>(
+      '#organizer-criterion input[value=supplier]',
+    )!;
+    criterion.click();
     fixture.detectChanges();
     expect(page.organizerOptions().criterion).toBe('supplier');
     expect(TestBed.inject(XmlSelectionService).forTool('xml-to-pdf')()).toHaveLength(0);

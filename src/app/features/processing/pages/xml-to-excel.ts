@@ -1,3 +1,11 @@
+import {
+  ToolHero,
+  ToolWorkspace,
+  ToolUploader,
+  ToolStatus,
+  ToolSecurityNote,
+  ToolRelated,
+} from './tool-experience';
 import { toolFaqs } from '../../../core/tool-faqs';
 import { OrganizerOptionsPanel } from './organizer-options';
 import { OrganizerResultPanel } from './organizer-result';
@@ -41,7 +49,21 @@ type UiState =
 
 @Component({
   selector: 'app-xml-to-excel',
-  imports: [DatePipe, RouterLink, ToolIcon, OrganizerOptionsPanel, OrganizerResultPanel, XmlAnalyzerDashboard],
+  host: { class: 'tool-app' },
+  imports: [
+    ToolHero,
+    ToolWorkspace,
+    ToolUploader,
+    ToolStatus,
+    ToolSecurityNote,
+    ToolRelated,
+    DatePipe,
+    RouterLink,
+    ToolIcon,
+    OrganizerOptionsPanel,
+    OrganizerResultPanel,
+    XmlAnalyzerDashboard,
+  ],
   templateUrl: './xml-to-excel.html',
   styleUrl: './xml-to-excel.scss',
 })
@@ -74,13 +96,15 @@ export class XmlToExcelPage {
   private readonly route = inject(ActivatedRoute);
   readonly tool =
     processingTools[
-      this.route.snapshot.data?.['tool'] === 'xml-analyzer' ? 'xml-analyzer' : this.route.snapshot.data?.['tool'] === 'xml-organizer'
-        ? 'xml-organizer'
-        : this.route.snapshot.data?.['tool'] === 'xml-to-pdf'
-          ? 'xml-to-pdf'
-          : this.route.snapshot.data?.['tool'] === 'products-from-xml'
-            ? 'products-from-xml'
-            : 'xml-to-excel'
+      this.route.snapshot.data?.['tool'] === 'xml-analyzer'
+        ? 'xml-analyzer'
+        : this.route.snapshot.data?.['tool'] === 'xml-organizer'
+          ? 'xml-organizer'
+          : this.route.snapshot.data?.['tool'] === 'xml-to-pdf'
+            ? 'xml-to-pdf'
+            : this.route.snapshot.data?.['tool'] === 'products-from-xml'
+              ? 'products-from-xml'
+              : 'xml-to-excel'
     ];
   readonly faqs = toolFaqs[this.tool.path];
   readonly productsMode = this.tool.id === 'products-from-xml';
@@ -88,13 +112,15 @@ export class XmlToExcelPage {
   readonly organizerMode = this.tool.id === 'xml-organizer';
   readonly analyzerMode = this.tool.id === 'xml-analyzer';
   readonly organizerOptions = inject(XmlSelectionService).organizerOptions;
-  readonly pageTitle = this.analyzerMode ? 'Analisador de XMLs Online' : this.organizerMode
-    ? 'Organizador de XMLs Online'
-    : this.pdfMode
-      ? 'Converter XML em PDF'
-      : this.productsMode
-        ? 'Extrair produtos de XMLs NF-e'
-        : 'Converter XML para Excel';
+  readonly pageTitle = this.analyzerMode
+    ? 'Analisador de XMLs Online'
+    : this.organizerMode
+      ? 'Organizador de XMLs Online'
+      : this.pdfMode
+        ? 'Converter XML em PDF'
+        : this.productsMode
+          ? 'Extrair produtos de XMLs NF-e'
+          : 'Converter XML para Excel';
   readonly documentFiles = signal<readonly ProcessingFile[]>([]);
   readonly pdfPreview = signal<SafeResourceUrl | null>(null);
   readonly pdfBusy = signal(false);
@@ -141,7 +167,12 @@ export class XmlToExcelPage {
 
   loadDocumentFiles(): void {
     const batch = this.processing();
-    if ((!this.pdfMode && !this.organizerMode && !this.analyzerMode) || !batch || this.deleted() || this.expired())
+    if (
+      (!this.pdfMode && !this.organizerMode && !this.analyzerMode) ||
+      !batch ||
+      this.deleted() ||
+      this.expired()
+    )
       return;
     this.api
       .listFiles(batch.id)
@@ -565,7 +596,11 @@ export class XmlToExcelPage {
   loadUsage(): void {
     if (!this.auth.user()) return;
     this.billing
-      .usage(this.productsMode || this.pdfMode || this.organizerMode || this.analyzerMode ? this.tool.id : undefined)
+      .usage(
+        this.productsMode || this.pdfMode || this.organizerMode || this.analyzerMode
+          ? this.tool.id
+          : undefined,
+      )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (r) => {
@@ -888,7 +923,8 @@ export class XmlToExcelPage {
     } else if (processing.status === 'queued' || processing.status === 'processing') {
       this.state.set(processing.status);
     } else {
-      if ((this.organizerMode || this.analyzerMode) && processing.status === 'failed') this.loadUsage();
+      if ((this.organizerMode || this.analyzerMode) && processing.status === 'failed')
+        this.loadUsage();
       if (processing.status === 'failed' && !this.terminalTracked) {
         this.terminalTracked = true;
         this.analytics.track('processing_failed', {

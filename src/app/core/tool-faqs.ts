@@ -46,34 +46,39 @@ export const toolFaqs: Record<
 > = {
   '/docx-para-pdf': [
     {
-      question: 'Posso converter vários DOCX ao mesmo tempo?',
+      question: 'Como converter DOCX para PDF?',
       answer:
-        'Sim, conforme os limites por arquivo, lote e dia exibidos na ferramenta. Os PDFs ficam disponíveis individualmente e em ZIP. Se um documento falhar, os demais podem ser convertidos.',
-    },
-    {
-      question: 'Funciona com arquivos .doc?',
-      answer:
-        'Não nesta versão. Somente arquivos .docx válidos são aceitos. DOC, DOCM, ODT, RTF, TXT e PDF não são convertidos.',
+        'Selecione os documentos DOCX, entre na sua conta e envie para conversão. Aguarde o processamento e baixe os PDFs prontos.',
     },
     {
       question: 'Preciso instalar o Microsoft Word?',
       answer:
-        'Não. A conversão é feita no servidor, usando LibreOffice, e o envio e o download são feitos pelo navegador. É necessário entrar na sua conta para processar.',
+        'Não. Você envia os documentos e baixa os PDFs pelo navegador, sem instalar o Word. É necessário entrar na sua conta para processar.',
     },
     {
-      question: 'O Feitoo altera meu arquivo original?',
+      question: 'O Feitoo aceita arquivos .doc?',
       answer:
-        'Não. Um PDF separado é gerado a partir de uma cópia temporária do DOCX. O arquivo original no seu dispositivo permanece intacto.',
+        'Não. A ferramenta aceita somente arquivos DOCX válidos. DOC e DOCX são formatos diferentes; mudar a extensão não converte o documento.',
     },
     {
-      question: 'Quanto tempo os arquivos ficam armazenados?',
+      question: 'Posso converter vários arquivos?',
       answer:
-        'Documentos e PDFs ficam temporariamente em armazenamento privado, com acesso restrito à sua conta. O prazo aparece na ferramenta e no resultado. Após a expiração, o download é bloqueado e a rotina de limpeza remove os arquivos. Você também pode excluí-los ao terminar.',
+        'Sim. No Free, são até 3 documentos por processamento e 6 por dia. No Pro, até 20 por processamento e 100 por dia. Cada DOCX pode ter até 10 MB e o lote até 40 MB. Uma falha individual não impede o download dos outros PDFs.',
     },
     {
-      question: 'Fontes e layout ficam exatamente iguais?',
+      question: 'O layout fica exatamente igual?',
       answer:
-        'A conversão tenta preservar texto, estilos, tabelas, imagens, cabeçalhos, rodapés e quebras de página. Fontes ausentes e recursos específicos do Word podem alterar o resultado. Confira o PDF antes de compartilhar. Macros, objetos incorporados e campos dinâmicos não são aceitos nesta versão.',
+        'A conversão busca preservar textos, estilos comuns, tabelas, imagens, cabeçalhos, rodapés e quebras de página. Fontes não instaladas e recursos específicos do Word podem alterar a renderização. Confira o PDF antes de compartilhar.',
+    },
+    {
+      question: 'Meus documentos ficam armazenados?',
+      answer:
+        'Documentos e PDFs ficam temporariamente em armazenamento privado, com acesso protegido pela sua conta. O prazo de retenção aparece na ferramenta e a expiração no resultado. Ao vencer, o acesso é bloqueado e a rotina de limpeza exclui os arquivos. Você também pode excluí-los ao terminar.',
+    },
+    {
+      question: 'Posso baixar todos os PDFs juntos?',
+      answer:
+        'Sim. Quando o lote tem mais de um documento convertido com sucesso, você pode baixar todos os PDFs em um ZIP. Os PDFs também ficam disponíveis para download individual.',
     },
   ],
   '/analisar-xml': [

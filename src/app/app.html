@@ -23,14 +23,34 @@
         <path d="M4 6h16 M4 12h16 M4 18h16" />
       </svg>
     </button>
-    <nav
-      id="primary-nav"
-      aria-label="Navegação principal"
-      [class.is-open]="mobileMenuOpen()"
-      (click)="mobileMenuOpen.set(false)"
-    >
-      <a routerLink="/" fragment="ferramentas">Ferramentas</a><a routerLink="/planos">Planos</a
-      ><a routerLink="/seguranca">Segurança</a>
+    <nav id="primary-nav" aria-label="Navegação principal" [class.is-open]="mobileMenuOpen()">
+      <details class="tools-menu" (keydown.escape)="closeAccountMenu($event)">
+        <summary>Ferramentas</summary>
+        <div class="tools-dropdown">
+          <a
+            routerLink="/"
+            fragment="ferramentas"
+            (click)="closeAccountMenu($event); mobileMenuOpen.set(false)"
+            >Ver todas as ferramentas ↗</a
+          >
+          @for (category of toolCategories; track category) {
+            <section>
+              <h2>{{ category }}</h2>
+              @for (tool of tools; track tool.route) {
+                @if (tool.category === category) {
+                  <a
+                    [routerLink]="tool.route"
+                    (click)="closeAccountMenu($event); mobileMenuOpen.set(false)"
+                    >{{ tool.title }}</a
+                  >
+                }
+              }
+            </section>
+          }
+        </div>
+      </details>
+      <a routerLink="/planos" (click)="mobileMenuOpen.set(false)">Planos</a
+      ><a routerLink="/seguranca" (click)="mobileMenuOpen.set(false)">Segurança</a>
     </nav>
     <div class="header-account">
       @if (auth.user(); as user) {
@@ -79,21 +99,15 @@
 <footer class="site-footer container">
   <div class="footer-identity">
     <a class="brand" routerLink="/">feitoo<span aria-hidden="true">.</span></a>
-    <p>Tarefas com arquivos. Feitas.</p>
+    <p>Ferramentas online para resolver tarefas com arquivos.</p>
     <a href="mailto:suporte@feitoo.com.br">suporte@feitoo.com.br</a>
   </div>
   <div class="footer-groups">
     <nav aria-label="Ferramentas">
-      <h2>XML e documentos fiscais</h2>
-      <a routerLink="/xml-para-excel">XML para Excel</a
-      ><a routerLink="/produtos-dos-xmls">Produtos dos XMLs</a>
-      <a routerLink="/xml-para-pdf">XML para PDF</a>
-      <a routerLink="/organizar-xml">Organizador de XMLs</a>
-      <a routerLink="/analisar-xml">Analisador de XMLs</a>
-    </nav>
-    <nav aria-label="Documentos">
-      <h2>Documentos</h2>
-      <a routerLink="/docx-para-pdf">DOCX para PDF</a>
+      <h2>Ferramentas</h2>
+      @for (tool of tools; track tool.route) {
+        <a [routerLink]="tool.route">{{ tool.title }}</a>
+      }
     </nav>
     <nav aria-label="Produto">
       <h2>Produto</h2>

@@ -1,0 +1,43 @@
+.tool-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 0.5rem 0 1.4rem;
+}
+.tool-kicker span {
+  padding-inline: 0.5rem;
+}
+h1 {
+  font-size: clamp(1.65rem, 3.3vw, 2.6rem);
+  line-height: 1.14;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.7rem;
+}
+.tool-subtitle {
+  max-width: 65ch;
+  color: #526158;
+  font-size: 0.95rem;
+  margin: 0;
+}
+.tool-hero-tags {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0;
+  list-style: none;
+  flex-shrink: 0;
+}
+.tool-hero-tags li {
+  border: 1px solid var(--tool-line);
+  padding: 0.25rem 0.6rem;
+  font-size: 0.7rem;
+  border-radius: 4px;
+}
+@media (max-width: 767px) {
+  .tool-hero {
+    display: block;
+  }
+  .tool-hero-tags {
+    margin: 0.9rem 0 0;
+  }
+}

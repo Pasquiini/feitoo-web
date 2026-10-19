@@ -296,7 +296,7 @@ try {
   );
   await waitFor('document.body.innerText.includes("Você ainda pode processar")');
   assert.equal(
-    await evaluate('document.querySelectorAll("#organizer-criterion option").length'),
+    await evaluate('document.querySelectorAll("#organizer-criterion input[type=radio]").length'),
     5,
   );
   assert.equal(
@@ -314,7 +314,7 @@ try {
   assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true);
   await screenshot('organizer-mobile.png');
   await evaluate(`(() => {
-    const select = document.querySelector('#organizer-criterion'); select.value = 'year_month_supplier'; select.dispatchEvent(new Event('change', { bubbles: true }));
+    document.querySelector('#organizer-criterion input[value=year_month_supplier]').click();
     const input = document.querySelector('#xml-files'); const transfer = new DataTransfer();
     transfer.items.add(new File(['<NFe/>'], 'nota-sintetica.xml', { type: 'application/xml' }));
     transfer.items.add(new File(['<broken>'], 'arquivo-com-problema.xml', { type: 'application/xml' }));

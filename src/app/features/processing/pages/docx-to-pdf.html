@@ -1,190 +1,246 @@
 <nav aria-label="Breadcrumb" class="small mb-3">
   <a routerLink="/">Feitoo</a> / <span>DOCX para PDF</span>
 </nav>
-<header>
-  <p class="eyebrow">Documentos · DOCX → PDF</p>
-  <h1>Converter DOCX para PDF online</h1>
-  <p class="lead">
-    Transforme documentos do Word em PDF direto no navegador. Envie seus arquivos DOCX e baixe os
-    PDFs prontos em poucos passos.
-  </p>
-</header>
-<section class="document-tool" aria-label="Conversão de documentos" [attr.aria-busy]="busy()">
-  @if (!processing()) {
-    <div
-      class="dropzone"
-      [class.dragging]="dragging()"
-      (dragover)="$event.preventDefault(); dragging.set(true)"
-      (dragleave)="dragging.set(false)"
-      (drop)="drop($event)"
-    >
-      <label for="docx-files"><strong>Selecione ou arraste seus documentos DOCX</strong></label>
-      <input
-        id="docx-files"
-        type="file"
-        accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        multiple
+<app-tool-hero
+  path="/docx-para-pdf"
+  title="Converter DOCX para PDF online"
+  subtitle="Transforme documentos do Word em PDF direto no navegador. Envie seus arquivos DOCX e baixe os PDFs prontos em poucos passos."
+/>
+<app-tool-workspace name="DOCX para PDF" [count]="processing()?.files_count ?? files().length">
+  <ol class="flow-steps" aria-label="Etapas da conversão">
+    <li [class.current]="!processing()">1. Selecionar DOCX</li>
+    <li [class.current]="busy()">2. Converter</li>
+    <li [class.current]="finished()">3. Conferir e baixar</li>
+  </ol>
+  <section class="document-tool" aria-label="Conversão de documentos" [attr.aria-busy]="busy()">
+    @if (!processing()) {
+      <app-tool-uploader
+        class="dropzone"
+        format="DOCX"
+        heading="Arraste seus documentos DOCX aqui"
+        [count]="files().length"
         [disabled]="busy() || !config()"
-        (change)="select($any($event.target).files); $any($event.target).value = ''"
-      />
-      <p class="small">Somente .docx. A estrutura do documento é verificada no servidor.</p>
-    </div>
-    @if (config(); as cfg) {
-      <p class="small">
-        Até {{ cfg.max_processing_files }} documentos por lote ·
-        {{ cfg.max_file_size_kb / 1024 }} MB por documento ·
-        {{ (cfg.max_total_size_kb ?? 0) / 1024 }} MB no lote.
-      </p>
-      <p class="small">
-        {{ usage()?.plan === 'pro' ? 'Pro' : 'Free' }}: até {{ limits().per_processing }} por
-        processamento e {{ limits().remaining_today }} disponíveis hoje. Retenção
-        {{ cfg.ttl_minutes }} minutos no Free; o prazo da sua conta aparece no resultado.
-      </p>
-    }
-    <ul class="document-list">
-      @for (file of files(); track $index) {
-        <li>
-          <div>
-            <strong class="file-name">{{ file.name }}</strong
-            ><span class="small">{{ (file.size / 1024).toFixed(1) }} KB · Pronto para enviar</span>
-          </div>
-          <button
-            type="button"
-            class="btn btn-outline-secondary btn-sm"
-            [disabled]="busy()"
-            (click)="remove($index)"
-            [attr.aria-label]="'Remover ' + file.name"
-          >
-            Remover
-          </button>
-        </li>
-      }
-    </ul>
-    @for (issue of selectionErrors(); track $index) {
-      <p class="feedback feedback-error" role="alert">{{ issue }}</p>
-    }
-    <button
-      type="button"
-      class="btn btn-primary"
-      [disabled]="busy() || !files().length || !config()"
-      (click)="start()"
-    >
-      {{ busy() ? 'Enviando…' : 'Converter para PDF' }}
-    </button>
-    @if (authPrompt()) {
-      <div class="feedback feedback-info mt-3">
-        <p>Entre na sua conta para converter seus documentos.</p>
-        <div class="actions">
-          <button type="button" class="btn btn-primary" (click)="login()">Entrar com e-mail</button
-          ><button type="button" class="btn btn-outline-primary" (click)="login(true)">
-            Criar conta</button
-          ><button type="button" class="btn btn-outline-primary" (click)="google()">
-            Entrar com Google
-          </button>
-        </div>
-        <p class="small mt-3">
-          Se entrar com Google, selecione os documentos novamente ao voltar. Com e-mail, a seleção é
-          mantida nesta aba.
-        </p>
-      </div>
-    }
-  } @else if (processing(); as batch) {
-    @if (expired()) {
-      <h2>Arquivos expirados ou excluídos</h2>
-      <p>Selecione os documentos novamente para gerar novos PDFs.</p>
-    } @else {
-      <h2>
-        {{
-          batch.status === 'completed'
-            ? 'Conversão concluída'
-            : batch.status === 'failed'
-              ? 'Não foi possível concluir a conversão'
-              : 'Preparando seus PDFs'
-        }}
-      </h2>
-      <p role="status" aria-live="polite">
-        {{ batch.successful_files_count }} de {{ batch.files_count }} arquivos convertidos
-      </p>
-      @if (busy()) {
-        <progress [value]="progress()" max="100" aria-label="Progresso da conversão"></progress>
+        [class.dragging]="dragging()"
+        (dragover)="$event.preventDefault(); dragging.set(true)"
+        (dragleave)="dragging.set(false)"
+        (drop)="drop($event)"
+      >
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          [disabled]="busy() || !config()"
+          (click)="docxInput.click()"
+        >
+          {{ files().length ? 'Adicionar documentos' : 'Selecionar documentos' }}
+        </button>
+        <input
+          #docxInput
+          hidden
+          aria-label="Selecionar documentos DOCX"
+          id="docx-files"
+          type="file"
+          accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          multiple
+          [disabled]="busy() || !config()"
+          (change)="select($any($event.target).files); $any($event.target).value = ''"
+        />
+        <p class="small">Somente .docx. A estrutura do documento é verificada no servidor.</p>
+      </app-tool-uploader>
+      <app-tool-security />
+      @if (config(); as cfg) {
         <p class="small">
-          {{
-            batch.status === 'pending'
-              ? 'Enviando documentos'
-              : batch.status === 'queued'
-                ? 'Na fila de conversão'
-                : 'Convertendo documentos'
-          }}
+          Até {{ cfg.max_processing_files }} documentos por lote ·
+          {{ cfg.max_file_size_kb / 1024 }} MB por documento ·
+          {{ (cfg.max_total_size_kb ?? 0) / 1024 }} MB no lote.
         </p>
+        <p class="tool-limits">
+          {{ usage()?.plan === 'pro' ? 'Pro' : 'Free' }}: até {{ limits().per_processing }} por
+          processamento e {{ limits().remaining_today }} disponíveis hoje. Retenção
+          {{ cfg.ttl_minutes }} minutos no Free; o prazo da sua conta aparece no resultado.
+        </p>
+      }
+      @if (files().length) {
+        <div class="selection-summary">
+          <strong>{{ files().length }} documentos prontos para converter</strong
+          ><span class="small text-secondary">Confira sua seleção</span>
+        </div>
       }
       <ul class="document-list">
-        @for (file of results(); track file.id) {
+        @for (file of files(); track $index) {
           <li>
+            <span class="file-type" aria-hidden="true">DOCX</span>
             <div>
-              <strong class="file-name">{{ file.original_name }}</strong
-              ><span class="small">{{
-                file.status === 'completed'
-                  ? '✓ PDF pronto'
-                  : file.status === 'failed'
-                    ? '✕ ' + file.error_message
-                    : 'Aguardando conversão'
-              }}</span>
-            </div>
-            @if (file.status === 'completed') {
-              <button
-                type="button"
-                class="btn btn-primary btn-sm"
-                [disabled]="downloading()"
-                (click)="download(file)"
+              <strong class="file-name" [title]="file.name">{{ file.name }}</strong
+              ><span class="small"
+                >{{ (file.size / 1024).toFixed(1) }} KB ·
+                {{ busy() ? 'Enviando' : 'Pronto para converter' }}</span
               >
-                Baixar PDF
-              </button>
-            }
+            </div>
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm"
+              [disabled]="busy()"
+              (click)="remove($index)"
+              [attr.aria-label]="'Remover ' + file.name"
+            >
+              Remover
+            </button>
           </li>
         }
       </ul>
-      @if (
-        batch.status === 'completed' && batch.result.available && batch.successful_files_count > 1
-      ) {
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="downloading()"
-          (click)="download()"
-        >
-          Baixar todos (.zip)
-        </button>
+      @for (issue of selectionErrors(); track $index) {
+        <p class="feedback feedback-error" role="alert">{{ issue }}</p>
       }
-      <p class="small mt-3">
-        Disponível até {{ batch.expires_at | date: 'dd/MM/yyyy HH:mm' }}.
-        <a routerLink="/conta">Ver histórico</a>
-      </p>
-      @if (!busy()) {
-        <div class="actions">
-          <button class="btn btn-outline-secondary" type="button" (click)="refresh()">
-            Consultar novamente</button
-          ><button class="btn btn-outline-secondary" type="button" (click)="deleteFiles()">
-            Excluir arquivos
-          </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="busy() || !files().length || !config()"
+        (click)="start()"
+      >
+        {{ busy() ? 'Enviando…' : 'Converter para PDF' }}
+      </button>
+      @if (busy()) {
+        <app-tool-status state="uploading" />
+      }
+      @if (authPrompt()) {
+        <div class="feedback feedback-info mt-3">
+          <p>Entre na sua conta para converter seus documentos.</p>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" (click)="login()">
+              Entrar com e-mail</button
+            ><button type="button" class="btn btn-outline-primary" (click)="login(true)">
+              Criar conta</button
+            ><button type="button" class="btn btn-outline-primary" (click)="google()">
+              Entrar com Google
+            </button>
+          </div>
+          <p class="small mt-3">
+            Se entrar com Google, selecione os documentos novamente ao voltar. Com e-mail, a seleção
+            é mantida nesta aba.
+          </p>
         </div>
       }
+    } @else if (processing(); as batch) {
+      <div class="document-result">
+        <app-tool-status
+          [state]="
+            expired()
+              ? 'expired'
+              : batch.status === 'completed' && batch.failed_files_count > 0
+                ? 'partial'
+                : batch.status
+          "
+          [title]="!expired() && batch.status === 'completed' ? 'Conversão concluída' : ''"
+        />
+        @if (!expired()) {
+          <p role="status" aria-live="polite">
+            {{ batch.successful_files_count }} de {{ batch.files_count }} arquivos convertidos
+          </p>
+          @if (busy()) {
+            @if (batch.status === 'processing') {
+              <progress
+                [value]="progress()"
+                max="100"
+                aria-label="Progresso da conversão"
+              ></progress>
+            }
+            <p class="small">
+              {{
+                batch.status === 'pending'
+                  ? 'Enviando documentos'
+                  : batch.status === 'queued'
+                    ? 'Na fila de conversão'
+                    : 'Convertendo documentos'
+              }}
+            </p>
+          }
+          <ul class="document-list">
+            @for (file of results(); track file.id) {
+              <li [attr.data-status]="file.status">
+                <span class="file-type" aria-hidden="true">{{
+                  file.status === 'completed' ? 'PDF' : 'DOCX'
+                }}</span>
+                <div>
+                  <strong
+                    class="file-name"
+                    [title]="
+                      file.status === 'completed' ? pdfName(file.original_name) : file.original_name
+                    "
+                    >{{
+                      file.status === 'completed' ? pdfName(file.original_name) : file.original_name
+                    }}</strong
+                  ><span class="small">{{
+                    file.status === 'completed'
+                      ? '✓ PDF pronto'
+                      : file.status === 'failed'
+                        ? '✕ ' + file.error_message
+                        : file.status === 'processing'
+                          ? 'Convertendo documento…'
+                          : batch.status === 'queued'
+                            ? 'Na fila de conversão'
+                            : 'Aguardando conversão'
+                  }}</span>
+                </div>
+                @if (file.status === 'completed') {
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    [disabled]="downloading()"
+                    (click)="download(file)"
+                  >
+                    Baixar PDF
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+          @if (
+            batch.status === 'completed' &&
+            batch.result.available &&
+            batch.successful_files_count > 1
+          ) {
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="downloading()"
+              (click)="download()"
+            >
+              Baixar todos (.zip)
+            </button>
+          }
+          <p class="small mt-3">
+            Disponível até {{ batch.expires_at | date: 'dd/MM/yyyy HH:mm' }}.
+            <a routerLink="/conta">Ver histórico</a>
+          </p>
+          @if (!busy()) {
+            <div class="actions">
+              <button class="btn btn-outline-secondary" type="button" (click)="refresh()">
+                Consultar novamente</button
+              ><button class="btn btn-danger" type="button" (click)="deleteFiles()">
+                Excluir arquivos
+              </button>
+            </div>
+          }
+        }
+      </div>
+      @if (!busy()) {
+        <button type="button" class="btn btn-outline-primary mt-3" (click)="reset()">
+          Selecionar outros documentos
+        </button>
+      }
     }
-    @if (!busy()) {
-      <button type="button" class="btn btn-outline-primary mt-3" (click)="reset()">
-        Selecionar outros documentos
-      </button>
+    @if (error()) {
+      <p class="feedback feedback-error mt-3" role="alert">{{ error() }}</p>
     }
-  }
-  @if (error()) {
-    <p class="feedback feedback-error mt-3" role="alert">{{ error() }}</p>
-  }
-</section>
+  </section>
+</app-tool-workspace>
 <section class="public-section tool-explainer" aria-label="Sobre a ferramenta">
   <h2>Como converter DOCX para PDF</h2>
   <ol>
     <li>Selecione seus arquivos DOCX do Word.</li>
     <li>Entre na sua conta e clique em Converter para PDF.</li>
-    <li>Acompanhe a conversão e baixe cada PDF ou o ZIP do lote.</li>
+    <li>Aguarde a conversão dos documentos.</li>
+    <li>Baixe cada PDF ou o ZIP do lote.</li>
   </ol>
   <h2>O que a conversão preserva</h2>
   <p>
@@ -196,10 +252,10 @@
   </p>
   <h2>Posso converter vários documentos?</h2>
   <p>
-    Sim, respeitando os limites de tamanho, lote e dia exibidos acima. Cada documento tem seu
-    próprio resultado. Uma falha individual não impede o download dos outros PDFs. Apenas conversões
-    concluídas consomem seu limite Free ou Pro. A compra avulsa não está disponível para DOCX neste
-    MVP.
+    Sim. No Free, até 3 por processamento e 6 por dia. No Pro, até 20 por processamento e 100 por
+    dia. Confira também os limites de tamanho exibidos acima. Cada documento tem seu próprio
+    resultado. Uma falha individual não impede o download dos outros PDFs. Apenas conversões
+    concluídas consomem seu limite Free ou Pro.
   </p>
   <h2>Por que transformar Word em PDF?</h2>
   <p>
@@ -207,7 +263,7 @@
     destinatário tenha o Word. Converter Word em PDF não corrige o texto nem adiciona assinatura
     digital.
   </p>
-  <h2>Meus documentos ficam seguros?</h2>
+  <h2>Os documentos ficam armazenados?</h2>
   <p>
     Entradas e resultados ficam em armazenamento privado e temporário, com download autenticado.
     Você pode excluir os arquivos ao terminar. Consulte a
@@ -219,6 +275,11 @@
     São formatos diferentes do Word. Esta ferramenta aceita somente DOCX válido; trocar a extensão
     de um DOC, ZIP ou PDF não transforma o arquivo em DOCX.
   </p>
+  <h2>Preciso do Microsoft Word?</h2>
+  <p>
+    Não. Para converter um documento Word em PDF, basta enviar o DOCX pelo navegador, sem instalar o
+    Microsoft Word.
+  </p>
   <h2>Perguntas frequentes</h2>
   @for (faq of faqs; track faq.question) {
     <details>
@@ -227,3 +288,5 @@
     </details>
   }
 </section>
+
+<app-tool-related path="/docx-para-pdf" />

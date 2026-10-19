@@ -25,6 +25,26 @@ describe('App', () => {
     request.flush({ status: 'ok', service: 'feitoo-api' });
   }
 
+  it('shares the complete categorized catalog and restores dropdown keyboard focus', async () => {
+    const fixture = TestBed.createComponent(App);
+    respondToHealth();
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    const menu = element.querySelector<HTMLDetailsElement>('.tools-menu')!;
+    expect([...menu.querySelectorAll('section h2')].map((h) => h.textContent)).toEqual([
+      'XML e Fiscal',
+      'Documentos',
+    ]);
+    expect(menu.querySelectorAll('section a')).toHaveLength(6);
+    expect(menu.querySelector('a[href="/docx-para-pdf"]')).not.toBeNull();
+    menu.open = true;
+    menu
+      .querySelector('summary')!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(menu.open).toBe(false);
+  });
+
   it('should create the app', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
@@ -62,7 +82,15 @@ describe('App', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('#primary-nav a[href="/planos"]')?.textContent).toBe('Planos');
     expect(element.querySelector('.header-account a')?.getAttribute('href')).toBe('/login');
-    for (const href of ['/xml-para-excel', '/produtos-dos-xmls', '/planos', '/seguranca', '/privacidade', '/termos', '/conta'])
+    for (const href of [
+      '/xml-para-excel',
+      '/produtos-dos-xmls',
+      '/planos',
+      '/seguranca',
+      '/privacidade',
+      '/termos',
+      '/conta',
+    ])
       expect(element.querySelector(`footer a[href="${href}"]`)).not.toBeNull();
   });
 

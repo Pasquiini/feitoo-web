@@ -1,3 +1,11 @@
+import {
+  ToolHero,
+  ToolWorkspace,
+  ToolUploader,
+  ToolStatus,
+  ToolSecurityNote,
+  ToolRelated,
+} from './tool-experience';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -34,11 +42,24 @@ import { FileSelectionService } from '../services/file-selection.service';
 
 @Component({
   selector: 'app-docx-to-pdf',
-  imports: [RouterLink, DatePipe],
+  host: { class: 'tool-app' },
+  imports: [
+    ToolHero,
+    ToolWorkspace,
+    ToolUploader,
+    ToolStatus,
+    ToolSecurityNote,
+    ToolRelated,
+    RouterLink,
+    DatePipe,
+  ],
   templateUrl: './docx-to-pdf.html',
   styleUrl: './docx-to-pdf.scss',
 })
 export class DocxToPdfPage {
+  pdfName(name: string | null): string {
+    return (name ?? 'documento.docx').replace(/\.docx$/i, '.pdf');
+  }
   readonly auth = inject(AuthService);
   private readonly api = inject(ProcessingService);
   private readonly billing = inject(BillingService);

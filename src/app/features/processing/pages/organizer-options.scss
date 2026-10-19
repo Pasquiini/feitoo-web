@@ -1,0 +1,121 @@
+:host {
+  display: block;
+}
+.organizer-options {
+  min-inline-size: 0;
+  padding: 1.25rem 0;
+  margin: 1rem 0;
+  border: 0;
+  border-block: 1px solid #d8e1d9;
+}
+legend {
+  font-size: 1.1rem;
+  font-weight: 750;
+  padding-right: 0.75rem;
+}
+.option-hint {
+  font-size: 0.75rem;
+  color: #526158;
+  margin-bottom: 0.75rem;
+}
+.criterion-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+.criterion-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid #d8e1d9;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.criterion-option.selected {
+  background: #edf4e4;
+  border-color: #125d54;
+  box-shadow: inset 0 0 0 1px #125d54;
+}
+.criterion-option strong,
+.criterion-option small {
+  display: block;
+}
+.criterion-option strong {
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+.criterion-option small {
+  color: #526158;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+input {
+  accent-color: #125d54;
+  margin: 0.15rem 0.3rem 0 0;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #125d54;
+  outline-offset: 3px;
+}
+.folder-preview {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  background: #f1f4ed;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 6px;
+}
+.folder-preview > span {
+  font-size: 1.6rem;
+  color: #125d54;
+}
+.folder-preview p {
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.organizer-toggles {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+.organizer-toggles label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  font-size: 0.85rem;
+  padding: 0.4rem 0;
+}
+select {
+  width: 100%;
+  max-width: 100%;
+  font: inherit;
+  background: #fff;
+  padding: 0.7rem;
+  border: 1px solid #a7bbae;
+  border-radius: 5px;
+}
+fieldset:disabled .criterion-option {
+  opacity: 0.65;
+  cursor: default;
+}
+@media (max-width: 767px) {
+  .criterion-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .criterion-grid {
+    grid-template-columns: 1fr;
+  }
+  .criterion-option {
+    padding: 0.85rem;
+  }
+}

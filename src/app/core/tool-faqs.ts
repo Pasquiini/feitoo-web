@@ -36,6 +36,7 @@ const common: readonly ToolFaq[] = [
 ];
 
 export const toolFaqs: Record<
+  | '/gerador-de-orcamentos'
   | '/docx-para-pdf'
   | '/xml-para-excel'
   | '/produtos-dos-xmls'
@@ -44,6 +45,38 @@ export const toolFaqs: Record<
   | '/analisar-xml',
   readonly ToolFaq[]
 > = {
+  '/gerador-de-orcamentos': [
+    {
+      question: 'O gerador de orçamentos é grátis?',
+      answer:
+        'Sim. Com uma conta gratuita, você pode concluir um orçamento por dia, com renovação à meia-noite no horário de São Paulo. Os modelos Clássico e Moderno estão incluídos.',
+    },
+    {
+      question: 'Preciso de cadastro para gerar e baixar o PDF?',
+      answer:
+        'Sim. Você pode preencher o orçamento antes de entrar. Para gerar e baixar o PDF, entre ou crie uma conta. O rascunho é recuperado neste navegador quando o armazenamento local está disponível.',
+    },
+    {
+      question: 'Posso colocar meu logotipo e aplicar descontos?',
+      answer:
+        'Sim. Adicione um logotipo PNG ou JPEG de até 2 MB e 4 milhões de pixels. Os itens aceitam quantidades fracionadas e o desconto pode ser em reais ou percentual. Confira o resumo antes de confirmar a geração.',
+    },
+    {
+      question: 'Por quanto tempo meus documentos ficam disponíveis?',
+      answer:
+        'O PDF fica disponível por duas horas após a conclusão. O rascunho expira 24 horas após a última edição. O acesso é privado, e os arquivos expirados são removidos pela rotina de limpeza. Baixe o PDF para guardar sua cópia.',
+    },
+    {
+      question: 'Como funcionam o Pro e os créditos de orçamentos?',
+      answer:
+        'O Feitoo Pro inclui 100 gerações por período da assinatura, com saldo e fim do período exibidos na conta. Essa franquia tem prioridade. Créditos avulsos são exclusivos para orçamentos e só são usados por escolha explícita. A compra de cinco créditos por R$ 9,90 depende da disponibilidade do checkout.',
+    },
+    {
+      question: 'Uma falha na geração consome minha franquia?',
+      answer:
+        'A geração reserva uma unidade, e o consumo só é confirmado quando o PDF é concluído. Em uma falha definitiva ou expiração do processamento, a reserva é liberada. Tentativas de recuperação mantêm a mesma emissão e não geram consumo duplicado.',
+    },
+  ],
   '/docx-para-pdf': [
     {
       question: 'Como converter DOCX para PDF?',

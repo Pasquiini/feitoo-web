@@ -3,6 +3,7 @@ import { ComponentFixture } from '@angular/core/testing';
 import { QuotationPage } from './quotation-page';
 import { QuotationLogoLoader } from '../services/quotation-logo';
 import { validDate } from '../services/quotation-form';
+import { provideRouter } from '@angular/router';
 
 describe('QuotationPage editor in memory', () => {
   let fixture: ComponentFixture<QuotationPage>;
@@ -28,7 +29,7 @@ describe('QuotationPage editor in memory', () => {
     originalRevoke = Object.getOwnPropertyDescriptor(URL, 'revokeObjectURL');
     Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
     TestBed.configureTestingModule({
-      providers: [{ provide: QuotationLogoLoader, useValue: loader }],
+      providers: [provideRouter([]), { provide: QuotationLogoLoader, useValue: loader }],
     });
     fixture = TestBed.createComponent(QuotationPage);
     page = fixture.componentInstance;
@@ -37,6 +38,7 @@ describe('QuotationPage editor in memory', () => {
   });
   afterEach(() => {
     fixture.destroy();
+    vi.restoreAllMocks();
     if (originalRevoke) Object.defineProperty(URL, 'revokeObjectURL', originalRevoke);
     else Reflect.deleteProperty(URL, 'revokeObjectURL');
   });
@@ -66,6 +68,92 @@ describe('QuotationPage editor in memory', () => {
     expect(validDate('2024-02-29')).toBe(true);
     page.form.controls.valid_until.setValue('2026-11-04');
     expect(page.ready()).toBe(true);
+  });
+  it('formats Brazilian contacts while preserving alphanumeric documents', () => {
+    const details = element().querySelector<HTMLDetailsElement>('app-quotation-party details')!;
+    details.open = true;
+    const set = (id: string, value: string) => {
+      const input = element().querySelector<HTMLInputElement>(id)!;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+      return input;
+    };
+    set('#issuer-document', '12345678000199');
+    expect(page.value().issuer.document).toBe('12.345.678/0001-99');
+    set('#issuer-document', '12345678901');
+    expect(page.value().issuer.document).toBe('123.456.789-01');
+    set('#issuer-phone', '11987654321');
+    expect(page.value().issuer.phone).toBe('(11) 98765-4321');
+    set('#issuer-phone', '+551133334444');
+    expect(page.value().issuer.phone).toBe('+55 (11) 3333-4444');
+    set('#issuer-document', 'AB123456000199');
+    expect(page.value().issuer.document).toBe('AB123456000199');
+  });
+  it('requires a review before reserving a generation, including double clicks and cancellation', async () => {
+    fill();
+    vi.spyOn(page.auth, 'user').mockReturnValue({ id: 7 } as NonNullable<
+      ReturnType<typeof page.auth.user>
+    >);
+    const refresh = vi.spyOn(page.generation, 'refresh').mockResolvedValue();
+    const generate = vi.spyOn(page.generation, 'generate').mockResolvedValue();
+    page.generation.entitlements.set({
+      source: 'free',
+      policy: 'explicit_source',
+      daily_limit: 1,
+      remaining: 1,
+      consumed: 0,
+      reserved: 0,
+      enabled: true,
+      resets_at: '',
+      active_processing: null,
+      latest_processing: null,
+    });
+    await Promise.all([page.generate(), page.generate()]);
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(generate).not.toHaveBeenCalled();
+    expect(page.confirmation()?.source).toBe('free');
+    fixture.detectChanges();
+    expect(element().querySelector('#generation-confirmation')?.textContent).toContain('300,00');
+    page.cancelGeneration();
+    expect(generate).not.toHaveBeenCalled();
+    await page.generate();
+    page.form.controls.number.setValue('REVISED');
+    expect(page.confirmation()).toBeNull();
+    await page.confirmGeneration();
+    expect(generate).not.toHaveBeenCalled();
+    await page.generate();
+    await page.confirmGeneration();
+    await page.confirmGeneration();
+    expect(generate).toHaveBeenCalledOnce();
+  });
+  it('does not generate when the flag is off or the account changes after review', async () => {
+    fill();
+    const user = vi
+      .spyOn(page.auth, 'user')
+      .mockReturnValue({ id: 7 } as NonNullable<ReturnType<typeof page.auth.user>>);
+    vi.spyOn(page.generation, 'refresh').mockResolvedValue();
+    const generate = vi.spyOn(page.generation, 'generate').mockResolvedValue();
+    page.generation.entitlements.set({
+      source: 'free',
+      policy: 'explicit_source',
+      daily_limit: 1,
+      remaining: 1,
+      consumed: 0,
+      reserved: 0,
+      enabled: false,
+      resets_at: '',
+      active_processing: null,
+      latest_processing: null,
+    });
+    await page.generate();
+    expect(page.confirmation()).toBeNull();
+    page.generation.entitlements.update((q) => ({ ...q!, enabled: true }));
+    await page.generate();
+    expect(page.confirmation()).not.toBeNull();
+    user.mockReturnValue({ id: 8 } as NonNullable<ReturnType<typeof page.auth.user>>);
+    await page.confirmGeneration();
+    expect(generate).not.toHaveBeenCalled();
   });
   it('adds/removes items without removing the last and enforces 100', () => {
     page.removeItem(0);

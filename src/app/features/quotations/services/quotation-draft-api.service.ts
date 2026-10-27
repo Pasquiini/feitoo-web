@@ -6,6 +6,16 @@ import { QuotationEditorValue } from '../models/quotation';
 import { RemoteDraft } from './quotation-local.store';
 import { AuthService } from '../../auth/services/auth.service';
 
+export interface QuotationDraftSummary {
+  uuid: string;
+  revision: number;
+  number: string;
+  customer_name: string;
+  template_id: 'classic' | 'modern';
+  updated_at: string;
+  expires_at: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class QuotationDraftApi {
   private readonly http = inject(HttpClient);
@@ -27,6 +37,23 @@ export class QuotationDraftApi {
         this.http.get<{ data: RemoteDraft | null }>(this.base, { headers: this.headers() }),
       )
     ).data;
+  }
+  async list(
+    page = 1,
+  ): Promise<{
+    data: QuotationDraftSummary[];
+    meta: { current_page: number; last_page: number; total: number };
+  }> {
+    return firstValueFrom(
+      this.http.get<{
+        data: QuotationDraftSummary[];
+        meta: { current_page: number; last_page: number; total: number };
+      }>(this.base, {
+        headers: this.headers(),
+        params: { page },
+        timeout: 15000,
+      }),
+    );
   }
   async read(uuid: string): Promise<RemoteDraft> {
     return (

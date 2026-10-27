@@ -36,12 +36,16 @@ describe('Home tool discovery', () => {
       '/organizar-xml',
       '/analisar-xml',
       '/docx-para-pdf',
+      '/gerador-de-orcamentos',
     ]);
     expect(element.querySelectorAll('.workflow-grid li')).toHaveLength(3);
     expect(element.querySelectorAll('.plan-card')).toHaveLength(3);
     expect(element.querySelector('.plan-pro')?.textContent).toContain('R$ 29,90');
     expect(element.querySelector('.security-block a')?.getAttribute('href')).toBe('/seguranca');
-    expect(element.querySelectorAll('.final-links a')).toHaveLength(6);
+    expect(element.querySelectorAll('.final-links a')).toHaveLength(7);
+    const quotation = element.querySelector('app-tool-card a[href="/gerador-de-orcamentos"]');
+    expect(quotation?.textContent).toContain('Grátis para começar');
+    expect(quotation?.textContent).toContain('Criar orçamento');
   });
   it('filters through the input using names, descriptions and keywords, ignoring accents and case', () => {
     const { fixture, element } = render();
@@ -50,15 +54,17 @@ describe('Home tool discovery', () => {
       ['excel', 4],
       ['word', 1],
       ['docx', 1],
-      ['pdf', 2],
+      ['pdf', 3],
+      ['orçamento', 1],
+      ['orcamento', 1],
       ['xml', 5],
-      ['produto', 2],
+      ['produto', 3],
       ['nota', 5],
       ['nfe', 5],
       ['  CONVERSÃO  ', 1],
       ['produto ncm', 1],
       ['inexistente', 0],
-      ['', 6],
+      ['', 7],
     ] as const) {
       input.value = query;
       input.dispatchEvent(new Event('input'));
@@ -77,6 +83,6 @@ describe('Home tool discovery', () => {
     element.querySelector<HTMLButtonElement>('.search-field button')!.click();
     fixture.detectChanges();
     expect(fixture.componentInstance.query()).toBe('');
-    expect(element.querySelectorAll('.home-tool-card')).toHaveLength(6);
+    expect(element.querySelectorAll('.home-tool-card')).toHaveLength(7);
   });
 });

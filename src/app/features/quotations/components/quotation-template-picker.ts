@@ -125,7 +125,7 @@ import { QuotationTemplate } from '../models/quotation';
 export class QuotationTemplatePicker {
   readonly control = input.required<FormControl<QuotationTemplate>>();
   readonly options = [
-    { value: 'modern', title: 'Moderno', description: 'Verde e marcante' },
-    { value: 'classic', title: 'Clássico', description: 'Discreto e elegante' },
+    { value: 'modern', title: 'Moderno', description: 'Identidade visual em destaque' },
+    { value: 'classic', title: 'Clássico', description: 'Formal e discreto' },
   ] as const;
 }

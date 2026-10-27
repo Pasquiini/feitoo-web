@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 export const paths = [
   '/',
+  '/gerador-de-orcamentos',
   '/docx-para-pdf',
   '/xml-para-excel',
   '/xml-para-pdf',
@@ -134,6 +135,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       }
       if (path === '/') assert.ok(graph.some((node) => node['@type'] === 'WebSite'));
       if (
+        path === '/gerador-de-orcamentos' ||
         path === '/docx-para-pdf' ||
         path === '/xml-para-excel' ||
         path === '/produtos-dos-xmls' ||

@@ -233,6 +233,11 @@ try {
     await evaluate(
       'document.querySelector(".generate-pdf").click(); document.querySelector(".generate-pdf").click()',
     );
+    await waitFor('!!document.querySelector(".confirm-generation")');
+    assert.equal((await fixture('inspect')).generations, 0, 'Review must not reserve a generation');
+    await evaluate(
+      'document.querySelector(".confirm-generation").click(); document.querySelector(".confirm-generation")?.click()',
+    );
     await waitFor(
       'document.querySelector(".quotation-generation").textContent.includes("na fila")',
     );
@@ -301,8 +306,63 @@ try {
     );
     assert.equal(await evaluate('!!document.querySelector(".download-quotation")'), false);
     assert.equal((await fixture('inspect')).consumed, 1);
+    await click('Consultar rascunhos salvos');
+    await waitFor('document.querySelector(".saved-drafts-list")?.textContent.includes("E2E-001")');
+    await click('Novo orçamento');
+    await waitFor(
+      'document.querySelector("#issuer-name").value === "" && !document.querySelector("form[inert]")',
+    );
+    await field('#quotation-number', 'E2E-DRAFT-002');
+    await waitFor('document.querySelector(".draft-status").textContent.includes("Rascunho salvo")');
+    await click('Consultar rascunhos salvos');
+    await waitFor('document.querySelectorAll(".saved-drafts-list li").length === 2');
+    await evaluate(
+      '[...document.querySelectorAll(".saved-drafts-list li")].find(row=>row.textContent.includes("E2E-001")).querySelector("button").click()',
+    );
+    await waitFor(
+      'document.querySelector("#quotation-number").value === "E2E-001" && !document.querySelector("form[inert]")',
+    );
     assert.equal(
-      requests.some((r) => /purchase|checkout|stripe|\/start|\/files$/.test(r.path)),
+      await evaluate('document.querySelector("#issuer-name").value'),
+      'Alterado após a emissão',
+    );
+    for (const width of [390, 1440]) {
+      await command('Emulation.setDeviceMetricsOverride', {
+        width,
+        height: 1000,
+        deviceScaleFactor: 1,
+        mobile: width < 768,
+      });
+      await evaluate(
+        `document.querySelector('.quotation-workbench').scrollIntoView({block:'start'})`,
+      );
+      const screenshot = await command('Page.captureScreenshot', {
+        format: 'png',
+        captureBeyondViewport: false,
+      });
+      await writeFile(
+        resolve(artifacts, `launch-${width}.png`),
+        Buffer.from(screenshot.data, 'base64'),
+      );
+    }
+    await click('Ver meu histórico de orçamentos e arquivos');
+    await waitFor(
+      `[...document.querySelectorAll('.history-row a')].some(a=>a.textContent.trim()==='Consultar orçamento')`,
+    );
+    await click('Consultar orçamento');
+    await ready();
+    await waitFor(
+      'document.querySelector(".quotation-generation").textContent.includes("arquivo expirou")',
+    );
+    assert.equal(
+      (await fixture('inspect')).generations,
+      1,
+      'History navigation and draft management cannot issue a PDF',
+    );
+    assert.equal(
+      requests.some(
+        (r) => r.method !== 'GET' && /purchase|checkout|stripe|\/start|\/files$/.test(r.path),
+      ),
       false,
     );
     assert.ok(
@@ -321,6 +381,9 @@ try {
           realSubprocessPdf: true,
           keyboardActivation: true,
           labelledGenerationAndLiveStatus: true,
+          generationConfirmation: true,
+          multipleDraftsAndRecovery: true,
+          sharedAccountHistory: true,
           pdfBytes: pdf.length,
           repeatedDownloadIdentical: true,
           downloadWindowSeconds: 7200,

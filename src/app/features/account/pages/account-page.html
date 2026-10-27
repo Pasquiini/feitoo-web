@@ -477,6 +477,14 @@
             }
           </div>
           <div class="history-actions d-flex flex-wrap align-items-center gap-2">
+            @if (batch.tool === 'quotation-generator') {
+              <a
+                class="btn btn-outline-primary btn-sm"
+                routerLink="/gerador-de-orcamentos"
+                [queryParams]="{ generation: batch.id }"
+                >Consultar orçamento</a
+              >
+            }
             @if (available(batch)) {
               <button
                 type="button"
@@ -537,7 +545,7 @@
             >
               <h4 [id]="'confirm-' + batch.id">Excluir arquivos deste processamento?</h4>
               <p class="small">
-                Os XMLs, o Excel e o preview serão excluídos. Esta ação não pode ser desfeita. O
+                Os arquivos deste processamento serão excluídos. Esta ação não pode ser desfeita. O
                 registro permanece no histórico.
               </p>
               <div class="d-flex flex-wrap gap-2">

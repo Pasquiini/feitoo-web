@@ -83,12 +83,12 @@ import {
             <button
               type="button"
               class="btn btn-primary"
-              [disabled]="busy() || !q.offer.available"
+              [disabled]="busy() || retryBlocked() || !q.offer.available || checkoutUnavailable()"
               (click)="buy.emit()"
             >
               Comprar cinco créditos por R$ 9,90
             </button>
-            @if (!q.offer.available) {
+            @if (!q.offer.available || checkoutUnavailable()) {
               <p>A compra de créditos está temporariamente indisponível.</p>
             }
             @if (!q.pro?.active) {
@@ -159,6 +159,7 @@ export class QuotationCommercePanel {
   readonly ownQuota = signal<QuotationEntitlements | null>(null);
   readonly orders = signal<QuotationOrder[]>([]);
   readonly busy = signal(false);
+  readonly checkoutUnavailable = signal(false);
   readonly retryBlocked = signal(false);
   readonly message = signal('');
   readonly error = signal('');
@@ -190,6 +191,7 @@ export class QuotationCommercePanel {
       this.message.set('');
       this.error.set('');
       this.busy.set(false);
+      this.checkoutUnavailable.set(false);
       if (this.ready && owner) void this.initialize();
     });
     afterNextRender(() => {
@@ -226,7 +228,14 @@ export class QuotationCommercePanel {
     }
   }
   async checkout(preserve: () => Promise<boolean>): Promise<void> {
-    if (this.busy()) return;
+    if (this.busy() || this.retryBlocked() || this.checkoutUnavailable()) return;
+    if (!this.quota()?.offer?.available) {
+      this.checkoutUnavailable.set(true);
+      this.error.set(
+        'A compra de créditos está temporariamente indisponível. Você pode continuar usando sua franquia gratuita ou Pro.',
+      );
+      return;
+    }
     this.busy.set(true);
     this.error.set('');
     const epoch = this.epoch;
@@ -250,11 +259,20 @@ export class QuotationCommercePanel {
       if (!order.checkout_url || !/^https:\/\/checkout\.stripe\.com\//.test(order.checkout_url))
         throw new Error('checkout');
       window.location.assign(order.checkout_url);
-    } catch {
-      if (this.valid(epoch))
-        this.error.set(
-          'Não foi possível abrir o Checkout. Seu rascunho foi preservado; tente novamente.',
-        );
+    } catch (error) {
+      if (this.valid(epoch)) {
+        if (error instanceof HttpErrorResponse && error.status === 503) {
+          this.checkoutUnavailable.set(true);
+          this.error.set(
+            'A compra de créditos está temporariamente indisponível. Seu rascunho foi preservado; as gerações gratuitas e Pro continuam disponíveis conforme seu saldo.',
+          );
+        } else if (error instanceof HttpErrorResponse && [401, 419].includes(error.status)) {
+          this.error.set('Entre novamente antes de comprar créditos. Seu rascunho foi preservado.');
+        } else
+          this.error.set(
+            'Não foi possível abrir o Checkout. Seu rascunho foi preservado; tente novamente.',
+          );
+      }
     } finally {
       if (this.valid(epoch)) this.busy.set(false);
     }

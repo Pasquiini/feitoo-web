@@ -8,7 +8,12 @@
       <span>{{ tool().inputLabel }}</span
       ><span class="card-arrow">→</span><strong>{{ tool().outputLabel }}</strong>
     </div>
-    <h3>{{ tool().title }}</h3>
+    <h3>
+      @if (tool().icon === 'pdf') {
+        <app-home-icon name="pdf" />
+      }
+      {{ tool().title }}
+    </h3>
     <p class="tool-description">{{ tool().description }}</p>
     <ul class="tool-tags" aria-label="Recursos">
       @for (tag of tool().tags; track tag) {

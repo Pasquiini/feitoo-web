@@ -96,7 +96,7 @@
   @for (tool of featured; track tool.route; let first = $first) {
     <article [class.feature-document]="first">
       <span class="feature-label">{{
-        first ? 'Novo · Documentos' : 'Para sua rotina fiscal'
+        first ? 'Novo · Documentos' : 'Grátis para começar · Negócios'
       }}</span>
       <h2>{{ tool.inputLabel }} → {{ tool.outputLabel }}</h2>
       <p>
@@ -111,7 +111,7 @@
         [class.btn-primary]="!first"
         [class.btn-light]="first"
         [routerLink]="tool.route"
-        >{{ first ? 'Converter DOCX' : 'Converter XML' }} <span aria-hidden="true">↗</span></a
+        >{{ tool.cta }} <span aria-hidden="true">↗</span></a
       >
     </article>
   }

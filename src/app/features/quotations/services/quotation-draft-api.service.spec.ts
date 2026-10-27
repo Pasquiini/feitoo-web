@@ -41,6 +41,17 @@ describe('private quotation draft API contract', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('lists the requested page with account context without replacing the latest contract', async () => {
+    const response = { data: [], meta: { current_page: 2, last_page: 2, total: 11 } };
+    const result = api.list(2);
+    const request = http.expectOne(base + '?page=2');
+    expect(request.request.headers.get('X-Quotation-Owner')).toBe('7');
+    request.flush(response);
+    expect(await result).toEqual(response);
+    const latest = api.latest();
+    http.expectOne(base).flush({ data: draft });
+    expect(await latest).toEqual(draft);
+  });
   it('imports with CSRF, an idempotency key and the expected account context', async () => {
     const result = api.create(payload, 'opaque-import-key');
     http.expectNone(base);

@@ -134,6 +134,41 @@ describe('quotation draft coordination', () => {
     await settle();
   };
 
+  it('opens another draft after saving and gives each document its own generation key', async () => {
+    user.set({ id: 1 });
+    const first = local(1);
+    first.remote = remote(3);
+    first.dirty = false;
+    rows.set(first.id, first);
+    api.read.mockResolvedValue(remote(3));
+    await start();
+    const context = await coordinator.generationContext('free');
+    const second = {
+      ...remote(3),
+      uuid: 'remote-2',
+      payload: { ...view.payload, number: 'SECOND' },
+    };
+    api.read.mockResolvedValue(second);
+    expect(await coordinator.open(second.uuid)).toBe(true);
+    expect(view.payload.number).toBe('SECOND');
+    const next = await coordinator.generationContext('free');
+    expect(next?.uuid).toBe('remote-2');
+    expect(next?.key).not.toBe(context?.key);
+    expect(rows.size).toBe(2);
+    expect(api.remove).not.toHaveBeenCalled();
+  });
+  it('creates an empty new draft while keeping the previous one intact', async () => {
+    rows.set('local-1', local());
+    await start();
+    view.payload.number = 'PREVIOUS';
+    coordinator.changed();
+    await coordinator.newDraft();
+    expect(rows.size).toBe(2);
+    expect(rows.get('local-1')?.payload.number).toBe('PREVIOUS');
+    expect(view.payload.number).not.toBe('PREVIOUS');
+    expect(api.remove).not.toHaveBeenCalled();
+  });
+
   it('restores partial values and logo without login and never calls the API', async () => {
     view.payload.issuer.name = 'Fictício';
     view.payload.items[0].quantity = '0,';

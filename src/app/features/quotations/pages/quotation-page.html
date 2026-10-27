@@ -1,18 +1,39 @@
 <header class="quotation-hero">
-  <p class="quotation-kicker">NEGÓCIOS <span aria-hidden="true">/</span> EDITOR EM PRÉVIA</p>
+  <p class="quotation-kicker">NEGÓCIOS <span aria-hidden="true">/</span> DO SEU JEITO</p>
   <div class="quotation-title-row">
     <div>
-      <h1>Gerador de <span>orçamentos.</span></h1>
-      <p>Seu próximo trabalho, bem apresentado. Preencha os dados e acompanhe a prévia.</p>
+      <h1>Gerador de <span>Orçamentos</span></h1>
+      <p>Crie orçamentos profissionais em minutos, sem planilhas e sem complicação.</p>
     </div>
-    <span class="quotation-badge">Prévia do editor</span>
+    <span class="quotation-badge">Grátis para começar</span>
   </div>
 </header>
 <p class="editor-notice">
-  <span aria-hidden="true">↳</span> Gere um orçamento em PDF por dia gratuitamente. O arquivo fica
-  disponível por duas horas após a conclusão.
+  <span aria-hidden="true">↳</span> Na conta gratuita, gere um orçamento em PDF por dia. O arquivo
+  fica disponível por duas horas após a conclusão.
 </p>
-<div class="draft-status" aria-label="Rascunho temporário">
+@if (auth.user()) {
+  <p class="quota-summary" role="status">
+    @if (generation.entitlements(); as q) {
+      @if (!q.enabled) {
+        A geração está temporariamente indisponível. Seu rascunho pode ser salvo normalmente.
+      } @else if (q.pro?.active) {
+        Feitoo Pro · {{ q.pro?.remaining }} de {{ q.pro?.limit }} gerações disponíveis neste
+        período.
+      } @else {
+        Hoje · {{ q.remaining }} de {{ q.daily_limit }} geração gratuita disponível.
+      }
+      Créditos disponíveis: {{ q.credits?.available ?? 0 }}.
+    } @else {
+      Consultando a disponibilidade e a franquia da sua conta…
+    }
+  </p>
+}
+<div
+  class="draft-status"
+  aria-label="Rascunho temporário"
+  [attr.inert]="confirmation() || preparing() || generation.sending() ? '' : null"
+>
   <p role="status">{{ draft.loading() ? 'Recuperando rascunho...' : draft.message() }}</p>
   @if (draft.warning()) {
     <p role="alert">{{ draft.warning() }}</p>
@@ -55,6 +76,9 @@
     </button>
   }
 </div>
+<app-quotation-drafts
+  [attr.inert]="confirmation() || preparing() || generation.sending() ? '' : null"
+/>
 <div class="mobile-view" role="group" aria-label="Modo de trabalho">
   <button
     type="button"
@@ -84,7 +108,9 @@
     <form
       [formGroup]="form"
       (ngSubmit)="validatePreview()"
-      [attr.inert]="draft.loading() || generation.sending() ? '' : null"
+      [attr.inert]="
+        draft.loading() || generation.sending() || preparing() || confirmation() ? '' : null
+      "
       novalidate
       autocomplete="off"
     >
@@ -317,6 +343,9 @@
           type="button"
           [disabled]="
             generation.sending() ||
+            preparing() ||
+            !!confirmation() ||
+            generation.entitlements()?.enabled === false ||
             generation.pending() ||
             generation.retryBlocked() ||
             logoBusy() ||
@@ -326,13 +355,15 @@
           aria-describedby="pdf-policy"
         >
           {{
-            generation.sending()
-              ? 'Preparando emissão...'
-              : generation.pending()
-                ? 'Geração em andamento...'
-                : generation.selectedSource() === 'credit'
-                  ? 'Gerar PDF usando 1 crédito pago'
-                  : 'Gerar orçamento em PDF'
+            preparing()
+              ? 'Consultando disponibilidade...'
+              : generation.sending()
+                ? 'Preparando emissão...'
+                : generation.pending()
+                  ? 'Geração em andamento...'
+                  : generation.selectedSource() === 'credit'
+                    ? 'Gerar PDF usando 1 crédito pago'
+                    : 'Gerar orçamento em PDF'
           }}
           <span aria-hidden="true">↗</span>
         </button>
@@ -357,6 +388,49 @@
     />
   </aside>
 </div>
+@if (confirmation(); as confirmation) {
+  <section
+    class="generation-confirmation"
+    id="generation-confirmation"
+    tabindex="-1"
+    aria-labelledby="confirmation-title"
+  >
+    <h2 id="confirmation-title">Confirmar geração do PDF</h2>
+    <p>
+      Orçamento {{ value().number }} para {{ value().customer.name }} ·
+      {{ value().items.length }} item(ns) ·
+      {{ value().template_id === 'classic' ? 'Clássico' : 'Moderno' }}.
+    </p>
+    <p class="confirmation-total">Total: R$ {{ format(calculation().total) }}</p>
+    <p>
+      @switch (confirmation.source) {
+        @case ('credit') {
+          Será reservado 1 crédito pago do seu saldo.
+        }
+        @case ('pro') {
+          Será reservada 1 geração da franquia Pro deste período.
+        }
+        @default {
+          Será reservada 1 geração gratuita de hoje.
+        }
+      }
+      O consumo só é confirmado após a conclusão do PDF. O download ficará disponível por duas
+      horas.
+    </p>
+    <div class="confirmation-actions">
+      <button
+        class="btn btn-primary confirm-generation"
+        type="button"
+        (click)="confirmGeneration()"
+      >
+        Confirmar e gerar PDF
+      </button>
+      <button class="btn btn-secondary" type="button" (click)="cancelGeneration()">
+        Voltar à edição
+      </button>
+    </div>
+  </section>
+}
 <section
   class="quotation-generation"
   aria-labelledby="generation-title"
@@ -379,6 +453,7 @@
     }
   }
   <app-quotation-commerce
+    [attr.inert]="confirmation() ? '' : null"
     [editor]="true"
     [entitlement]="generation.entitlements()"
     [source]="generation.selectedSource()"
@@ -388,9 +463,21 @@
   />
   @if (generation.processing(); as processing) {
     <p>
+      Emissão solicitada em {{ processing.created_at | date: 'dd/MM/yyyy HH:mm' : '-0300' }} (São
+      Paulo).
+    </p>
+    <p>
       O PDF usa os dados confirmados na emissão. Alterações posteriores no rascunho não modificam
       esse arquivo.
     </p>
+    <button
+      class="btn btn-secondary"
+      type="button"
+      [disabled]="draft.loading() || !!confirmation() || generation.sending()"
+      (click)="draft.open(processing.quotation.draft_uuid)"
+    >
+      Editar rascunho desta emissão
+    </button>
     @if (processing.result.available) {
       <p>
         Disponível até {{ processing.expires_at | date: 'dd/MM/yyyy HH:mm' : '-0300' }} (horário de
@@ -419,7 +506,9 @@
       <button
         class="btn btn-secondary"
         type="button"
-        [disabled]="generation.sending() || generation.retryBlocked()"
+        [disabled]="
+          generation.sending() || generation.retryBlocked() || !!confirmation() || preparing()
+        "
         (click)="generation.retry()"
       >
         Tentar novamente sem novo consumo
@@ -435,5 +524,46 @@
     >
       Consultar franquia e última emissão
     </button>
+  }
+  @if (auth.user()) {
+    <p>
+      <a routerLink="/conta" fragment="history-title">Ver meu histórico de orçamentos e arquivos</a>
+    </p>
+  }
+</section>
+<section class="tool-explainer quotation-explainer" aria-labelledby="quotation-how-title">
+  <h2 id="quotation-how-title">Como criar um orçamento profissional em PDF</h2>
+  <p>
+    Reúna os dados do seu negócio, os contatos do cliente e os produtos ou serviços que deseja
+    oferecer. O Feitoo calcula os valores enquanto você preenche.
+  </p>
+  <ol>
+    <li>Informe a identificação, a data e a validade do orçamento.</li>
+    <li>Preencha os dados do prestador e do cliente. Contatos e documentos são opcionais.</li>
+    <li>
+      Adicione itens, quantidades e preços em reais. Se precisar, aplique um desconto e descreva as
+      condições de pagamento.
+    </li>
+    <li>Escolha Clássico ou Moderno, adicione seu logotipo e confira o resumo.</li>
+    <li>
+      Entre ou crie uma conta, confirme a franquia utilizada e gere seu PDF. Baixe a cópia para
+      enviar ao cliente.
+    </li>
+  </ol>
+  <p>
+    Use o modelo Clássico para uma apresentação formal e discreta, ou o Moderno para destacar sua
+    identidade visual. Ambos incluem os mesmos dados e estão disponíveis no gratuito.
+  </p>
+  <p>
+    Seu orçamento e seu logotipo têm acesso privado. Consulte os prazos no editor e saiba mais sobre
+    a <a routerLink="/seguranca">segurança dos seus arquivos</a>. O documento é comercial, sem valor
+    fiscal.
+  </p>
+  <h2>Dúvidas sobre o Gerador de Orçamentos</h2>
+  @for (faq of faqs; track faq.question) {
+    <details>
+      <summary>{{ faq.question }}</summary>
+      <p>{{ faq.answer }}</p>
+    </details>
   }
 </section>

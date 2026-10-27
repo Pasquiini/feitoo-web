@@ -39,6 +39,7 @@ export class QuotationGenerationCoordinator {
   private began = 0;
   private retryKey: { id: string; attempt: number; key: string } | null = null;
   private readonly urls = new Set<string>();
+  private requestedProcessing: string | null = null;
   constructor() {
     effect(() => {
       const owner = this.auth.user()?.id ?? null;
@@ -65,6 +66,11 @@ export class QuotationGenerationCoordinator {
   }
   start(): void {
     this.active = true;
+    const requested = new URLSearchParams(window.location.search).get('generation');
+    this.requestedProcessing =
+      requested && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requested)
+        ? requested
+        : null;
     this.owner = this.auth.user()?.id ?? null;
     if (this.owner !== null) void this.refresh();
   }
@@ -73,6 +79,15 @@ export class QuotationGenerationCoordinator {
   }
   pending(): boolean {
     return ['queued', 'processing'].includes(this.processing()?.status ?? '');
+  }
+  sourceAvailable(): boolean {
+    const q = this.entitlements();
+    if (!q?.enabled) return false;
+    const source = this.selectedSource();
+    if (source === 'pro') return !!q.pro?.active && q.pro.remaining > 0;
+    if (source === 'credit')
+      return (q.credits?.available ?? 0) > 0 && !(q.pro?.active && q.pro.remaining > 0);
+    return !q.pro?.active && q.remaining > 0;
   }
   needLogin(): void {
     this.loginRequired.set(true);
@@ -88,9 +103,12 @@ export class QuotationGenerationCoordinator {
       if (!this.valid(epoch)) return;
       this.entitlements.set(entitlement);
       if (entitlement.pro?.active && entitlement.pro.remaining > 0) this.selectedSource.set('pro');
-      else if (this.selectedSource() === 'pro') this.selectedSource.set('free');
+      else if (entitlement.pro?.active) {
+        if (this.selectedSource() !== 'credit') this.selectedSource.set('pro');
+      } else if (this.selectedSource() === 'pro') this.selectedSource.set('free');
       this.loginRequired.set(false);
-      const uuid = entitlement.active_processing ?? entitlement.latest_processing;
+      const uuid =
+        entitlement.active_processing ?? this.requestedProcessing ?? entitlement.latest_processing;
       if (uuid && !this.processing()) await this.consult(uuid);
     } catch (error) {
       if (this.valid(epoch)) this.failure(error);
@@ -174,7 +192,7 @@ export class QuotationGenerationCoordinator {
     const reason = processing.quotation.error_code;
     this.message.set(
       processing.status === 'queued'
-        ? 'Seu orçamento está na fila. A unidade Free está reservada.'
+        ? `Seu orçamento está na fila. ${processing.quotation.source === 'credit' ? 'Um crédito está reservado.' : processing.quotation.source === 'pro' ? 'Uma geração Pro está reservada.' : 'A unidade Free está reservada.'}`
         : processing.status === 'processing'
           ? 'Gerando seu orçamento em PDF...'
           : processing.status === 'completed'
@@ -313,19 +331,29 @@ export class QuotationGenerationCoordinator {
     this.error.set(
       code === 'free_quota_exhausted'
         ? 'Você já utilizou seu orçamento gratuito de hoje.'
-        : code === 'draft_revision_conflict'
-          ? 'O rascunho foi alterado em outra aba. Recupere a versão mais recente antes de gerar.'
-          : status === 401 || status === 419
-            ? 'Entre novamente para continuar. Seu rascunho foi preservado.'
-            : status === 429
-              ? 'Muitas solicitações. Aguarde alguns segundos antes de tentar novamente.'
-              : status === 422
-                ? 'Confira os dados do orçamento e sua franquia antes de gerar.'
-                : status === 410
-                  ? 'Esta emissão expirou. Edite o rascunho para solicitar uma nova emissão.'
-                  : status === 503
-                    ? 'A geração está temporariamente indisponível. Seu rascunho foi preservado.'
-                    : 'Não foi possível confirmar a solicitação. Consulte o andamento ou tente novamente com o mesmo rascunho.',
+        : code === 'pro_quota_exhausted'
+          ? 'Você utilizou a franquia Pro deste período. Escolha um crédito disponível ou aguarde a renovação da assinatura.'
+          : code === 'credits_exhausted'
+            ? 'Não há créditos disponíveis. Confira seu saldo e a franquia da conta.'
+            : code === 'pro_first'
+              ? 'Use primeiro a franquia Pro disponível. Atualize o saldo antes de confirmar.'
+              : code === 'pro_period_invalid' || code === 'source_invalid'
+                ? 'O benefício selecionado não está disponível neste período. Atualize o saldo e escolha como gerar.'
+                : code === 'generation_in_progress'
+                  ? 'Você já tem um orçamento em andamento. Aguarde a conclusão ou consulte o histórico.'
+                  : code === 'draft_revision_conflict'
+                    ? 'O rascunho foi alterado em outra aba. Recupere a versão mais recente antes de gerar.'
+                    : status === 401 || status === 419
+                      ? 'Entre novamente para continuar. Seu rascunho foi preservado.'
+                      : status === 429
+                        ? 'Muitas solicitações. Aguarde alguns segundos antes de tentar novamente.'
+                        : status === 422
+                          ? 'Confira os dados do orçamento e sua franquia antes de gerar.'
+                          : status === 410
+                            ? 'Esta emissão expirou. Edite o rascunho para solicitar uma nova emissão.'
+                            : status === 503
+                              ? 'A geração está temporariamente indisponível. Seu rascunho foi preservado.'
+                              : 'Não foi possível confirmar a solicitação. Consulte o andamento ou tente novamente com o mesmo rascunho.',
     );
   }
   private stop(): void {

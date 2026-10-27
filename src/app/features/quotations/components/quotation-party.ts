@@ -47,6 +47,7 @@ import { fieldError } from '../services/quotation-form';
                 [formControlName]="field.key"
                 [maxlength]="field.max"
                 autocomplete="off"
+                (blur)="formatContact(field.key)"
                 [attr.aria-invalid]="!!error(group().controls[field.key])"
                 [attr.aria-describedby]="prefix() + '-' + field.key + '-error'"
               />
@@ -66,6 +67,25 @@ export class QuotationPartyFields {
   readonly title = input.required<string>();
   readonly step = input.required<string>();
   readonly error = fieldError;
+  formatContact(key: Exclude<keyof QuotationParty, 'name'>): void {
+    const control = this.group().controls[key];
+    const value = control.value.trim();
+    if (key === 'document' && /^[\d.\-/\s]+$/.test(value)) {
+      const digits = value.replace(/\D/g, '');
+      if (digits.length === 11)
+        control.setValue(digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4'));
+      else if (digits.length === 14)
+        control.setValue(digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5'));
+    } else if (key === 'phone' && /^[\d()+\-\s]+$/.test(value)) {
+      const digits = value.replace(/\D/g, '');
+      const international = digits.startsWith('55') && [12, 13].includes(digits.length);
+      const local = international ? digits.slice(2) : digits;
+      if ([10, 11].includes(local.length))
+        control.setValue(
+          (international ? '+55 ' : '') + local.replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3'),
+        );
+    }
+  }
   readonly fields: {
     key: Exclude<keyof QuotationParty, 'name'>;
     label: string;

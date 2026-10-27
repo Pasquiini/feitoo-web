@@ -78,6 +78,37 @@ const server = createServer(async (request, response) => {
       body = {
         data: accountUser,
       };
+    } else if (path === '/api/quotations/entitlements') {
+      body = {
+        data: {
+          source: accountVisual?.pro ? 'pro' : 'free',
+          policy: 'explicit_source',
+          enabled: true,
+          daily_limit: 1,
+          remaining: 1,
+          consumed: 0,
+          reserved: 0,
+          resets_at: new Date(Date.now() + 86400000).toISOString(),
+          active_processing: null,
+          latest_processing: null,
+          pro: {
+            active: !!accountVisual?.pro,
+            limit: 100,
+            remaining: accountVisual?.pro ? 100 : 0,
+            period_end: '2026-11-09T12:00:00Z',
+          },
+          credits: { granted: 0, available: 0, reserved: 0, consumed: 0, revoked: 0 },
+          offer: {
+            code: 'quotation_5',
+            available: false,
+            amount: 990,
+            credits: 5,
+            currency: 'brl',
+          },
+        },
+      };
+    } else if (path === '/api/quotations/credit-orders') {
+      body = { data: [], meta: { current_page: 1, last_page: 1 } };
     } else if (path.endsWith('/config')) {
       body = {
         data: {
@@ -506,14 +537,14 @@ try {
     ['excel', 4],
     ['word', 1],
     ['docx', 1],
-    ['pdf', 2],
+    ['pdf', 3],
     ['xml', 5],
-    ['produto', 2],
+    ['produto', 3],
     ['nota', 5],
     ['nfe', 5],
     ['CONVERSÃO', 1],
     ['inexistente', 0],
-    ['', 6],
+    ['', 7],
   ]) {
     await evaluate(
       `(() => { const input = document.querySelector('#tool-search'); input.value = ${JSON.stringify(query)}; input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
@@ -526,7 +557,7 @@ try {
   await waitFor("!!document.querySelector('.search-field button')");
   await evaluate("document.querySelector('.search-field button').click()");
   await waitFor(
-    "document.querySelectorAll('.home-tool-card').length === 6 && document.activeElement.id === 'tool-search'",
+    "document.querySelectorAll('.home-tool-card').length === 7 && document.activeElement.id === 'tool-search'",
   );
   const publicChecks = [];
   for (const [path, heading] of [
@@ -552,7 +583,7 @@ try {
       assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'), false);
       publicChecks.push({ path, width, overflow: false });
       if (path === '/') {
-        assert.equal(await evaluate('document.querySelectorAll(".home-tool-card").length'), 6);
+        assert.equal(await evaluate('document.querySelectorAll(".home-tool-card").length'), 7);
         assert.equal(await evaluate('document.querySelectorAll(".plan-card").length'), 3);
         assert.ok(
           await evaluate('document.querySelector(".plan-pro a").getAttribute("href") === "/conta"'),

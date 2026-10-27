@@ -407,12 +407,12 @@ export class QuotationDraftCoordinator {
       );
     }
   }
-  private async acceptRemote(remote: RemoteDraft, epoch: number): Promise<void> {
+  private async acceptRemote(remote: RemoteDraft, epoch: number, replace = false): Promise<void> {
     const version = this.changeVersion;
     const logo = remote.logo_checksum ? await this.api.logo(remote.uuid) : null;
     if (!this.active(epoch)) return;
     if (version !== this.changeVersion) throw new LocalDraftConflict();
-    const record = this.record ?? this.fresh({ payload: remote.payload, logo });
+    const record = (replace ? null : this.record) ?? this.fresh({ payload: remote.payload, logo });
     this.record = await this.local.write({
       ...record,
       ownerId: this.owner,
@@ -431,6 +431,35 @@ export class QuotationDraftCoordinator {
     this.available.set(true);
     this.conflict.set(false);
     this.message.set('Rascunho recuperado da sua conta.');
+  }
+  async open(uuid: string): Promise<boolean> {
+    if (this.owner === null || this.loading() || this.conflict()) return false;
+    const epoch = this.epoch;
+    if (!(await this.flush()) || !this.active(epoch)) return false;
+    this.loading.set(true);
+    try {
+      const remote = await this.api.read(uuid);
+      if (!this.active(epoch)) return false;
+      await this.acceptRemote(remote, epoch, true);
+      return this.active(epoch);
+    } catch (error) {
+      if (this.active(epoch)) this.failure(error);
+      return false;
+    } finally {
+      if (this.active(epoch)) this.loading.set(false);
+    }
+  }
+  async newDraft(): Promise<void> {
+    if (this.loading() || this.conflict()) return;
+    const epoch = this.epoch;
+    if (!(await this.flush()) || !this.active(epoch)) return;
+    this.record = null;
+    this.lastEdit = Date.now();
+    this.edits = 0;
+    this.restoreEditor?.(null);
+    this.available.set(false);
+    this.changed();
+    await this.flush();
   }
   async recoverLatest(): Promise<void> {
     await this.queue;

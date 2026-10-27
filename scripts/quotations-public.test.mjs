@@ -10,12 +10,12 @@ const html = readFileSync(
 );
 const document = new JSDOM(html).window.document;
 test('quotation editor prerenders safely with accurate metadata and the explicit Free policy', () => {
-  assert.equal(document.title, 'Gerador de Orçamentos Online Grátis | Feitoo');
+  assert.equal(document.title, 'Gerador de Orçamentos Grátis em PDF | Feitoo');
   assert.equal(
     document.querySelector('meta[name=description]').content,
-    'Crie orçamentos profissionais para serviços e produtos. Adicione clientes, valores, descontos e personalize o modelo do documento.',
+    'Crie orçamentos profissionais online. Adicione seus produtos ou serviços, escolha um modelo e gere um PDF para enviar aos clientes.',
   );
-  assert.equal(document.querySelector('meta[name=robots]').content, 'noindex,follow');
+  assert.equal(document.querySelector('meta[name=robots]').content, 'index,follow');
   assert.equal(
     document.querySelector('link[rel=canonical]').href,
     'https://feitoo.com.br/gerador-de-orcamentos',
@@ -29,22 +29,32 @@ test('quotation editor prerenders safely with accurate metadata and the explicit
   const graph = JSON.parse(document.querySelector('#feitoo-schema').textContent)['@graph'];
   assert.deepEqual(
     graph.map((entry) => entry['@type']),
-    ['WebPage'],
+    ['WebApplication', 'BreadcrumbList', 'FAQPage'],
   );
-  assert.ok(!html.includes('FAQPage'));
-  assert.ok(!html.includes('WebApplication'));
+  const visible = [...document.querySelectorAll('.quotation-explainer details')];
+  assert.equal(visible.length, graph[2].mainEntity.length);
+  for (const [i, faq] of graph[2].mainEntity.entries()) {
+    assert.equal(visible[i].querySelector('summary').textContent.trim(), faq.name);
+    assert.equal(visible[i].querySelector('p').textContent.trim(), faq.acceptedAnswer.text);
+  }
+  assert.equal(document.querySelector('app-quotation-drafts').textContent.trim(), '');
+  assert.equal(document.querySelector('.generation-confirmation'), null);
 });
-test('editor remains outside public discovery until backend generation is integrated', () => {
-  assert.ok(!publicAssets('https://feitoo.com.br').sitemap.includes('/gerador-de-orcamentos'));
+test('editor is discoverable from home and sitemap without a noindex HTTP override', () => {
+  assert.ok(publicAssets('https://feitoo.com.br').sitemap.includes('/gerador-de-orcamentos'));
   const home = new JSDOM(
     readFileSync(new URL('../dist/feitoo-web/browser/index.html', import.meta.url), 'utf8'),
   ).window.document;
-  assert.equal(home.querySelector('a[href="/gerador-de-orcamentos"]'), null);
+  const card = home.querySelector('app-tool-card a[href="/gerador-de-orcamentos"]');
+  assert.ok(card);
+  assert.match(card.textContent, /Grátis para começar/);
+  assert.match(card.textContent, /Criar orçamento/);
+  assert.ok(home.querySelector('.featured-tools a[href="/gerador-de-orcamentos"]'));
   const { routes } = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
   const index = routes.findIndex((route) => route.handle === 'filesystem');
   const before = routes.slice(0, index);
   assert.ok(
-    before.some(
+    !before.some(
       (route) =>
         new RegExp(`^${route.src}$`).test('/gerador-de-orcamentos') &&
         route.headers?.['X-Robots-Tag'] === 'noindex, follow',

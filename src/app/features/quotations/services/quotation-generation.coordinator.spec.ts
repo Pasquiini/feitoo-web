@@ -293,4 +293,38 @@ describe('quotation issuance coordination', () => {
     expect(service.polling()).toBe(true);
     expect(api.generate).not.toHaveBeenCalled();
   });
+  it('prioritizes Pro and requires an explicit credit choice when its period is exhausted', async () => {
+    const pro = { active: true, remaining: 100, limit: 100 };
+    const credits = { granted: 5, available: 5, consumed: 0, reserved: 0, revoked: 0 };
+    api.entitlements.mockResolvedValue({ ...quota, policy: 'explicit_source', pro, credits });
+    await service.refresh();
+    expect(service.selectedSource()).toBe('pro');
+    expect(service.sourceAvailable()).toBe(true);
+    api.entitlements.mockResolvedValue({
+      ...quota,
+      policy: 'explicit_source',
+      pro: { ...pro, remaining: 0 },
+      credits,
+    });
+    await service.refresh();
+    expect(service.selectedSource()).toBe('pro');
+    expect(service.sourceAvailable()).toBe(false);
+    service.selectedSource.set('credit');
+    expect(service.sourceAvailable()).toBe(true);
+    await service.refresh();
+    expect(service.selectedSource()).toBe('credit');
+  });
+  it('opens a generation selected from account history without starting a new one', async () => {
+    const id = '00000000-0000-4000-8000-000000000001';
+    history.replaceState({}, '', '/gerador-de-orcamentos?generation=' + id);
+    try {
+      service.processing.set(null);
+      service.start();
+      await settle();
+      expect(api.read).toHaveBeenCalledWith(id);
+      expect(api.generate).not.toHaveBeenCalled();
+    } finally {
+      history.replaceState({}, '', '/');
+    }
+  });
 });

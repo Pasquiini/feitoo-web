@@ -97,7 +97,7 @@ const server = createServer(async (req, res) => {
         assert.ok(latest.logo);
         assert.equal(latest.payload.notes, 'Rascunho parcial preservado');
         checkoutKeys.push(req.headers['idempotency-key']);
-        return json(503, { code: 'checkout_unavailable' });
+        return json(checkoutKeys.length === 1 ? 500 : 503, { code: 'checkout_unavailable' });
       }
       if (path === '/api/quotations/credit-orders/' + orderId)
         return json(200, {
@@ -327,7 +327,15 @@ try {
     await click('Comprar cinco créditos por R$ 9,90');
     await waitFor('document.body.textContent.includes("Não foi possível abrir o Checkout")');
     await click('Comprar cinco créditos por R$ 9,90');
-    await waitFor('!document.querySelector("app-quotation-commerce button").disabled');
+    await waitFor(
+      'document.querySelector("app-quotation-commerce").textContent.includes("temporariamente indisponível")',
+    );
+    await waitFor('document.querySelector("app-quotation-commerce button").disabled');
+    assert.ok(
+      await evaluate(
+        'document.querySelector("app-quotation-commerce").textContent.includes("temporariamente indisponível")',
+      ),
+    );
     assert.equal(checkoutKeys.length, 2);
     assert.equal(checkoutKeys[0], checkoutKeys[1]);
     assert.equal(generationPosts, 0);
@@ -369,6 +377,9 @@ try {
     await field('#item-price-0', '10,00');
     await saved();
     await evaluate('document.querySelector(".generate-pdf").click()');
+    await waitFor('!!document.querySelector(".confirm-generation")');
+    assert.equal(generationPosts, 0);
+    await evaluate('document.querySelector(".confirm-generation").click()');
     await waitFor('document.querySelector(".quotation-generation [role=alert]") !== null');
     assert.equal(generationPosts, 1);
     for (const width of [320, 768, 1440]) {

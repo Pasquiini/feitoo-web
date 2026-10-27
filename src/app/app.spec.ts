@@ -34,8 +34,9 @@ describe('App', () => {
     expect([...menu.querySelectorAll('section h2')].map((h) => h.textContent)).toEqual([
       'XML e Fiscal',
       'Documentos',
+      'Negócios',
     ]);
-    expect(menu.querySelectorAll('section a')).toHaveLength(6);
+    expect(menu.querySelectorAll('section a')).toHaveLength(7);
     expect(menu.querySelector('a[href="/docx-para-pdf"]')).not.toBeNull();
     menu.open = true;
     menu

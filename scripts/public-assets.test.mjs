@@ -11,9 +11,9 @@ test('assets excluem documentos e templates temporários da pasta OG', () => {
     'og/**/*.zip',
   ]);
 });
-test('sitemap lista as treze páginas públicas e a origem configurada', () => {
+test('sitemap lista as quatorze páginas públicas e a origem configurada', () => {
   const result = publicAssets('https://feitoo.example');
-  assert.equal((result.sitemap.match(/<url>/g) ?? []).length, 13);
+  assert.equal((result.sitemap.match(/<url>/g) ?? []).length, 14);
   assert.ok(result.sitemap.includes('/xml-para-pdf'));
   assert.ok(result.sitemap.includes('/docx-para-pdf'));
   assert.ok(result.sitemap.includes('/organizar-xml'));

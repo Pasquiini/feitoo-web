@@ -111,6 +111,30 @@ describe('quotation commerce and checkout return', () => {
     await panel.checkout(async () => false);
     expect(api.checkout).not.toHaveBeenCalled();
   });
+  it('does not open checkout when unavailable and keeps Free usable', async () => {
+    const fixture = await create(true, { ...quota, offer: { ...quota.offer!, available: false } });
+    const preserve = vi.fn(async () => true);
+    await fixture.componentInstance.checkout(preserve);
+    expect(api.checkout).not.toHaveBeenCalled();
+    expect(preserve).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.error()).toContain('temporariamente indisponível');
+    expect(fixture.nativeElement.textContent).toContain('gratuitamente');
+  });
+  it('disables a checkout that became unavailable without losing the draft', async () => {
+    const fixture = await create(true, { ...quota, remaining: 0 });
+    api.checkout.mockRejectedValue(
+      new HttpErrorResponse({ status: 503, error: { code: 'checkout_unavailable' } }),
+    );
+    await fixture.componentInstance.checkout(async () => true);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.error()).toContain('rascunho foi preservado');
+    const buy = [...fixture.nativeElement.querySelectorAll('button')].find((button: any) =>
+      button.textContent.includes('Comprar'),
+    ) as HTMLButtonElement;
+    expect(buy.disabled).toBe(true);
+    await fixture.componentInstance.checkout(async () => true);
+    expect(api.checkout).toHaveBeenCalledOnce();
+  });
   it('ignores success URL claims, polls pending and updates only after backend confirms without generating', async () => {
     history.replaceState(
       {},

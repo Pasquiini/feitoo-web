@@ -3,7 +3,7 @@ export interface ToolCard {
   description: string;
   benefit: string;
   route: string;
-  icon: 'excel' | 'product';
+  icon: 'excel' | 'product' | 'pdf';
   badge: string;
   category: string;
   keywords: readonly string[];
@@ -135,6 +135,22 @@ export const HOME_TOOLS: readonly ToolCard[] = [
     keywords: ['docx', 'word', 'pdf', 'documento', 'converter'],
     meta: 'DOCX → PDF',
     cta: 'Converter DOCX',
+  },
+  {
+    title: 'Gerador de Orçamentos',
+    description: 'Crie orçamentos profissionais para seus clientes e baixe em PDF.',
+    benefit: 'Dois modelos, logotipo, itens e descontos calculados na hora.',
+    route: '/gerador-de-orcamentos',
+    aliases: ['proposta comercial', 'orçamento de serviços'],
+    inputLabel: 'Orçamento',
+    outputLabel: 'PDF',
+    tags: ['Serviços', 'Produtos', 'PDF'],
+    icon: 'pdf',
+    badge: 'Grátis para começar',
+    category: 'Negócios',
+    keywords: ['orçamento', 'orcamento', 'proposta', 'cliente', 'serviço', 'produto', 'pdf'],
+    meta: '1 geração grátis por dia · com conta',
+    cta: 'Criar orçamento',
   },
 ];
 

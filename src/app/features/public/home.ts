@@ -14,7 +14,7 @@ import { HomePlans } from './home-plans';
 export class HomePage {
   readonly tools = HOME_TOOLS;
   readonly shortcuts = [HOME_TOOLS[0], HOME_TOOLS[5], HOME_TOOLS[3]];
-  readonly featured = [HOME_TOOLS[5], HOME_TOOLS[0]];
+  readonly featured = [HOME_TOOLS[5], HOME_TOOLS[6]];
   readonly query = signal('');
   readonly categories = computed(() => [
     ...new Set(this.filteredTools().map((tool) => tool.category)),

@@ -1,5 +1,10 @@
 import { guidePages } from './guide-pages';
 export const publicPages = {
+  '/gerador-de-orcamentos': {
+    title: 'Gerador de Orçamentos Grátis em PDF | Feitoo',
+    description:
+      'Crie orçamentos profissionais online. Adicione seus produtos ou serviços, escolha um modelo e gere um PDF para enviar aos clientes.',
+  },
   '/docx-para-pdf': {
     title: 'DOCX para PDF Online | Converter Word em PDF | Feitoo',
     description:
@@ -57,24 +62,9 @@ export const publicPages = {
   },
 } as const;
 export type PublicPath = keyof typeof publicPages;
-// Accessible for review, with no catalog/sitemap entry until PDF generation is integrated.
-export const previewPages = {
-  '/gerador-de-orcamentos': {
-    title: 'Gerador de Orçamentos Online Grátis | Feitoo',
-    description:
-      'Crie orçamentos profissionais para serviços e produtos. Adicione clientes, valores, descontos e personalize o modelo do documento.',
-  },
-} as const;
-export type PreviewPath = keyof typeof previewPages;
-export function safePage(
-  url: string,
-): PublicPath | PreviewPath | '/404' | '/login' | '/cadastro' | '/conta' {
+export function safePage(url: string): PublicPath | '/404' | '/login' | '/cadastro' | '/conta' {
   const path = url.split(/[?#]/)[0].replace(/\/$/, '') || '/';
-  return path in publicPages ||
-    path in previewPages ||
-    path === '/login' ||
-    path === '/cadastro' ||
-    path === '/conta'
-    ? (path as PublicPath | PreviewPath | '/login' | '/cadastro' | '/conta')
+  return path in publicPages || path === '/login' || path === '/cadastro' || path === '/conta'
+    ? (path as PublicPath | '/login' | '/cadastro' | '/conta')
     : '/404';
 }

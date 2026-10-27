@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   Injector,
@@ -13,9 +14,11 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { toolFaqs } from '../../../core/tool-faqs';
 import { map } from 'rxjs';
 import { QuotationCommercePanel } from '../components/quotation-commerce';
+import { QuotationDrafts } from '../components/quotation-drafts';
 import { QuotationItems } from '../components/quotation-items';
 import { QuotationMoney } from '../components/quotation-money';
 import { QuotationPartyFields } from '../components/quotation-party';
@@ -40,6 +43,8 @@ import { LocalQuotationLogo, QuotationLogoLoader } from '../services/quotation-l
   providers: [QuotationDraftCoordinator, QuotationGenerationCoordinator],
   imports: [
     DatePipe,
+    RouterLink,
+    QuotationDrafts,
     QuotationCommercePanel,
     ReactiveFormsModule,
     QuotationItems,
@@ -82,6 +87,9 @@ export class QuotationPage {
   readonly ready = computed(() => this.status() === 'VALID' && !this.calculation().error);
   readonly mobileView = signal<'edit' | 'preview'>('edit');
   readonly reviewed = signal(false);
+  readonly faqs = toolFaqs['/gerador-de-orcamentos'];
+  readonly confirmation = signal<{ owner: number; source: 'free' | 'pro' | 'credit' } | null>(null);
+  readonly preparing = signal(false);
   readonly logo = signal<LocalQuotationLogo | null>(null);
   readonly logoError = signal('');
   readonly logoBusy = signal(false);
@@ -96,6 +104,9 @@ export class QuotationPage {
   private restoreRevision = 0;
 
   constructor() {
+    effect(() => {
+      if (this.confirmation()?.owner !== this.auth.user()?.id) this.confirmation.set(null);
+    });
     afterNextRender(() => {
       this.generation.start();
       const parts = new Intl.DateTimeFormat('en-CA', {
@@ -173,6 +184,7 @@ export class QuotationPage {
       );
     });
     const subscription = this.form.valueChanges.subscribe(() => {
+      this.confirmation.set(null);
       if (!this.restoring) this.draft.changed();
     });
     inject(DestroyRef).onDestroy(() => {
@@ -195,13 +207,61 @@ export class QuotationPage {
     return this.draft.flush(false);
   }
   async generate(): Promise<void> {
-    if (this.generation.sending() || this.generation.pending() || this.logoBusy()) return;
+    if (
+      this.preparing() ||
+      this.confirmation() ||
+      this.generation.sending() ||
+      this.generation.pending() ||
+      this.logoBusy()
+    )
+      return;
     if (!this.auth.user()) {
       this.generation.needLogin();
       return;
     }
     this.validatePreview();
-    if (this.ready()) await this.generation.generate();
+    if (!this.ready()) return;
+    this.preparing.set(true);
+    this.generation.error.set('');
+    const owner = this.auth.user()!.id;
+    try {
+      await this.generation.refresh();
+      if (
+        this.destroyed ||
+        this.auth.user()?.id !== owner ||
+        !this.ready() ||
+        this.generation.pending()
+      )
+        return;
+      const quota = this.generation.entitlements();
+      if (!quota?.enabled || this.generation.error()) return;
+      const source = this.generation.selectedSource();
+      if (!this.generation.sourceAvailable()) {
+        this.generation.error.set(
+          'Sua franquia está esgotada. Confira o saldo e escolha um crédito disponível ou aguarde a renovação.',
+        );
+        return;
+      }
+      this.confirmation.set({ owner, source });
+      setTimeout(() =>
+        this.element.nativeElement.querySelector<HTMLElement>('#generation-confirmation')?.focus(),
+      );
+    } finally {
+      this.preparing.set(false);
+    }
+  }
+  async confirmGeneration(): Promise<void> {
+    const confirmation = this.confirmation();
+    if (!confirmation || confirmation.owner !== this.auth.user()?.id || !this.ready()) return;
+    this.confirmation.set(null);
+    this.generation.selectedSource.set(confirmation.source);
+    await this.generation.generate();
+  }
+  cancelGeneration(): void {
+    this.confirmation.set(null);
+    setTimeout(() =>
+      this.element.nativeElement.querySelector<HTMLElement>('.generate-pdf')?.focus(),
+    );
   }
   addItem(): void {
     if (this.form.controls.items.length < this.limits.items)
@@ -230,7 +290,7 @@ export class QuotationPage {
       });
     }
   }
-  /** Issuance remains disabled; drafts preserve the incomplete editor separately. */
+  /** The backend validates this document again before reserving a generation. */
   validatedPayload() {
     return this.ready() ? quotationPayload(this.value()) : null;
   }

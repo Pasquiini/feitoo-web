@@ -30,6 +30,36 @@ describe('Funnel analytics', () => {
     service.choose('granted');
     gtag.mockClear();
   }
+  it.each([
+    'upgrade_offer_viewed',
+    'upgrade_offer_selected',
+    'checkout_started',
+    'checkout_failed',
+  ] as const)('protects and deduplicates %s', (event) => {
+    service.track(event, { tool: 'xml-to-excel', file_count: 40 });
+    expect(gtag).not.toHaveBeenCalled();
+    grant();
+    const properties = {
+      tool: 'xml-to-excel',
+      file_count: 40,
+      email: 'private@example.test',
+      uuid: 'private-id',
+      file_name: 'private.xml',
+      cnpj: '12345678901234',
+    } as EventProperties;
+    service.trackOnce(event, 'private-id', properties);
+    service.trackOnce(event, 'private-id', properties);
+    expect(gtag).toHaveBeenCalledTimes(1);
+    const sent = JSON.stringify(gtag.mock.calls);
+    expect(sent).not.toContain('private');
+    expect(sent).not.toContain('12345678901234');
+    expect(gtag).toHaveBeenCalledWith(
+      'event',
+      event,
+      expect.objectContaining({ tool: 'xml_to_excel', file_count: 40 }),
+    );
+  });
+
   it('requires consent and enabled analytics', () => {
     service.track('processing_started', { tool: 'xml-to-excel', file_count: 12, plan: 'free' });
     expect(gtag).not.toHaveBeenCalled();

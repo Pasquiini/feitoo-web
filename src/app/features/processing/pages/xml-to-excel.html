@@ -27,13 +27,11 @@
         “Selecionar outros arquivos” para recuperar essa seleção.
       </p>
     }
-    @if (
-      (!processing() || processing()?.status === 'pending') &&
-      (needsPurchase() || purchase()) &&
-      auth.user()
-    ) {
+    @if ((!processing() || processing()?.status === 'pending') && (needsPurchase() || purchase())) {
       <section class="paywall" aria-labelledby="paywall-title">
-        <h2 id="paywall-title" class="h5">Como deseja processar seus XMLs?</h2>
+        <h2 id="paywall-title" class="h5">
+          {{ files().length || processing()?.files_count }} arquivos selecionados
+        </h2>
         <p>Você selecionou {{ files().length || processing()?.files_count }} XMLs.</p>
         <p>
           Seu plano permite até
@@ -42,18 +40,44 @@
         </p>
         @if (freeCount() > 0) {
           <p>
-            Você pode processar {{ freeCount() }} destes arquivos
-            {{ usage()?.plan === 'pro' ? 'com seu Pro' : 'gratuitamente' }} hoje. Serão usados os
-            primeiros da seleção, na ordem exibida.
+            Escolha até {{ freeCount() }} arquivos para processar
+            {{ usage()?.plan === 'pro' ? 'com Pro' : 'gratuitamente' }} hoje. O lote completo
+            continua disponível para compra até você confirmar a opção gratuita.
           </p>
           <button
             type="button"
             class="btn btn-outline-secondary"
             [disabled]="busy()"
-            (click)="useFree()"
+            (click)="chooseFree()"
           >
-            Processar {{ freeCount() }} {{ usage()?.plan === 'pro' ? 'com Pro' : 'grátis' }}
+            Escolher arquivos para usar {{ usage()?.plan === 'pro' ? 'Pro' : 'Free' }}
           </button>
+          @if (choosingFree()) {
+            <div class="free-picker" role="group" aria-label="Escolha os XMLs gratuitos">
+              @for (file of freeOptions(); track file.id) {
+                <label
+                  ><input
+                    type="checkbox"
+                    [checked]="freeSelection().includes(file.id)"
+                    [disabled]="
+                      busy() ||
+                      (!freeSelection().includes(file.id) && freeSelection().length >= freeCount())
+                    "
+                    (change)="toggleFree(file.id)"
+                  />
+                  <span>{{ file.name }}</span></label
+                >
+              }
+            </div>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              [disabled]="busy() || !freeSelection().length"
+              (click)="useFree()"
+            >
+              Processar {{ freeSelection().length }} arquivos escolhidos
+            </button>
+          }
         } @else {
           <p>
             Você utilizou seu limite {{ usage()?.plan === 'pro' ? 'Pro' : 'gratuito' }} de hoje. Ele
@@ -83,7 +107,9 @@
         }
         @if (usage()?.plan !== 'pro') {
           <div class="recurring-offer">
-            <a class="btn btn-outline-primary" routerLink="/conta">Assinar Feitoo Pro</a>
+            <a class="btn btn-outline-primary" href="/conta" (click)="trackProChoice($event)"
+              >Conhecer o Pro · R$ 29,90/mês</a
+            >
             <p class="small text-secondary">
               Para usar com frequência: 250 XMLs por processamento, 500 por dia e retenção de 24
               horas.
@@ -315,8 +341,7 @@
             >
           </div>
           <p class="small text-secondary mt-2 mb-0">
-            Sua seleção permanece em memória ao entrar com e-mail. Com Google, selecione os arquivos
-            novamente após entrar.
+            Sua seleção é preservada ao entrar com e-mail ou Google.
           </p>
         </div>
       }

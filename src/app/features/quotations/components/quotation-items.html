@@ -1,0 +1,95 @@
+<section class="editor-section" aria-labelledby="items-title">
+  <div class="items-heading">
+    <h2 id="items-title">
+      <span class="section-number" aria-hidden="true">04</span>Produtos e serviços
+    </h2>
+    <span>{{ items().length }} / {{ limit }}</span>
+  </div>
+  <p class="section-help">
+    Descreva o que será entregue. O total de cada item é calculado para você.
+  </p>
+  @for (item of items().controls; track item; let i = $index) {
+    <article class="item-card" [formGroup]="item" [attr.aria-label]="'Item ' + (i + 1)">
+      <div class="item-bar">
+        <span>Item {{ i + 1 }}</span
+        ><button
+          class="remove-item"
+          type="button"
+          [disabled]="items().length === 1"
+          (click)="remove(i)"
+          [attr.aria-label]="'Remover item ' + (i + 1)"
+        >
+          Remover <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <div class="field">
+        <label [for]="'item-description-' + i">Descrição <span aria-hidden="true">*</span></label>
+        <textarea
+          class="form-control"
+          [id]="'item-description-' + i"
+          formControlName="description"
+          rows="2"
+          maxlength="1000"
+          placeholder="Ex.: instalação de luminárias, com teste e acabamento"
+          required
+          [attr.aria-invalid]="!!error(item.controls.description)"
+          [attr.aria-describedby]="'item-description-error-' + i"
+        ></textarea>
+        <span class="field-error" [id]="'item-description-error-' + i">{{
+          error(item.controls.description)
+        }}</span>
+      </div>
+      <div class="item-values">
+        <div class="field">
+          <label [for]="'item-quantity-' + i">Quantidade</label
+          ><input
+            class="form-control"
+            [id]="'item-quantity-' + i"
+            formControlName="quantity"
+            inputmode="decimal"
+            maxlength="12"
+            required
+            [attr.aria-invalid]="!!error(item.controls.quantity)"
+            [attr.aria-describedby]="'item-quantity-error-' + i"
+          /><span class="field-error" [id]="'item-quantity-error-' + i">{{
+            error(item.controls.quantity)
+          }}</span>
+        </div>
+        <div class="field">
+          <label [for]="'item-price-' + i">Valor unitário</label>
+          <div class="money-input">
+            <span aria-hidden="true">R$</span
+            ><input
+              class="form-control"
+              quotationMoney
+              [id]="'item-price-' + i"
+              formControlName="unit_price_cents"
+              inputmode="decimal"
+              maxlength="24"
+              required
+              [attr.aria-label]="'Valor unitário em reais do item ' + (i + 1)"
+              [attr.aria-invalid]="!!amountError(item, i)"
+              [attr.aria-describedby]="'item-price-error-' + i"
+            />
+          </div>
+          <span class="field-error" [id]="'item-price-error-' + i">{{ amountError(item, i) }}</span>
+        </div>
+        <div class="item-total">
+          <span>Total do item</span
+          ><output>{{ totals()[i] === null ? '—' : 'R$ ' + format(totals()[i] ?? null) }}</output>
+        </div>
+      </div>
+    </article>
+  }
+  <button
+    class="btn btn-outline-primary add-item"
+    type="button"
+    (click)="add()"
+    [disabled]="items().length >= limit"
+  >
+    <span aria-hidden="true">＋</span> Adicionar produto ou serviço
+  </button>
+  @if (items().length >= limit) {
+    <p class="section-help" role="status">Você chegou ao limite de 100 itens.</p>
+  }
+</section>

@@ -6,7 +6,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { LAUNCH_CONFIG } from './launch-config';
-import { publicPages, PublicPath, safePage } from './public-pages';
+import { publicPages, PublicPath, previewPages, PreviewPath, safePage } from './public-pages';
 
 @Injectable({ providedIn: 'root' })
 export class SeoService {
@@ -24,10 +24,11 @@ export class SeoService {
   apply(url: string): void {
     const path = safePage(url);
     const guide = path in guidePages ? guidePages[path as GuidePath] : null;
-    const page = publicPages[path as PublicPath] ?? {
-      title: path === '/404' ? 'Página não encontrada | Feitoo' : 'Sua conta | Feitoo',
-      description: 'Entre na sua conta Feitoo para continuar.',
-    };
+    const page = publicPages[path as PublicPath] ??
+      previewPages[path as PreviewPath] ?? {
+        title: path === '/404' ? 'Página não encontrada | Feitoo' : 'Sua conta | Feitoo',
+        description: 'Entre na sua conta Feitoo para continuar.',
+      };
     this.title.setTitle(page.title);
     this.meta.updateTag({ name: 'description', content: page.description });
     this.meta.updateTag({
@@ -62,7 +63,7 @@ export class SeoService {
     this.document.querySelector('link[rel="canonical"]')?.remove();
     this.document.getElementById('feitoo-schema')?.remove();
     this.meta.removeTag('property="og:url"');
-    if (this.config.origin && path in publicPages) {
+    if (this.config.origin && (path in publicPages || path in previewPages)) {
       const canonical = this.config.origin + path;
       const link = this.document.createElement('link');
       link.rel = 'canonical';

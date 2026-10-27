@@ -36,10 +36,18 @@ export class ProcessingService {
     return this.http.get<ProcessingResponse>(this.urlFor(id), { timeout: 15000 });
   }
 
-  start(id: string, freeFilesCount?: number): Observable<ProcessingResponse> {
+  start(
+    id: string,
+    freeFilesCount?: number,
+    freeFileIds?: readonly string[],
+  ): Observable<ProcessingResponse> {
     return this.http.post<ProcessingResponse>(
       `${this.urlFor(id)}/start`,
-      freeFilesCount === undefined ? {} : { free_files_count: freeFilesCount },
+      freeFileIds
+        ? { free_file_ids: freeFileIds }
+        : freeFilesCount === undefined
+          ? {}
+          : { free_files_count: freeFilesCount },
     );
   }
 
@@ -62,13 +70,22 @@ export class ProcessingService {
   }
 
   analysis(id: string, query: AnalysisQuery): Observable<{ data: AnalysisView }> {
-    return this.http.get<{ data: AnalysisView }>(`${this.urlFor(id)}/analysis`, { params: this.analysisParams(query), timeout: 30000 });
+    return this.http.get<{ data: AnalysisView }>(`${this.urlFor(id)}/analysis`, {
+      params: this.analysisParams(query),
+      timeout: 30000,
+    });
   }
   exportAnalysis(id: string, query: AnalysisQuery): Observable<Blob> {
-    return this.http.get(`${this.urlFor(id)}/analysis/export`, { params: this.analysisParams(query), responseType: 'blob', timeout: 60000 });
+    return this.http.get(`${this.urlFor(id)}/analysis/export`, {
+      params: this.analysisParams(query),
+      responseType: 'blob',
+      timeout: 60000,
+    });
   }
   private analysisParams(query: AnalysisQuery): Record<string, string | number> {
-    return Object.fromEntries(Object.entries(query).filter(([, value]) => value !== '' && value != null));
+    return Object.fromEntries(
+      Object.entries(query).filter(([, value]) => value !== '' && value != null),
+    );
   }
 
   upload(id: string, files: readonly File[]): Observable<ProcessingResponse> {

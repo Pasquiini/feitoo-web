@@ -1,3 +1,4 @@
+import { QuotationCommercePanel } from '../../quotations/components/quotation-commerce';
 import { AnalyticsService } from '../../../core/analytics.service';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -29,12 +30,15 @@ import {
 
 @Component({
   selector: 'app-account-page',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, QuotationCommercePanel],
   templateUrl: './account-page.html',
   styleUrl: './account-page.scss',
 })
 export class AccountPage {
-  readonly tools = processingTools;
+  readonly tools = {
+    ...processingTools,
+    'quotation-generator': { name: 'Orçamento profissional', path: '/gerador-de-orcamentos' },
+  };
   private readonly analytics = inject(AnalyticsService);
   readonly subscription = signal<SubscriptionSummary | null>(null);
   readonly subscriptionBusy = signal(false);
@@ -209,15 +213,27 @@ export class AccountPage {
             this.analytics.track(portal ? 'pro_portal_opened' : 'pro_checkout_started');
             if (portal) this.billing.portalRedirect(r.data.url);
             else {
+              this.analytics.track('checkout_started', {
+                purchase_type: 'subscription',
+                plan: 'pro',
+              });
               this.analytics.beginSubscriptionCheckout();
               this.billing.redirect(r.data.url);
             }
           } catch {
+            if (!portal)
+              this.analytics.track('checkout_failed', {
+                purchase_type: 'subscription',
+                plan: 'pro',
+              });
             this.subscriptionError.set('Não foi possível abrir a Stripe.');
           }
         },
-        error: () =>
-          this.subscriptionError.set('Não foi possível abrir a Stripe. Tente novamente.'),
+        error: () => {
+          if (!portal)
+            this.analytics.track('checkout_failed', { purchase_type: 'subscription', plan: 'pro' });
+          this.subscriptionError.set('Não foi possível abrir a Stripe. Tente novamente.');
+        },
       });
   }
 

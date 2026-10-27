@@ -1,8 +1,11 @@
+import { FileSelectionService } from '../../processing/services/file-selection.service';
+import { QuotationLocalStore } from '../../quotations/services/quotation-local.store';
 import { AnalyticsService } from '../../../core/analytics.service';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
+import { afterNextRender, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import {
   catchError,
+  from,
   finalize,
   Observable,
   of,
@@ -23,6 +26,8 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly selection = inject(FileSelectionService);
+  private readonly quotationLocal = inject(QuotationLocalStore);
   private readonly http = inject(HttpClient);
   private readonly analytics = inject(AnalyticsService);
   private readonly userState = signal<AuthUser | null>(null);
@@ -30,6 +35,14 @@ export class AuthService {
   private restoreRequest: Observable<AuthUser | null> | null = null;
   readonly user = this.userState.asReadonly();
   readonly ready = this.readyState.asReadonly();
+
+  constructor() {
+    afterNextRender(() => this.quotationLocal.connect());
+    const subscription = this.quotationLocal.changes.subscribe((event) => {
+      if (event === 'accounts-cleared') this.clear();
+    });
+    inject(DestroyRef).onDestroy(() => subscription.unsubscribe());
+  }
 
   restore(): Observable<AuthUser | null> {
     if (this.restoreRequest) return this.restoreRequest;
@@ -82,6 +95,9 @@ export class AuthService {
     return this.csrf().pipe(
       switchMap(() => this.http.post<unknown>(`${environment.apiUrl}/auth/logout`, {})),
       tap(() => this.clear()),
+      switchMap((response) =>
+        from(this.quotationLocal.clearAccounts().catch(() => {})).pipe(map(() => response)),
+      ),
     );
   }
 
@@ -94,9 +110,21 @@ export class AuthService {
       | '/organizar-xml'
       | '/xml-para-excel'
       | '/xml-para-pdf'
+      | '/gerador-de-orcamentos'
       | '/produtos-dos-xmls',
   ): Observable<GoogleStartResponse> {
+    const tool =
+      returnTo === '/xml-para-excel'
+        ? 'xml-to-excel'
+        : returnTo === '/produtos-dos-xmls'
+          ? 'products-from-xml'
+          : null;
     return this.csrf().pipe(
+      switchMap(() =>
+        tool && this.selection.forTool(tool)().length
+          ? from(this.selection.preserveForGoogle(tool))
+          : of(undefined),
+      ),
       switchMap(() =>
         this.http.post<GoogleStartResponse>(`${environment.apiUrl}/auth/google/start`, {
           intent,

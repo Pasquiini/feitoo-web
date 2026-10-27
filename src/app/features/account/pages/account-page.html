@@ -443,8 +443,15 @@
               {{ batch.created_at | date: "dd/MM/yyyy 'às' HH:mm" }}
             </p>
             <p class="history-counts small">
-              {{ batch.files_count }} {{ batch.tool === 'docx_to_pdf' ? 'documentos' : 'XMLs' }} ·
-              {{ batch.successful_files_count }} concluídos ·
+              {{ batch.files_count }}
+              {{
+                batch.tool === 'quotation-generator'
+                  ? 'orçamento'
+                  : batch.tool === 'docx_to_pdf'
+                    ? 'documentos'
+                    : 'XMLs'
+              }}
+              · {{ batch.successful_files_count }} concluídos ·
               @if (batch.failed_files_count > 0) {
                 {{ batch.failed_files_count }} com erro
               }
@@ -476,17 +483,22 @@
                 class="btn btn-primary"
                 [disabled]="!!action() || loading() || !!confirming()"
                 [attr.aria-label]="
-                  (batch.tool === 'docx_to_pdf' ? 'Baixar PDFs de ' : 'Baixar Excel de ') +
-                  (batch.created_at | date: 'dd/MM/yyyy HH:mm')
+                  (batch.tool === 'quotation-generator'
+                    ? 'Baixar orçamento de '
+                    : batch.tool === 'docx_to_pdf'
+                      ? 'Baixar PDFs de '
+                      : 'Baixar Excel de ') + (batch.created_at | date: 'dd/MM/yyyy HH:mm')
                 "
                 (click)="download(batch)"
               >
                 {{
                   action()?.id === batch.id && action()?.kind === 'download'
                     ? 'Baixando…'
-                    : batch.tool === 'docx_to_pdf'
-                      ? 'Baixar PDFs (.zip)'
-                      : 'Baixar Excel'
+                    : batch.tool === 'quotation-generator'
+                      ? 'Baixar orçamento em PDF'
+                      : batch.tool === 'docx_to_pdf'
+                        ? 'Baixar PDFs (.zip)'
+                        : 'Baixar Excel'
                 }}
               </button>
               @if (batch.tool === 'docx_to_pdf') {
@@ -578,6 +590,11 @@
         </button>
       </nav>
     }
+  </section>
+
+  <section class="account-card mt-4">
+    <h2 class="section-title">Gerador de Orçamentos</h2>
+    <app-quotation-commerce />
   </section>
 
   <section class="account-privacy mt-4" aria-labelledby="privacy-title">

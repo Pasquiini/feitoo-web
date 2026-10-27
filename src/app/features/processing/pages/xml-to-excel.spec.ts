@@ -153,6 +153,49 @@ describe('XmlToExcelPage', () => {
     expect(api.create).not.toHaveBeenCalled();
   });
 
+  it.each([1, 3, 4, 40, 100, 250])(
+    'keeps all %i inputs and offers the smallest eligible package',
+    (count) => {
+      page.config.set({
+        max_files: 20,
+        max_processing_files: 250,
+        max_file_size_kb: 10240,
+        ttl_minutes: 120,
+        free: { per_processing: 3, daily: 6 },
+        packages: [
+          { code: 'xml_100', files_limit: 100, amount: 490, currency: 'brl' },
+          { code: 'xml_250', files_limit: 250, amount: 690, currency: 'brl' },
+        ],
+        checkout_available: true,
+      });
+      page.usage.set({
+        plan: 'free',
+        limits: {
+          per_processing: 3,
+          daily: 6,
+          used_today: 0,
+          remaining_today: 6,
+          resets_at: '2099-01-01',
+        },
+      });
+      billing.usage.mockReturnValue(of({ data: page.usage() }));
+      page.add(Array.from({ length: count }, (_, i) => new File(['<document/>'], `file-${i}.xml`)));
+      fixture.detectChanges();
+      expect(page.files()).toHaveLength(count);
+      expect(page.needsPurchase()).toBe(count > 3);
+      expect(page.suggestedPackage()?.amount).toBe(count <= 100 ? 490 : 690);
+      if (count > 3) {
+        page.chooseFree();
+        expect(page.freeSelection()).toHaveLength(0);
+        page.useFree();
+        expect(api.start).not.toHaveBeenCalled();
+        page.toggleFree(String(count - 1));
+        expect(page.freeSelection()).toEqual([String(count - 1)]);
+        expect(page.files()).toHaveLength(count);
+      }
+    },
+  );
+
   it('shows contextual daily paywall and requires explicit choice without dropping files', () => {
     page.config.set({
       max_files: 20,
@@ -168,13 +211,15 @@ describe('XmlToExcelPage', () => {
     page.start();
     expect(api.create).not.toHaveBeenCalled();
     expect(page.files()).toHaveLength(37);
-    expect(fixture.nativeElement.textContent).toContain('Processar 12 grátis');
-    expect(fixture.nativeElement.textContent).toContain('Assinar Feitoo Pro');
+    expect(fixture.nativeElement.textContent).toContain('Escolha até 12 arquivos');
+    expect(fixture.nativeElement.textContent).toContain('Conhecer o Pro');
     expect(page.suggestedPackage()?.amount).toBe(490);
     api.upload.mockReturnValue(of({ data: { ...batch, status: 'pending', files_count: 12 } }));
+    page.chooseFree();
+    for (let i = 0; i < 12; i++) page.toggleFree(String(i));
     page.useFree();
     expect(api.upload.mock.calls[0][1]).toHaveLength(12);
-    expect(api.start).toHaveBeenCalledWith('batch', 12);
+    expect(api.start).toHaveBeenCalledWith('batch', 12, undefined);
     expect(page.deferredFiles()).toHaveLength(25);
   });
 
@@ -207,7 +252,7 @@ describe('XmlToExcelPage', () => {
       u ? { ...u, limits: { ...u.limits, used_today: 500, remaining_today: 0 } } : u,
     );
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('Assinar Feitoo Pro');
+    expect(fixture.nativeElement.textContent).not.toContain('Conhecer o Pro');
     expect(fixture.nativeElement.textContent).not.toContain('Processar todos por');
     page.buy();
     expect(billing.checkout).not.toHaveBeenCalled();
@@ -278,12 +323,13 @@ describe('XmlToExcelPage', () => {
         resets_at: '2099-01-01',
       },
     });
+    page.freeSelection.set(['a', 'b', 'c', 'd', 'e']);
     billing.cancel.mockReturnValue(throwError(() => new Error('payment still open')));
     page.useFree();
     expect(api.start).not.toHaveBeenCalled();
     billing.cancel.mockReturnValue(of({ data: { ...purchase, status: 'expired' } }));
     page.useFree();
-    expect(api.start).toHaveBeenCalledWith('batch', 5);
+    expect(api.start).toHaveBeenCalledWith('batch', undefined, ['a', 'b', 'c', 'd', 'e']);
   });
 
   it('shows exhausted Free without a dead subscription action', () => {

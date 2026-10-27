@@ -95,6 +95,7 @@ export class App {
       | '/xml-para-excel'
       | '/xml-para-pdf'
       | '/produtos-dos-xmls'
+      | '/gerador-de-orcamentos'
       | '/conta';
   } | null {
     const path = this.router.url.split(/[?#]/)[0];
@@ -104,6 +105,7 @@ export class App {
       path === '/xml-para-pdf' ||
       path === '/xml-para-excel' ||
       path === '/produtos-dos-xmls' ||
+      path === '/gerador-de-orcamentos' ||
       path === '/conta'
       ? { returnTo: path }
       : null;

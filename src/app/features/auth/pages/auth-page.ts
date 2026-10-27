@@ -22,6 +22,7 @@ export class AuthPage {
     const path = this.route.snapshot.queryParamMap.get('returnTo');
     return path === '/docx-para-pdf' ||
       path === '/conta' ||
+      path === '/gerador-de-orcamentos' ||
       path === '/analisar-xml' ||
       path === '/organizar-xml' ||
       path === '/docx-para-pdf' ||

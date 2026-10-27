@@ -2,7 +2,7 @@ import { ProcessingStatus, ProcessingTool } from '../../processing/models/proces
 
 export interface HistoryProcessing {
   readonly id: string;
-  readonly tool: ProcessingTool;
+  readonly tool: ProcessingTool | 'quotation-generator';
   readonly status: ProcessingStatus;
   readonly created_at: string;
   readonly expires_at: string | null;

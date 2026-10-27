@@ -183,7 +183,15 @@ export const toolFaqs: Record<
     common[3],
   ],
   '/xml-para-excel': [
-    ...common,
+    ...common.map((faq, index) =>
+      index === 0
+        ? {
+            ...faq,
+            answer:
+              'Sim. No XML para Excel e Produtos dos XMLs, o Free permite 3 XMLs por processamento e 6 por dia em cada ferramenta. Para lotes maiores, a compra avulsa custa R$ 4,90 para até 100 XMLs ou R$ 6,90 para até 250, sem assinatura. O Pro custa R$ 29,90/mês, com 250 XMLs por processamento e 500 por dia.',
+          }
+        : faq,
+    ),
     {
       question: 'A planilha contém notas e itens?',
       answer:
@@ -192,7 +200,15 @@ export const toolFaqs: Record<
   ],
 
   '/produtos-dos-xmls': [
-    ...common,
+    ...common.map((faq, index) =>
+      index === 0
+        ? {
+            ...faq,
+            answer:
+              'Sim. No XML para Excel e Produtos dos XMLs, o Free permite 3 XMLs por processamento e 6 por dia em cada ferramenta. Para lotes maiores, a compra avulsa custa R$ 4,90 para até 100 XMLs ou R$ 6,90 para até 250, sem assinatura. O Pro custa R$ 29,90/mês, com 250 XMLs por processamento e 500 por dia.',
+          }
+        : faq,
+    ),
     {
       question: 'Produtos de fornecedores diferentes são agrupados?',
       answer:

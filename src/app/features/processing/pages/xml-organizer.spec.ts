@@ -261,8 +261,8 @@ describe('Organizador de XMLs shared flow', () => {
     page.start();
     fixture.detectChanges();
     expect(api.create).not.toHaveBeenCalled();
-    expect(element.textContent).toContain('Processar 1 grátis');
-    expect(element.textContent).toContain('Assinar Feitoo Pro');
+    expect(element.textContent).toContain('Escolha até 1 arquivos');
+    expect(element.textContent).toContain('Conhecer o Pro');
     expect(element.textContent).not.toContain('Processar todos por');
   });
 });

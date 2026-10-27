@@ -98,7 +98,7 @@ describe('Produtos dos XMLs — shared processing page', () => {
   };
   const auth = { user, startGoogle: vi.fn() };
   const track = vi.fn();
-  const analytics = { track, funnel: track, choice: signal('granted') };
+  const analytics = { track, trackOnce: track, funnel: track, choice: signal('granted') };
   let fixture: ComponentFixture<XmlToExcelPage>;
   let page: XmlToExcelPage;
   let element: HTMLElement;
@@ -230,9 +230,9 @@ describe('Produtos dos XMLs — shared processing page', () => {
     fixture.detectChanges();
     page.add(files(147));
     fixture.detectChanges();
-    expect(element.textContent).toContain('Processar 20 grátis');
+    expect(element.textContent).toContain('Escolha até 20 arquivos');
     expect(element.textContent?.replace(/\s+/g, ' ')).toContain('Processar todos por R$');
-    expect(element.textContent).toContain('Assinar Feitoo Pro');
+    expect(element.textContent).toContain('Conhecer o Pro');
   });
 
   it('uses Pro limits and suppresses a redundant single purchase', () => {

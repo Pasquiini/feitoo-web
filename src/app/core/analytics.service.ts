@@ -5,6 +5,10 @@ import { LAUNCH_CONFIG } from './launch-config';
 import { safePage } from './public-pages';
 
 export type AnalyticsEvent =
+  | 'upgrade_offer_viewed'
+  | 'upgrade_offer_selected'
+  | 'checkout_started'
+  | 'checkout_failed'
   | 'pro_offer_viewed'
   | 'pro_checkout_started'
   | 'pro_subscription_activated'
@@ -174,6 +178,10 @@ export class AnalyticsService {
     if (!this.browser || !this.enabled || this.choice() !== 'granted') return;
     if (
       ![
+        'upgrade_offer_viewed',
+        'upgrade_offer_selected',
+        'checkout_started',
+        'checkout_failed',
         'page_view',
         'tool_view',
         'processing_started',

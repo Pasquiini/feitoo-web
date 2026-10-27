@@ -5,6 +5,12 @@ import { guidePages } from './core/guide-pages';
 
 export const routes: Routes = [
   {
+    path: 'gerador-de-orcamentos',
+    canDeactivate: [(page: { beforeLeave: () => Promise<boolean> }) => page.beforeLeave()],
+    loadComponent: () =>
+      import('./features/quotations/pages/quotation-page').then((m) => m.QuotationPage),
+  },
+  {
     path: 'docx-para-pdf',
     loadComponent: () =>
       import('./features/processing/pages/docx-to-pdf').then((m) => m.DocxToPdfPage),

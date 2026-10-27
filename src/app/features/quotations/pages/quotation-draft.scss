@@ -1,0 +1,41 @@
+.quotation-app .draft-status {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #dce4df;
+  border-radius: 12px;
+  background: #fff;
+  p {
+    margin: 0 0 0.5rem;
+    overflow-wrap: anywhere;
+  }
+  button {
+    margin: 0.25rem 0.5rem 0.25rem 0;
+    max-width: 100%;
+    white-space: normal;
+  }
+  [role='alert'] {
+    color: #8a321b;
+  }
+}
+.quotation-app .quotation-generation {
+  margin: 1.25rem 0;
+  padding: 1.25rem;
+  border: 1px solid #dce4df;
+  border-radius: 12px;
+  background: #fff;
+  h2 {
+    font-size: 1.2rem;
+  }
+  p {
+    overflow-wrap: anywhere;
+  }
+  button {
+    margin: 0.25rem 0.5rem 0.25rem 0;
+    max-width: 100%;
+    white-space: normal;
+    min-height: 44px;
+  }
+  [role='alert'] {
+    color: #8a321b;
+  }
+}

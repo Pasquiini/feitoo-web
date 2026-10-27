@@ -944,7 +944,7 @@ try {
     const input = document.querySelector('#xml-files'); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles: true }));
   })()`);
   await selectSynthetic(37);
-  await waitFor("document.body.innerText.includes('Processar 5 grátis')");
+  await waitFor("document.body.innerText.includes('Escolha até 5 arquivos')");
   const paywallLayouts = [];
   for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await command('Emulation.setDeviceMetricsOverride', {

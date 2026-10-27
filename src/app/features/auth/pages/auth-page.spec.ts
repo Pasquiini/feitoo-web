@@ -24,6 +24,37 @@ describe('AuthPage', () => {
   });
   afterEach(() => http.verify());
 
+  it('keeps the quotation return route through login, registration and Google failure', async () => {
+    const harness = await RouterTestingHarness.create(
+      '/login?returnTo=%2Fgerador-de-orcamentos&google_error=invalid_google',
+    );
+    expect(harness.routeNativeElement?.textContent).toContain('orçamento');
+    expect(harness.routeNativeElement?.querySelector('.auth-back')?.getAttribute('href')).toBe(
+      '/gerador-de-orcamentos',
+    );
+    expect(
+      harness.routeNativeElement?.querySelector('.auth-switch a')?.getAttribute('href'),
+    ).toContain('returnTo=%2Fgerador-de-orcamentos');
+    const page = await harness.navigateByUrl(
+      '/cadastro?returnTo=%2Fgerador-de-orcamentos',
+      AuthPage,
+    );
+    page.google();
+    http.expectOne(environment.csrfUrl).flush(null);
+    const request = http.expectOne(`${environment.apiUrl}/auth/google/start`);
+    expect(request.request.body.return_to).toBe('/gerador-de-orcamentos');
+    request.flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(page.returnTo).toBe('/gerador-de-orcamentos');
+    expect(page.error()).toContain('indisponível');
+  });
+
+  it('rejects quotation return destinations containing personal query parameters', async () => {
+    const harness = await RouterTestingHarness.create(
+      '/login?returnTo=%2Fgerador-de-orcamentos%3Fname%3Dprivate',
+    );
+    expect(harness.routeNativeElement?.querySelector('.auth-back')?.getAttribute('href')).toBe('/');
+  });
+
   it('renders a minimal login form and Google button', async () => {
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/login', AuthPage);

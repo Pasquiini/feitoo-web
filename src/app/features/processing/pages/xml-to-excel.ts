@@ -191,6 +191,34 @@ export class XmlToExcelPage {
   readonly paymentMessage = signal('');
   readonly purchase = signal<Purchase | null>(null);
   readonly uploaded = signal(0);
+  readonly choosingFree = signal(false);
+  readonly freeSelection = signal<readonly string[]>([]);
+  readonly freeOptions = signal<readonly { id: string; name: string }[]>([]);
+  toggleFree(id: string): void {
+    this.freeSelection.update((ids) =>
+      ids.includes(id)
+        ? ids.filter((value) => value !== id)
+        : ids.length < this.freeCount()
+          ? [...ids, id]
+          : ids,
+    );
+  }
+  chooseFree(): void {
+    if (this.busy()) return;
+    this.freeSelection.set([]);
+    this.choosingFree.set(true);
+    if (this.processing()) {
+      this.api.listFiles(this.processing()!.id).subscribe({
+        next: (r) =>
+          this.freeOptions.set(
+            r.data
+              .filter((f) => f.status !== 'removed')
+              .map((f) => ({ id: f.id, name: f.original_name ?? 'XML' })),
+          ),
+        error: () => this.error.set('Não foi possível consultar os arquivos. Tente novamente.'),
+      });
+    } else this.freeOptions.set(this.files().map((f, i) => ({ id: String(i), name: f.name })));
+  }
   readonly deferredFiles = signal<readonly File[]>([]);
   readonly freeCount = computed(() =>
     Math.min(
@@ -299,6 +327,14 @@ export class XmlToExcelPage {
   private usageResetTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
+    if (isPlatformBrowser(inject(PLATFORM_ID))) {
+      void this.selection
+        .restoreGoogle(this.tool.id)
+        .then((restored) => {
+          if (restored) this.state.set('files-selected');
+        })
+        .catch(() => this.error.set('Não foi possível recuperar a seleção neste navegador.'));
+    }
     effect(() => {
       if (this.auth.user())
         untracked(() => {
@@ -311,17 +347,16 @@ export class XmlToExcelPage {
         });
     });
     effect(() => {
-      if (
-        this.auth.user() &&
-        this.needsPurchase() &&
-        this.analytics.choice() === 'granted' &&
-        !this.paywallTracked
-      ) {
+      if (this.needsPurchase() && this.analytics.choice() === 'granted' && !this.paywallTracked) {
         this.paywallTracked = true;
         if (this.usage()?.plan !== 'pro') this.analytics.track('pro_offer_viewed');
         this.analytics.track('free_limit_reached', {
           tool: this.tool.id,
           files_count_bucket: this.countBucket(),
+        });
+        this.analytics.track('upgrade_offer_viewed', {
+          tool: this.tool.id,
+          file_count: this.files().length || this.processing()?.files_count,
         });
         this.analytics.track('paywall_viewed', {
           tool: this.tool.id,
@@ -420,6 +455,8 @@ export class XmlToExcelPage {
       return;
     }
     this.error.set(accepted.length !== files.length ? 'Selecione somente arquivos .xml.' : '');
+    this.choosingFree.set(false);
+    this.freeSelection.set([]);
     this.files.update((current) => [...current, ...accepted]);
     this.state.set(this.files().length ? 'files-selected' : 'idle');
     this.processing.set(null);
@@ -435,6 +472,8 @@ export class XmlToExcelPage {
 
   remove(index: number): void {
     if (this.busy() || this.processing()) return;
+    this.choosingFree.set(false);
+    this.freeSelection.set([]);
     this.files.update((files) => files.filter((_, i) => i !== index));
     this.state.set(this.files().length ? 'files-selected' : 'idle');
     this.page.set(Math.min(this.page(), Math.max(0, this.pages() - 1)));
@@ -442,6 +481,10 @@ export class XmlToExcelPage {
 
   clear(): void {
     if (this.busy()) return;
+    this.selection.discardHandoff(this.tool.id);
+    this.choosingFree.set(false);
+    this.freeSelection.set([]);
+    this.freeOptions.set([]);
     this.files.set([]);
     this.page.set(0);
     this.authPrompt.set(false);
@@ -492,7 +535,7 @@ export class XmlToExcelPage {
       });
   }
 
-  start(freeFilesCount?: number, paid = false): void {
+  start(freeFilesCount?: number, paid = false, freeFileIds?: readonly string[]): void {
     if (this.busy() || (!this.files().length && this.processing()?.status !== 'pending')) return;
     if (!this.auth.user()) {
       this.selection.continueAfterLogin = true;
@@ -512,6 +555,10 @@ export class XmlToExcelPage {
         this.analytics.track('free_limit_reached', {
           tool: this.tool.id,
           files_count_bucket: this.countBucket(),
+        });
+        this.analytics.track('upgrade_offer_viewed', {
+          tool: this.tool.id,
+          file_count: this.files().length || this.processing()?.files_count,
         });
         this.analytics.track('paywall_viewed', {
           tool: this.tool.id,
@@ -541,9 +588,12 @@ export class XmlToExcelPage {
     this.state.set('uploading');
     this.error.set('');
     const selected = this.files();
-    const chosen = freeFilesCount === undefined ? selected : selected.slice(0, freeFilesCount);
+    const chosen =
+      freeFilesCount === undefined
+        ? selected
+        : selected.filter((_, i) => this.freeSelection().includes(String(i)));
     if (!this.processing() && freeFilesCount !== undefined)
-      this.deferredFiles.set(selected.slice(freeFilesCount));
+      this.deferredFiles.set(selected.filter((file) => !chosen.includes(file)));
     this.prepare(chosen)
       .pipe(
         switchMap((response) => {
@@ -552,7 +602,11 @@ export class XmlToExcelPage {
             files_count: response.data.files_count,
           });
           return freeFilesCount !== undefined
-            ? this.api.start(response.data.id, freeFilesCount)
+            ? this.api.start(
+                response.data.id,
+                freeFileIds ? undefined : freeFilesCount,
+                freeFileIds,
+              )
             : this.api.start(response.data.id);
         }),
         takeUntilDestroyed(this.destroyRef),
@@ -564,6 +618,7 @@ export class XmlToExcelPage {
             file_count: response.data.files_count,
             plan: this.usage()?.plan ?? 'free',
           });
+          this.selection.discardHandoff(this.tool.id);
           this.files.set([]);
           this.update(response.data);
           this.loadUsage();
@@ -685,7 +740,26 @@ export class XmlToExcelPage {
     );
   }
 
+  async trackProChoice(event: Event): Promise<void> {
+    event.preventDefault();
+    this.analytics.track('upgrade_offer_selected', {
+      tool: this.tool.id,
+      purchase_type: 'subscription',
+      plan: 'pro',
+    });
+    try {
+      if (!this.processing()) await this.selection.preserveForGoogle(this.tool.id);
+      await this.router.navigate(['/conta']);
+    } catch {
+      this.error.set('Não foi possível preservar sua seleção. Tente novamente.');
+    }
+  }
+
   buy(): void {
+    if (!this.auth.user()) {
+      this.start();
+      return;
+    }
     if (this.usage()?.plan === 'pro') return;
     if (
       this.busy() ||
@@ -694,6 +768,11 @@ export class XmlToExcelPage {
       !this.config()?.checkout_available
     )
       return;
+    this.analytics.track('upgrade_offer_selected', {
+      tool: this.tool.id,
+      purchase_type: 'single',
+      file_count: this.files().length || this.processing()?.files_count,
+    });
     this.paymentBusy.set(true);
     this.state.set('uploading');
     this.error.set('');
@@ -701,7 +780,6 @@ export class XmlToExcelPage {
       .pipe(
         // Only the final batch may create Checkout.
         takeWhile((response) => response.data.files_count < this.files().length, true),
-        finalize(() => this.paymentBusy.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
@@ -713,6 +791,12 @@ export class XmlToExcelPage {
             .subscribe({
               next: (r) => {
                 this.purchase.set(r.data.purchase);
+                this.analytics.trackOnce('checkout_started', r.data.purchase.id, {
+                  tool: this.tool.id,
+                  purchase_type: 'single',
+                  value: r.data.purchase.amount / 100,
+                  currency: 'BRL',
+                });
                 this.analytics.track('single_purchase_started', {
                   tool: this.tool.id,
                   files_count_bucket: this.countBucket(),
@@ -723,9 +807,17 @@ export class XmlToExcelPage {
                 this.state.set('files-selected');
                 if (r.data.checkout_url?.startsWith('https://checkout.stripe.com/'))
                   this.billing.redirect(r.data.checkout_url);
-                else this.confirmPayment(response.data.id);
+                else {
+                  this.paymentBusy.set(false);
+                  this.confirmPayment(response.data.id);
+                }
               },
               error: () => {
+                this.paymentBusy.set(false);
+                this.analytics.track('checkout_failed', {
+                  tool: this.tool.id,
+                  purchase_type: 'single',
+                });
                 this.state.set('files-selected');
                 this.error.set(
                   'Não foi possível abrir o pagamento. Seus arquivos não foram processados.',
@@ -733,10 +825,12 @@ export class XmlToExcelPage {
               },
             });
         },
-        error: () =>
+        error: () => {
+          this.paymentBusy.set(false);
           this.fail(
             'Não foi possível enviar o lote. Os arquivos ainda não foram processados. Exclua o envio incompleto e tente novamente.',
-          ),
+          );
+        },
       });
   }
 
@@ -821,6 +915,10 @@ export class XmlToExcelPage {
                 ? 'Pagamento expirado. Seus arquivos não foram processados.'
                 : 'Pagamento não confirmado. Tente novamente.',
             );
+            this.analytics.trackOnce('checkout_failed', r.data.id, {
+              tool: this.tool.id,
+              purchase_type: 'single',
+            });
             this.analytics.track('single_purchase_failed', {
               tool: this.tool.id,
               package_code: r.data.package_code,
@@ -841,10 +939,17 @@ export class XmlToExcelPage {
   }
 
   useFree(): void {
-    if (this.busy() || this.freeCount() < 1) return;
+    if (this.busy() || this.freeCount() < 1 || !this.freeSelection().length) return;
+    const count = this.freeSelection().length;
+    if (count > this.freeCount()) return;
+    this.analytics.track('upgrade_offer_selected', {
+      tool: this.tool.id,
+      plan: this.usage()?.plan ?? 'free',
+      file_count: count,
+    });
     const id = this.processing()?.id;
     if (!id || !this.purchase()) {
-      this.start(this.freeCount());
+      this.start(count, false, id ? this.freeSelection() : undefined);
       return;
     }
     this.paymentBusy.set(true);
@@ -858,7 +963,7 @@ export class XmlToExcelPage {
         next: (r) => {
           this.purchase.set(r.data);
           this.paymentBusy.set(false);
-          this.start(this.freeCount());
+          this.start(count, false, id ? this.freeSelection() : undefined);
         },
         error: () =>
           this.error.set(

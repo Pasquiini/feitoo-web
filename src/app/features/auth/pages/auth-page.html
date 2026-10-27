@@ -1,15 +1,33 @@
 <section class="auth-layout" aria-labelledby="auth-title">
   <aside class="auth-story">
     <span class="eyebrow">Uma tarefa a menos</span>
-    <h2>Escolheu o arquivo.<br />O próximo passo é Feitoo.</h2>
-    <p>Uma conta para processar seus XMLs, acompanhar o resultado e baixar sua planilha.</p>
+    <h2>
+      {{
+        returnTo === '/gerador-de-orcamentos'
+          ? 'Seu orçamento continua aqui.'
+          : 'Escolheu o arquivo.'
+      }}<br />O próximo passo é Feitoo.
+    </h2>
+    <p>
+      {{
+        returnTo === '/gerador-de-orcamentos'
+          ? 'Entre para recuperar e salvar seu rascunho de forma privada.'
+          : 'Uma conta para processar seus XMLs, acompanhar o resultado e baixar sua planilha.'
+      }}
+    </p>
     <div class="auth-value">
       <span aria-hidden="true">✓</span>
-      <p><strong>Arquivos privados</strong><br />Seu resultado fica disponível só para você.</p>
+      <p><strong>Dados privados</strong><br />Seu conteúdo fica disponível só para você.</p>
     </div>
     <div class="auth-value">
       <span aria-hidden="true">✓</span>
-      <p><strong>Sem organizar tudo à mão</strong><br />Notas e itens em uma planilha só.</p>
+      <p>
+        <strong>Continue de onde parou</strong><br />{{
+          returnTo === '/gerador-de-orcamentos'
+            ? 'Dados, modelo e logotipo preservados no rascunho.'
+            : 'Notas e itens em uma planilha só.'
+        }}
+      </p>
     </div>
     <a routerLink="/seguranca">Entenda como cuidamos dos arquivos →</a>
   </aside>
@@ -22,13 +40,15 @@
       {{
         returnTo === '/conta'
           ? 'Entre para acessar sua conta.'
-          : returnTo
-            ? registering
-              ? 'Crie uma conta gratuita para processar seus XMLs.'
-              : 'Entre para continuar seu processamento de XMLs.'
-            : registering
-              ? 'Comece com uma conta gratuita.'
-              : 'Entre na sua conta e resolva sua próxima tarefa.'
+          : returnTo === '/gerador-de-orcamentos'
+            ? 'Entre para continuar seu orçamento. O rascunho será preservado.'
+            : returnTo
+              ? registering
+                ? 'Crie uma conta gratuita para processar seus XMLs.'
+                : 'Entre para continuar seu processamento de XMLs.'
+              : registering
+                ? 'Comece com uma conta gratuita.'
+                : 'Entre na sua conta e resolva sua próxima tarefa.'
       }}
     </p>
     <button class="btn btn-google" type="button" [disabled]="busy()" (click)="google()">
@@ -176,9 +196,11 @@
       {{
         returnTo === '/conta'
           ? 'Voltar para Minha conta'
-          : returnTo
-            ? 'Voltar para XML para Excel'
-            : 'Voltar ao início'
+          : returnTo === '/gerador-de-orcamentos'
+            ? 'Voltar ao orçamento'
+            : returnTo
+              ? 'Voltar para XML para Excel'
+              : 'Voltar ao início'
       }}</a
     >
   </div>

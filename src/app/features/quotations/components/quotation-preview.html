@@ -1,0 +1,146 @@
+<div class="preview-toolbar">
+  <span>Prévia do documento</span
+  ><button
+    type="button"
+    [attr.aria-pressed]="comfortable()"
+    (click)="comfortable.set(!comfortable())"
+  >
+    {{ comfortable() ? 'Ajustar à tela' : 'Leitura ampliada' }}
+  </button>
+</div>
+<p class="preview-note" id="preview-note">
+  A prévia acompanha seus dados. A paginação do PDF pode ser diferente.
+</p>
+<div
+  class="preview-stage"
+  tabindex="0"
+  role="region"
+  aria-label="Documento de orçamento em prévia"
+  aria-describedby="preview-note"
+>
+  <article
+    class="paper"
+    [class.modern]="value().template_id === 'modern'"
+    [class.comfortable]="comfortable()"
+    aria-label="Orçamento em preparação"
+  >
+    <div class="doc-running">FEITOO <span>/</span> ORÇAMENTO PROFISSIONAL</div>
+    <header class="doc-brand">
+      <div>
+        <strong>{{ value().issuer.name || 'Seu nome ou empresa' }}</strong
+        ><span>Serviços e soluções sob medida</span>
+      </div>
+      @if (logo()) {
+        <img [src]="logo()" alt="Logotipo do prestador" />
+      }
+    </header>
+    <div class="doc-heading">
+      <div>
+        <p>Uma proposta para o seu projeto</p>
+        <h2>Orçamento</h2>
+        <span>{{ value().number || 'Identificação do orçamento' }}</span>
+      </div>
+      <dl>
+        <div>
+          <dt>Emitido em</dt>
+          <dd>{{ date(value().issue_date) }}</dd>
+        </div>
+        <div>
+          <dt>Válido até</dt>
+          <dd>{{ date(value().valid_until) }}</dd>
+        </div>
+      </dl>
+    </div>
+    <div class="doc-parties">
+      @for (
+        entry of [
+          { title: 'Prestador', party: value().issuer, placeholder: 'Seu nome ou empresa' },
+          { title: 'Cliente', party: value().customer, placeholder: 'Nome do cliente' },
+        ];
+        track entry.title
+      ) {
+        <section>
+          <h3>{{ entry.title }}</h3>
+          <strong>{{ entry.party.name || entry.placeholder }}</strong>
+          @for (
+            detail of [
+              entry.party.document,
+              entry.party.email,
+              entry.party.phone,
+              entry.party.address,
+            ];
+            track $index
+          ) {
+            @if (detail) {
+              <span>{{ detail }}</span>
+            }
+          }
+        </section>
+      }
+    </div>
+    <h3 class="items-title">Produtos e serviços <span>Valores em R$</span></h3>
+    <table>
+      <caption class="visually-hidden">
+        Itens do orçamento em prévia
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Descrição</th>
+          <th scope="col">Qtd.</th>
+          <th scope="col">Unitário</th>
+          <th scope="col">Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of value().items; track $index) {
+          <tr>
+            <td>{{ $index + 1 }}</td>
+            <td class="description">
+              {{ item.description || 'A descrição do seu produto ou serviço aparecerá aqui.' }}
+            </td>
+            <td>{{ item.quantity.replace('.', ',') || '—' }}</td>
+            <td>{{ format(item.unit_price_cents) }}</td>
+            <td>{{ format(calculation().lines[$index]) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <dl class="doc-totals">
+      <div>
+        <dt>Subtotal</dt>
+        <dd>
+          {{ calculation().subtotal === null ? '—' : 'R$ ' + format(calculation().subtotal) }}
+        </dd>
+      </div>
+      <div>
+        <dt>
+          Desconto
+          @if (value().discount_type === 'percent') {
+            ({{ value().discount_percent }}%)
+          }
+        </dt>
+        <dd>
+          {{ calculation().discount === null ? '—' : 'R$ ' + format(calculation().discount) }}
+        </dd>
+      </div>
+      <div class="grand-total">
+        <dt>Total</dt>
+        <dd>{{ calculation().total === null ? '—' : 'R$ ' + format(calculation().total) }}</dd>
+      </div>
+    </dl>
+    @if (value().conditions) {
+      <section class="doc-text">
+        <h3>Condições de pagamento</h3>
+        <p>{{ value().conditions }}</p>
+      </section>
+    }
+    @if (value().notes) {
+      <section class="doc-text">
+        <h3>Observações</h3>
+        <p>{{ value().notes }}</p>
+      </section>
+    }
+    <footer><span>Documento comercial, sem valor fiscal.</span><span>Prévia</span></footer>
+  </article>
+</div>

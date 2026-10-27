@@ -29,7 +29,7 @@ export const HOME_TOOLS: readonly ToolCard[] = [
     badge: 'Mais usado',
     category: 'XML e Fiscal',
     keywords: ['xml', 'excel', 'planilha', 'nota fiscal', 'nfe', 'nf-e', 'converter', 'conversão'],
-    meta: 'Até 20 XMLs grátis',
+    meta: 'Até 3 XMLs grátis por lote',
     cta: 'Abrir ferramenta',
   },
   {

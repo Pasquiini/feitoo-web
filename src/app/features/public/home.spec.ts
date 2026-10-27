@@ -42,7 +42,7 @@ describe('Home tool discovery', () => {
     expect(element.querySelectorAll('.plan-card')).toHaveLength(3);
     expect(element.querySelector('.plan-pro')?.textContent).toContain('R$ 29,90');
     expect(element.querySelector('.security-block a')?.getAttribute('href')).toBe('/seguranca');
-    expect(element.querySelectorAll('.final-links a')).toHaveLength(7);
+    expect(element.querySelectorAll('.final-links a')).toHaveLength(2);
     const quotation = element.querySelector('app-tool-card a[href="/gerador-de-orcamentos"]');
     expect(quotation?.textContent).toContain('Grátis para começar');
     expect(quotation?.textContent).toContain('Criar orçamento');

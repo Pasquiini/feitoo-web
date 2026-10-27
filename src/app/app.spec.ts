@@ -140,5 +140,14 @@ describe('App', () => {
     expect(element.querySelector('.account-menu a')?.getAttribute('href')).toBe('/conta');
     expect(element.querySelector('.account-link')).toBeNull();
     expect(element.querySelector('footer a[href="/conta"]')).not.toBeNull();
+    TestBed.inject(HttpTestingController)
+      .expectOne('http://localhost:8000/api/quotations/entitlements')
+      .flush(null, { status: 503, statusText: 'Unavailable' });
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(element.querySelector('app-navbar-credits')?.textContent).toContain(
+        'Saldo indisponível',
+      );
+    });
   });
 });

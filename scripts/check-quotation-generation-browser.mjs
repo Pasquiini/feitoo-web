@@ -168,7 +168,7 @@ try {
       );
     const field = (selector, value) =>
       evaluate(
-        `(() => { const e=document.querySelector(${JSON.stringify(selector)}); e.value=${JSON.stringify(value)}; e.dispatchEvent(new Event('input',{bubbles:true})); e.dispatchEvent(new Event('change',{bubbles:true})); e.dispatchEvent(new Event('blur')); })()`,
+        `(() => { const e=document.querySelector(${JSON.stringify(selector)}); const step=e.closest('[data-step]')?.dataset.step; if(step) document.querySelectorAll('.editor-steps button')[Number(step)-1].click(); e.value=${JSON.stringify(value)}; e.dispatchEvent(new Event('input',{bubbles:true})); e.dispatchEvent(new Event('change',{bubbles:true})); e.dispatchEvent(new Event('blur')); })()`,
       );
     const click = (text) =>
       evaluate(
@@ -181,10 +181,13 @@ try {
     await field('#customer-name', 'Cliente E2E Fictício');
     await field('#item-description-0', 'Serviço de teste inteiramente fictício');
     await field('#item-price-0', '120,00');
+    await evaluate('document.querySelectorAll(".editor-steps button")[0].click()');
     await evaluate(
       `(async()=>{ const c=document.createElement('canvas');c.width=40;c.height=20;c.getContext('2d').fillRect(0,0,40,20);const b=await new Promise(r=>c.toBlob(r,'image/png'));const t=new DataTransfer();t.items.add(new File([b],'logo.png',{type:'image/png'}));const e=document.querySelector('#quotation-logo');e.files=t.files;e.dispatchEvent(new Event('change',{bubbles:true}));})()`,
     );
     await waitFor('!!document.querySelector(".logo-selected img")');
+    await evaluate('document.querySelectorAll(".editor-steps button")[3].click()');
+    await waitFor('!document.querySelector(".editor-finish").hidden');
     await evaluate('document.querySelector(".generate-pdf").focus()');
     assert.equal(await evaluate('document.activeElement.classList.contains("generate-pdf")'), true);
     assert.equal(
@@ -220,6 +223,7 @@ try {
     await evaluate('document.querySelector(".auth-submit").click()');
     await ready();
     await waitFor('document.querySelector(".draft-status").textContent.includes("Rascunho salvo")');
+    await evaluate('document.querySelectorAll(".editor-steps button")[3].click()');
     assert.equal(
       await evaluate('document.querySelector("#issuer-name").value'),
       'Prestador E2E Fictício',
@@ -279,7 +283,7 @@ try {
     assert.equal((await fixture('inspect')).consumed, 1);
     await evaluate('document.querySelector(".generate-pdf").click()');
     await waitFor(
-      'document.querySelector(".quotation-generation").textContent.includes("Você já utilizou seu orçamento gratuito de hoje.")',
+      'document.querySelector(".quotation-app").textContent.includes("Você já utilizou seu orçamento gratuito de hoje.")',
     );
     assert.equal((await fixture('inspect')).generations, 1);
     const forbidden = await evaluate(
@@ -349,6 +353,78 @@ try {
     await waitFor(
       `[...document.querySelectorAll('.history-row a')].some(a=>a.textContent.trim()==='Consultar orçamento')`,
     );
+    await waitFor('!!document.querySelector("app-navbar-credits .credit-unit")');
+    assert.equal(await evaluate(`document.querySelectorAll('main').length`), 1);
+    assert.equal(
+      await evaluate(
+        `[...document.querySelectorAll('.account-navigation a')].every(a => document.getElementById(a.hash.slice(1)))`,
+      ),
+      true,
+    );
+    const uxLayouts = [];
+    const captureUx = async (name, widths = [390, 1440]) => {
+      for (const width of widths) {
+        await command('Emulation.setDeviceMetricsOverride', {
+          width,
+          height: 1000,
+          deviceScaleFactor: 1,
+          mobile: width < 768,
+        });
+        await evaluate(
+          name.startsWith('step-')
+            ? 'document.querySelector(".quotation-workbench").scrollIntoView({block:"start"})'
+            : 'scrollTo(0,0)',
+        );
+        await new Promise((resolve) => setTimeout(resolve, 80));
+        const check = await evaluate(`(() => {
+          const visible = e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden';
+          return { overflow: document.documentElement.scrollWidth > innerWidth,
+            unlabeled: [...document.querySelectorAll('input:not([type=hidden]), select, textarea')].filter(visible).filter(e => !(e.labels?.length || e.getAttribute('aria-label') || e.getAttribute('aria-labelledby'))).length,
+            smallTargets: [...document.querySelectorAll('.account-navigation a, app-navbar-credits summary, app-navbar-credits button, .editor-steps button')].filter(visible).filter(e => e.getBoundingClientRect().height < 43).length };
+        })()`);
+        assert.deepEqual(
+          check,
+          { overflow: false, unlabeled: 0, smallTargets: 0 },
+          JSON.stringify({ name, width, ...check }),
+        );
+        uxLayouts.push({ name, width, ...check });
+        if ([390, 1440].includes(width)) {
+          const shot = await command('Page.captureScreenshot', {
+            format: 'png',
+            captureBeyondViewport: false,
+          });
+          await writeFile(
+            resolve(artifacts, `feitoo2-${name}-${width}.png`),
+            Buffer.from(shot.data, 'base64'),
+          );
+        }
+      }
+    };
+    await captureUx('account', [320, 390, 768, 1440]);
+    await evaluate('document.querySelector("app-navbar-credits summary").click()');
+    await captureUx('credits');
+    await evaluate(
+      `document.querySelector('app-navbar-credits details').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`,
+    );
+    assert.equal(
+      await evaluate('document.querySelector("app-navbar-credits details").open'),
+      false,
+    );
+    assert.equal(
+      await evaluate('document.activeElement.matches("app-navbar-credits summary")'),
+      true,
+    );
+    await click('Ver pacote de orçamentos');
+    await ready();
+    await waitFor('!document.querySelector(".editor-finish").hidden');
+    assert.equal(
+      await evaluate(
+        'document.querySelector(".editor-steps [aria-current]").textContent.includes("Revisar")',
+      ),
+      true,
+    );
+    await evaluate('document.querySelector(".account-menu a").click()');
+    await waitFor('!!document.querySelector(".history-row a")');
     await click('Consultar orçamento');
     await ready();
     await waitFor(
@@ -359,6 +435,19 @@ try {
       1,
       'History navigation and draft management cannot issue a PDF',
     );
+    await captureUx('editor');
+    for (const step of [1, 2, 3, 4]) {
+      await evaluate(`document.querySelectorAll('.editor-steps button')[${step - 1}].click()`);
+      await waitFor(
+        `document.querySelector('.editor-steps [aria-current]').textContent.includes(${JSON.stringify(String(step))})`,
+      );
+      await evaluate('document.querySelectorAll(".mobile-view button")[0].click()');
+      await captureUx('step-' + step);
+    }
+    await evaluate(`document.querySelector('a.brand').click()`);
+    await waitFor('!!document.querySelector("#tool-search")');
+    await captureUx('home', [320, 390, 768, 1440]);
+    assert.equal(await evaluate('document.querySelectorAll(".home-faq details").length'), 4);
     assert.equal(
       requests.some(
         (r) => r.method !== 'GET' && /purchase|checkout|stripe|\/start|\/files$/.test(r.path),
@@ -388,6 +477,7 @@ try {
           repeatedDownloadIdentical: true,
           downloadWindowSeconds: 7200,
           layouts: 4,
+          uxLayouts,
           requests,
           errors,
         },

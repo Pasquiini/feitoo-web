@@ -86,7 +86,7 @@ import {
               [disabled]="busy() || retryBlocked() || !q.offer.available || checkoutUnavailable()"
               (click)="buy.emit()"
             >
-              Comprar cinco créditos por R$ 9,90
+              Comprar {{ q.offer.credits }} créditos por {{ offerPrice() }}
             </button>
             @if (!q.offer.available || checkoutUnavailable()) {
               <p>A compra de créditos está temporariamente indisponível.</p>
@@ -174,6 +174,14 @@ export class QuotationCommercePanel {
   private ready = false;
   quota(): QuotationEntitlements | null {
     return this.entitlement() ?? this.ownQuota();
+  }
+  offerPrice(): string {
+    const offer = this.quota()?.offer;
+    return offer
+      ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: offer.currency })
+          .format(offer.amount / 100)
+          .replace(/\u00a0/g, ' ')
+      : '';
   }
   constructor() {
     effect(() => {

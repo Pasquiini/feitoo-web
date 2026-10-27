@@ -1,0 +1,54 @@
+:host {
+  display: block;
+}
+.credit-mobile {
+  display: none;
+}
+details {
+  position: relative;
+}
+summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.credit-popover {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  width: min(21rem, calc(100vw - 2.5rem));
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  font-size: 0.875rem;
+}
+.credit-popover p {
+  margin-top: 0.75rem;
+}
+.credit-popover a {
+  display: block;
+  min-height: 44px;
+  padding-block: 0.6rem;
+}
+@media (max-width: 600px) {
+  .credit-unit {
+    display: none;
+  }
+  .credit-mobile {
+    display: inline;
+  }
+  .credit-popover {
+    position: fixed;
+    top: 5rem;
+    right: 1.25rem;
+    max-height: calc(100dvh - 6rem);
+    overflow-y: auto;
+  }
+}

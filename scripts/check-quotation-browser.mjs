@@ -49,7 +49,15 @@ try {
       '!!document.querySelector("#issue-date")?.value && !document.querySelector("form[inert]")',
     );
     await evaluate(
-      `window.setField = (selector, value) => { const element = document.querySelector(selector); element.value = value; element.dispatchEvent(new Event('input', { bubbles:true })); element.dispatchEvent(new Event('change', { bubbles:true })); element.dispatchEvent(new Event('blur')); };`,
+      `window.setStep = step => document.querySelectorAll('.editor-steps button')[step - 1].click(); window.setField = (selector, value) => { const element = document.querySelector(selector); const step = element.closest('[data-step]')?.dataset.step; if (step) setStep(Number(step)); element.value = value; element.dispatchEvent(new Event('input', { bubbles:true })); element.dispatchEvent(new Event('change', { bubbles:true })); element.dispatchEvent(new Event('blur')); };`,
+    );
+    await evaluate('document.querySelector(".editor-navigation .btn-primary").click()');
+    await waitFor('document.activeElement.id === "issuer-name"');
+    assert.equal(
+      await evaluate(
+        'document.querySelector(".editor-steps [aria-current]").textContent.includes("Minha empresa")',
+      ),
+      true,
     );
     const storage = await evaluate('JSON.stringify(Object.entries(localStorage))');
     const inputs = {
@@ -69,7 +77,7 @@ try {
     await waitFor('document.querySelector(".paper .grand-total").textContent.includes("0,51")');
     await evaluate('setField("#item-quantity-0", "2"); setField("#item-price-0", "150,00")');
     await waitFor('document.querySelector(".paper .grand-total").textContent.includes("300,00")');
-    await evaluate('document.querySelector("#quotation-template-classic").click()');
+    await evaluate('setStep(4); document.querySelector("#quotation-template-classic").click()');
     await waitFor('!document.querySelector(".paper").classList.contains("modern")');
     assert.ok(
       await evaluate(
@@ -155,9 +163,9 @@ try {
     await waitFor('document.querySelector("#validity-error").textContent.includes("posterior")');
     await evaluate('setField("#valid-until", "2026-11-04"); setField("#item-price-0", "10,001")');
     await waitFor('document.querySelector(".paper .grand-total").textContent.includes("—")');
-    await evaluate(
-      'setField("#item-price-0", "150,00"); document.querySelector("#quotation-notes").scrollIntoView()',
-    );
+    await evaluate('setField("#item-price-0", "150,00"); setStep(3)');
+    await waitFor('!document.querySelector("#quotation-notes").closest("[data-step]").hidden');
+    await evaluate('document.querySelector("#quotation-notes").scrollIntoView()');
     const sticky = await evaluate(
       'document.querySelector(".editor-panel-heading").getBoundingClientRect().top',
     );
@@ -168,6 +176,7 @@ try {
     await evaluate(
       `window.activeLogoUrls = new Set(); const create = URL.createObjectURL.bind(URL); const revoke = URL.revokeObjectURL.bind(URL); URL.createObjectURL = blob => { const url = create(blob); activeLogoUrls.add(url); return url; }; URL.revokeObjectURL = url => { activeLogoUrls.delete(url); revoke(url); };`,
     );
+    await evaluate('setStep(1)');
     for (const type of ['image/png', 'image/jpeg']) {
       await evaluate(
         `(async () => { const canvas = document.createElement('canvas'); canvas.width = 240; canvas.height = 100; const context = canvas.getContext('2d'); context.fillStyle = '#125d54'; context.fillRect(15,15,60,70); context.font = '18px sans-serif'; context.fillText('EXEMPLO',90,60); const blob = await new Promise(resolve => canvas.toBlob(resolve, ${JSON.stringify(type)})); const transfer = new DataTransfer(); transfer.items.add(new File([blob], 'ficticio.' + (${JSON.stringify(type)} === 'image/png' ? 'png' : 'jpg'), {type:${JSON.stringify(type)}})); const input = document.querySelector('#quotation-logo'); input.files = transfer.files; input.dispatchEvent(new Event('change', {bubbles:true})); })()`,

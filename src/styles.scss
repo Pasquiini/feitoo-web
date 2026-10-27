@@ -38,7 +38,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -414,7 +416,7 @@ a {
   text-underline-offset: 0.22em;
 }
 
-:is(a, button, input, summary):focus-visible {
+:is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 3px solid #125d54;
   outline-offset: 4px;
 }

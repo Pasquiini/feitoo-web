@@ -196,7 +196,10 @@ describe('AccountPage', () => {
 
   it('keeps the account sections in reading order', () => {
     fixture.detectChanges();
-    expect([...element.querySelectorAll('h2, #usage-title')].slice(0, 6).map((h) => h.id)).toEqual([
+    expect([...element.querySelectorAll('h2, #usage-title')].slice(0, 9).map((h) => h.id)).toEqual([
+      'overview-title',
+      'credits-title',
+      'buy-credits-title',
       'plan-title',
       'usage-title',
       'purchases-title',

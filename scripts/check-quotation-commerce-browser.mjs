@@ -323,10 +323,11 @@ try {
     assert.equal(current.payload.template_id, 'classic');
     await field('#item-price-0', '12,345');
     await saved();
-    await waitFor('document.body.textContent.includes("Comprar cinco créditos por R$ 9,90")');
-    await click('Comprar cinco créditos por R$ 9,90');
+    await evaluate('document.querySelectorAll(".editor-steps button")[3].click()');
+    await waitFor('document.body.textContent.includes("Comprar 5 créditos por R$ 9,90")');
+    await click('Comprar 5 créditos por R$ 9,90');
     await waitFor('document.body.textContent.includes("Não foi possível abrir o Checkout")');
-    await click('Comprar cinco créditos por R$ 9,90');
+    await click('Comprar 5 créditos por R$ 9,90');
     await waitFor(
       'document.querySelector("app-quotation-commerce").textContent.includes("temporariamente indisponível")',
     );

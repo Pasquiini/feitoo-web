@@ -8,27 +8,6 @@
     <span class="quotation-badge">Grátis para começar</span>
   </div>
 </header>
-<p class="editor-notice">
-  <span aria-hidden="true">↳</span> Na conta gratuita, gere um orçamento em PDF por dia. O arquivo
-  fica disponível por duas horas após a conclusão.
-</p>
-@if (auth.user()) {
-  <p class="quota-summary" role="status">
-    @if (generation.entitlements(); as q) {
-      @if (!q.enabled) {
-        A geração está temporariamente indisponível. Seu rascunho pode ser salvo normalmente.
-      } @else if (q.pro?.active) {
-        Feitoo Pro · {{ q.pro?.remaining }} de {{ q.pro?.limit }} gerações disponíveis neste
-        período.
-      } @else {
-        Hoje · {{ q.remaining }} de {{ q.daily_limit }} geração gratuita disponível.
-      }
-      Créditos disponíveis: {{ q.credits?.available ?? 0 }}.
-    } @else {
-      Consultando a disponibilidade e a franquia da sua conta…
-    }
-  </p>
-}
 <div
   class="draft-status"
   aria-label="Rascunho temporário"
@@ -58,7 +37,7 @@
     }
     <button
       type="button"
-      class="btn btn-secondary"
+      class="btn btn-ghost btn-sm"
       [disabled]="draft.loading()"
       (click)="draft.flush()"
     >
@@ -68,17 +47,17 @@
   @if (draft.available()) {
     <button
       type="button"
-      class="btn btn-secondary"
+      class="btn btn-ghost btn-sm"
       [disabled]="draft.loading()"
       (click)="draft.discard()"
     >
       Descartar rascunho
     </button>
   }
+  @if (auth.user()) {
+    <a class="btn btn-ghost btn-sm" href="#saved-drafts-title">Meus rascunhos</a>
+  }
 </div>
-<app-quotation-drafts
-  [attr.inert]="confirmation() || preparing() || generation.sending() ? '' : null"
-/>
 <div class="mobile-view" role="group" aria-label="Modo de trabalho">
   <button
     type="button"
@@ -105,19 +84,64 @@
         {{ calculation().total === null ? '—' : 'R$ ' + format(calculation().total) }}</span
       >
     </div>
+    <nav
+      class="editor-steps"
+      aria-label="Etapas do orçamento"
+      [attr.inert]="
+        draft.loading() || confirmation() || preparing() || generation.sending() ? '' : null
+      "
+    >
+      @for (label of steps; track label; let index = $index) {
+        <button
+          type="button"
+          [attr.aria-current]="step() === index + 1 ? 'step' : null"
+          (click)="goToStep(index + 1)"
+        >
+          <span aria-hidden="true">{{ index + 1 }}</span
+          >{{ label }}
+        </button>
+      }
+    </nav>
+    <div class="editor-step-intro">
+      <h2 id="editor-step-title" tabindex="-1">{{ step() }} de 4 · {{ steps[step() - 1] }}</h2>
+      @if (!auth.user()) {
+        <p>Grátis para começar: um orçamento concluído por dia. Entre ao gerar o PDF.</p>
+      }
+      @if (generation.entitlements(); as quota) {
+        <p class="editor-availability">
+          @if (!quota.enabled) {
+            Geração temporariamente indisponível.
+          } @else if (quota.pro?.active) {
+            Pro: {{ quota.pro?.remaining }} orçamentos no período.
+          } @else {
+            Free: {{ quota.remaining }} orçamento disponível hoje.
+          }
+          @if (quota.credits; as credits) {
+            Créditos exclusivos de orçamentos: {{ credits.available }} disponíveis.
+          }
+        </p>
+      }
+      @if (auth.user() && !generation.entitlements()) {
+        <p role="status">Consultando sua disponibilidade…</p>
+      }
+      <p class="field-error" role="status">{{ stepMessage() }}</p>
+    </div>
     <form
       [formGroup]="form"
-      (ngSubmit)="validatePreview()"
+      (ngSubmit)="step() < 4 ? nextStep() : validatePreview()"
       [attr.inert]="
         draft.loading() || generation.sending() || preparing() || confirmation() ? '' : null
       "
       novalidate
       autocomplete="off"
     >
-      <section class="editor-section" aria-labelledby="identity-title">
-        <h2 id="identity-title">
-          <span class="section-number" aria-hidden="true">01</span>Identificação
-        </h2>
+      <section
+        class="editor-section"
+        data-step="4"
+        [hidden]="step() !== 4"
+        aria-labelledby="identity-title"
+      >
+        <h2 id="identity-title">Identificação do orçamento</h2>
         <div class="field">
           <label for="quotation-number">Número do orçamento <span aria-hidden="true">*</span></label
           ><input
@@ -165,27 +189,36 @@
         </div>
       </section>
       <app-quotation-party
+        data-step="1"
+        [hidden]="step() !== 1"
         [group]="form.controls.issuer"
         prefix="issuer"
-        title="Seus dados"
-        step="02"
+        title="Minha empresa"
+        step="01"
       />
       <app-quotation-party
+        data-step="2"
+        [hidden]="step() !== 2"
         [group]="form.controls.customer"
         prefix="customer"
         title="Seu cliente"
-        step="03"
+        step="02"
       />
       <app-quotation-items
+        data-step="3"
+        [hidden]="step() !== 3"
         [items]="form.controls.items"
         [totals]="calculation().lines"
         (addItem)="addItem()"
         (removeItem)="removeItem($event)"
       />
-      <section class="editor-section" aria-labelledby="values-title">
-        <h2 id="values-title">
-          <span class="section-number" aria-hidden="true">05</span>Valores e desconto
-        </h2>
+      <section
+        class="editor-section"
+        data-step="3"
+        [hidden]="step() !== 3"
+        aria-labelledby="values-title"
+      >
+        <h2 id="values-title">Valores e desconto</h2>
         <div class="fields-grid">
           <div class="field">
             <label for="discount-type">Tipo de desconto</label
@@ -244,10 +277,13 @@
           </div>
         </dl>
       </section>
-      <section class="editor-section" aria-labelledby="conditions-title">
-        <h2 id="conditions-title">
-          <span class="section-number" aria-hidden="true">06</span>Condições e detalhes
-        </h2>
+      <section
+        class="editor-section"
+        data-step="3"
+        [hidden]="step() !== 3"
+        aria-labelledby="conditions-title"
+      >
+        <h2 id="conditions-title">Condições e detalhes</h2>
         <div class="field">
           <label for="quotation-conditions"
             >Condições de pagamento <span class="optional-label">opcional</span></label
@@ -281,11 +317,21 @@
           ><span class="field-error" id="notes-error">{{ error(form.controls.notes) }}</span>
         </div>
       </section>
-      <section class="editor-section" aria-labelledby="appearance-title">
-        <h2 id="appearance-title">
-          <span class="section-number" aria-hidden="true">07</span>Seu estilo
-        </h2>
+      <section
+        class="editor-section"
+        data-step="4"
+        [hidden]="step() !== 4"
+        aria-labelledby="appearance-title"
+      >
+        <h2 id="appearance-title">Escolha o modelo</h2>
         <app-quotation-template-picker [control]="form.controls.template_id" />
+      </section>
+      <section
+        class="editor-section"
+        data-step="1"
+        [hidden]="step() !== 1"
+        aria-label="Logotipo da minha empresa"
+      >
         <div class="logo-picker">
           <div>
             <strong>Seu logotipo <span class="optional-label">opcional</span></strong>
@@ -318,7 +364,48 @@
           <p class="field-error" id="logo-error" role="status">{{ logoError() }}</p>
         </div>
       </section>
-      <div class="editor-finish">
+      <div class="editor-navigation">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          [disabled]="step() === 1"
+          (click)="goToStep(step() - 1)"
+        >
+          Voltar
+        </button>
+        @if (step() < 4) {
+          <button type="submit" class="btn btn-primary">Continuar para {{ steps[step()] }}</button>
+        }
+      </div>
+      <div class="editor-finish" [hidden]="step() !== 4">
+        <h2 class="review-title">Confira antes de gerar</h2>
+        <dl class="editor-totals">
+          <div>
+            <dt>Minha empresa</dt>
+            <dd>{{ value().issuer.name || 'Ainda não informada' }}</dd>
+          </div>
+          <div>
+            <dt>Cliente</dt>
+            <dd>{{ value().customer.name || 'Ainda não informado' }}</dd>
+          </div>
+          <div>
+            <dt>Itens</dt>
+            <dd>{{ value().items.length }}</dd>
+          </div>
+          <div class="editor-grand">
+            <dt>Total</dt>
+            <dd>{{ calculation().total === null ? '—' : 'R$ ' + format(calculation().total) }}</dd>
+          </div>
+        </dl>
+        <app-quotation-commerce
+          [attr.inert]="confirmation() ? '' : null"
+          [editor]="true"
+          [entitlement]="generation.entitlements()"
+          [source]="generation.selectedSource()"
+          (choose)="generation.selectedSource.set($event)"
+          (buy)="buyCredits()"
+          (updated)="generation.refresh()"
+        />
         <div class="completion-status" role="status">
           <span [class.ready]="ready()" aria-hidden="true">{{ ready() ? '✓' : '○' }}</span
           >{{
@@ -388,6 +475,9 @@
     />
   </aside>
 </div>
+<app-quotation-drafts
+  [attr.inert]="confirmation() || preparing() || generation.sending() ? '' : null"
+/>
 @if (confirmation(); as confirmation) {
   <section
     class="generation-confirmation"
@@ -436,7 +526,7 @@
   aria-labelledby="generation-title"
   [attr.aria-busy]="generation.sending() || generation.pending()"
 >
-  <h2 id="generation-title">Seu PDF</h2>
+  <h2 id="generation-title" tabindex="-1">Seu PDF</h2>
   @if (generation.message()) {
     <p role="status">{{ generation.message() }}</p>
   }
@@ -452,15 +542,6 @@
       <p>A geração está temporariamente indisponível. Você pode continuar editando.</p>
     }
   }
-  <app-quotation-commerce
-    [attr.inert]="confirmation() ? '' : null"
-    [editor]="true"
-    [entitlement]="generation.entitlements()"
-    [source]="generation.selectedSource()"
-    (choose)="generation.selectedSource.set($event)"
-    (buy)="buyCredits()"
-    (updated)="generation.refresh()"
-  />
   @if (generation.processing(); as processing) {
     <p>
       Emissão solicitada em {{ processing.created_at | date: 'dd/MM/yyyy HH:mm' : '-0300' }} (São

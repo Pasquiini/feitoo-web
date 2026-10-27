@@ -1,11 +1,96 @@
 <section class="account-page" aria-labelledby="account-title">
   <header class="account-heading mb-4">
     <h1 id="account-title">Minha conta</h1>
-    <p class="text-secondary">Gerencie seu plano, seus dados e seus processamentos.</p>
+    <p class="text-secondary">Acompanhe seus benefícios, compras e arquivos em um só lugar.</p>
   </header>
+  <nav class="account-navigation" aria-label="Áreas da minha conta">
+    <a href="#account-overview">Visão geral</a>
+    <a href="#credits-title">Meus créditos</a>
+    <a href="#buy-credits-title">Comprar créditos</a>
+    <a href="#purchases-title">Movimentações e compras</a>
+    <a href="#plan-title">Assinatura Pro</a>
+    <a href="#history-title">Histórico</a>
+    <a href="#profile-title">Dados e segurança</a>
+  </nav>
+  <section id="account-overview" class="account-overview" aria-labelledby="overview-title">
+    <h2 id="overview-title" class="section-title">Visão geral</h2>
+    <p>Confira o uso de cada ferramenta e encontre seus resultados no histórico.</p>
+    <div class="d-flex flex-wrap gap-3">
+      <a class="btn btn-primary" routerLink="/gerador-de-orcamentos">Criar orçamento</a>
+      <a class="btn btn-outline-primary" routerLink="/" fragment="ferramentas"
+        >Escolher ferramenta</a
+      >
+      <a class="btn btn-outline-secondary" href="#history-title">Baixar resultados recentes</a>
+    </div>
+  </section>
+  <div class="account-credit-areas">
+    <section class="account-panel" aria-labelledby="credits-title">
+      <h2 id="credits-title" class="section-title">Meus créditos</h2>
+      @if (balances.quota(); as quota) {
+        @if (quota.credits; as credits) {
+          <p>
+            <strong>{{ credits.available }} créditos pagos de orçamentos disponíveis</strong>
+          </p>
+          <p class="small">
+            {{ credits.reserved }} reservados · {{ credits.consumed }} utilizados ·
+            {{ credits.revoked }} revogados
+          </p>
+        }
+        @if (quota.pro?.active) {
+          <p>Pro: {{ quota.pro?.remaining }} orçamentos disponíveis no período.</p>
+        } @else {
+          <p>Free: {{ quota.remaining }} orçamento disponível hoje.</p>
+        }
+      }
+      <p>
+        Créditos pagos de orçamentos, franquias do plano e compras de lotes XML têm usos próprios.
+      </p>
+      <a href="#quotation-credits-title">Consultar créditos e benefícios de orçamentos</a>
+      <p class="small text-secondary">
+        O uso de XML para Excel aparece no seu plano. Cada ferramenta consulta sua própria franquia
+        antes de processar.
+      </p>
+    </section>
+    <section class="account-panel" aria-labelledby="buy-credits-title">
+      <h2 id="buy-credits-title" class="section-title">Comprar créditos</h2>
+      @if (balances.quota()?.offer; as offer) {
+        <p>
+          <strong
+            >{{ offer.credits }} créditos de orçamentos · R$
+            {{ (offer.amount / 100).toFixed(2).replace('.', ',') }}</strong
+          >
+        </p>
+        @if (!offer.available) {
+          <p class="feedback feedback-info">
+            A compra deste pacote está temporariamente indisponível.
+          </p>
+        }
+      }
+      <p>
+        Para orçamentos, confira o pacote, o preço e a disponibilidade no editor. Os créditos pagos
+        são exclusivos para gerar orçamentos em PDF.
+      </p>
+      <a
+        class="btn btn-outline-primary"
+        routerLink="/gerador-de-orcamentos"
+        [queryParams]="{ etapa: 'revisar' }"
+        fragment="quotation-editor"
+        >Ver pacote de orçamentos</a
+      >
+      <p class="small text-secondary">
+        Para um lote XML maior, selecione os arquivos na ferramenta. A compra avulsa informa o preço
+        e vale para aquele lote.
+      </p>
+      <a routerLink="/xml-para-excel">Selecionar lote XML</a>
+      <p class="small text-secondary">
+        O saldo só é liberado após a confirmação do pagamento. Compras indisponíveis não podem ser
+        concluídas.
+      </p>
+    </section>
+  </div>
   <div class="account-commercial">
     <section class="account-panel plan-panel" aria-labelledby="plan-title">
-      <h2 class="section-title" id="plan-title">Seu plano</h2>
+      <h2 class="section-title" id="plan-title">Seu plano e assinatura Pro</h2>
       @if (usage(); as current) {
         <div class="plan-heading d-flex flex-wrap align-items-center gap-2 mb-3">
           <h3>{{ current.plan === 'pro' ? 'Feitoo Pro' : 'Feitoo Free' }}</h3>
@@ -148,8 +233,11 @@
       aria-labelledby="purchases-title"
       [attr.aria-busy]="purchasesLoading()"
     >
-      <h2 class="section-title" id="purchases-title">Compras</h2>
-      <p class="small text-secondary">Seus processamentos avulsos.</p>
+      <h2 class="section-title" id="purchases-title">Movimentações e compras</h2>
+      <p class="small text-secondary">
+        Compras avulsas de XML, vinculadas ao lote.
+        <a href="#quotation-credits-title">Ver compras e consumo de orçamentos</a>.
+      </p>
       @if (billingError()) {
         <p role="alert">{{ billingError() }}</p>
         <button
@@ -482,6 +570,7 @@
                 class="btn btn-outline-primary btn-sm"
                 routerLink="/gerador-de-orcamentos"
                 [queryParams]="{ generation: batch.id }"
+                fragment="generation-title"
                 >Consultar orçamento</a
               >
             }
@@ -601,7 +690,7 @@
   </section>
 
   <section class="account-card mt-4">
-    <h2 class="section-title">Gerador de Orçamentos</h2>
+    <h2 id="quotation-credits-title" class="section-title">Créditos e compras de orçamentos</h2>
     <app-quotation-commerce />
   </section>
 

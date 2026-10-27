@@ -86,6 +86,9 @@ export class QuotationPage {
   });
   readonly ready = computed(() => this.status() === 'VALID' && !this.calculation().error);
   readonly mobileView = signal<'edit' | 'preview'>('edit');
+  readonly steps = ['Minha empresa', 'Cliente', 'Itens e valores', 'Revisar e gerar'];
+  readonly step = signal(1);
+  readonly stepMessage = signal('');
   readonly reviewed = signal(false);
   readonly faqs = toolFaqs['/gerador-de-orcamentos'];
   readonly confirmation = signal<{ owner: number; source: 'free' | 'pro' | 'credit' } | null>(null);
@@ -153,6 +156,9 @@ export class QuotationPage {
             this.form.controls.items.push(group, { emitEvent: false });
           }
           this.form.reset(value);
+          const params = new URLSearchParams(window.location.search);
+          this.step.set(params.has('quotation_order') || params.get('etapa') === 'revisar' ? 4 : 1);
+          this.stepMessage.set('');
           this.reviewed.set(false);
           if (snapshot?.logo)
             this.logo.set({
@@ -217,6 +223,7 @@ export class QuotationPage {
       return;
     if (!this.auth.user()) {
       this.generation.needLogin();
+      this.focusGeneration();
       return;
     }
     this.validatePreview();
@@ -256,6 +263,12 @@ export class QuotationPage {
     this.confirmation.set(null);
     this.generation.selectedSource.set(confirmation.source);
     await this.generation.generate();
+    this.focusGeneration();
+  }
+  private focusGeneration(): void {
+    setTimeout(() =>
+      this.element.nativeElement.querySelector<HTMLElement>('#generation-title')?.focus(),
+    );
   }
   cancelGeneration(): void {
     this.confirmation.set(null);
@@ -275,19 +288,66 @@ export class QuotationPage {
     )
       this.form.controls.items.removeAt(index);
   }
+  goToStep(step: number): void {
+    if (
+      step < 1 ||
+      step > 4 ||
+      this.confirmation() ||
+      this.preparing() ||
+      this.generation.sending()
+    )
+      return;
+    this.step.set(step);
+    this.stepMessage.set('');
+    this.mobileView.set('edit');
+    setTimeout(() =>
+      this.element.nativeElement.querySelector<HTMLElement>('#editor-step-title')?.focus(),
+    );
+  }
+  nextStep(): void {
+    const controls = this.form.controls;
+    const fields =
+      this.step() === 1
+        ? [controls.issuer]
+        : this.step() === 2
+          ? [controls.customer]
+          : [controls.items, controls.conditions, controls.notes];
+    fields.forEach((field) => field.markAllAsTouched());
+    if (fields.some((field) => field.invalid) || (this.step() === 3 && this.calculation().error)) {
+      this.stepMessage.set('Confira os campos destacados antes de continuar.');
+      this.focusInvalid();
+      return;
+    }
+    this.goToStep(this.step() + 1);
+  }
+  private focusInvalid(): void {
+    setTimeout(() => {
+      const invalid =
+        this.element.nativeElement.querySelector<HTMLElement>(
+          '[data-step]:not([hidden]) [aria-invalid="true"], [data-step]:not([hidden])[aria-invalid="true"]',
+        ) ?? this.element.nativeElement.querySelector<HTMLElement>('#calculation-error');
+      const details = invalid?.closest('details');
+      if (details) details.open = true;
+      invalid?.focus();
+    });
+  }
   validatePreview(): void {
     this.reviewed.set(true);
     this.form.markAllAsTouched();
     if (!this.ready()) {
       this.mobileView.set('edit');
-      setTimeout(() => {
-        const invalid =
-          this.element.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]') ??
-          this.element.nativeElement.querySelector<HTMLElement>('#calculation-error');
-        const details = invalid?.closest('details');
-        if (details) details.open = true;
-        invalid?.focus();
-      });
+      const c = this.form.controls;
+      this.step.set(
+        c.issuer.invalid
+          ? 1
+          : c.customer.invalid
+            ? 2
+            : c.items.invalid || c.conditions.invalid || c.notes.invalid || this.calculation().error
+              ? 3
+              : 4,
+      );
+      this.stepMessage.set('Confira os campos destacados antes de gerar.');
+      this.focusInvalid();
     }
   }
   /** The backend validates this document again before reserving a generation. */

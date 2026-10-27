@@ -21,6 +21,7 @@ import { ProcessingService } from '../../processing/services/processing.service'
 import { HistoryProcessing } from '../models/account';
 import { processingTools } from '../../processing/tools';
 import { AccountService } from '../services/account.service';
+import { CreditBalanceStore } from '../services/credit-balance.store';
 import {
   BillingService,
   Purchase,
@@ -35,6 +36,7 @@ import {
   styleUrl: './account-page.scss',
 })
 export class AccountPage {
+  readonly balances = inject(CreditBalanceStore);
   readonly tools = {
     ...processingTools,
     'quotation-generator': { name: 'Orçamento profissional', path: '/gerador-de-orcamentos' },

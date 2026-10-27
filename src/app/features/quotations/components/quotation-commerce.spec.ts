@@ -73,7 +73,7 @@ describe('quotation commerce and checkout return', () => {
     const fixture = await create();
     const element = fixture.nativeElement as HTMLElement;
     expect(element.textContent).toContain('gratuitamente');
-    expect(element.textContent).not.toContain('Comprar cinco');
+    expect(element.textContent).not.toContain('Comprar 5 créditos');
     const choose = vi.fn();
     fixture.componentInstance.choose.subscribe(choose);
     element.querySelectorAll<HTMLInputElement>('input[type=radio]')[1].click();
@@ -94,7 +94,7 @@ describe('quotation commerce and checkout return', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('99 de 100');
     expect(fixture.nativeElement.textContent).not.toContain('Conhecer o Feitoo Pro');
-    expect(fixture.nativeElement.textContent).not.toContain('Comprar cinco');
+    expect(fixture.nativeElement.textContent).not.toContain('Comprar 5 créditos');
     expect(fixture.nativeElement.querySelector('input[type=radio]')).toBeNull();
   });
   it('persists before checkout and retries an ambiguous failure with the same key', async () => {

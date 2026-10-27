@@ -115,6 +115,12 @@
   font-size: 0.8rem;
   color: var(--color-primary);
 }
+.quotation-app .review-title {
+  font-size: 1.15rem;
+}
+.quotation-app .editor-totals dd {
+  overflow-wrap: anywhere;
+}
 .quotation-app .validate-preview,
 .quotation-app .generate-pdf {
   width: 100%;
@@ -140,6 +146,73 @@
 .quotation-app .mobile-view {
   display: none;
 }
+.quotation-app .editor-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.quotation-app .editor-steps button {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.35rem;
+  min-height: 64px;
+  padding: 0.5rem 0.15rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.quotation-app .editor-steps button[aria-current] {
+  background: var(--color-subtle);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.quotation-app .editor-steps button span {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+.quotation-app .editor-step-intro {
+  padding: 1.25rem 1.4rem 0;
+}
+.quotation-app .editor-step-intro h2 {
+  font-size: 1.2rem;
+}
+.quotation-app .editor-step-intro p {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+.quotation-app .editor-step-intro .field-error {
+  color: var(--color-danger);
+}
+.quotation-app .editor-availability {
+  border-left: 3px solid var(--color-primary);
+  padding-left: 0.75rem;
+}
+.quotation-app .editor-navigation {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 1.4rem;
+  border-top: 1px solid var(--color-border);
+}
+.quotation-app .editor-panel-heading > span:last-child,
+.quotation-app .memory-note,
+.quotation-app #pdf-policy {
+  font-size: 0.875rem;
+}
+.quotation-app .editor-step-intro h2 {
+  scroll-margin-top: 6rem;
+}
 .quotation-app .quotation-explainer {
   max-width: 54rem;
   margin: 3rem auto 0;
@@ -159,6 +232,10 @@
   min-height: 44px;
 }
 @media (max-width: 900px) {
+  .quotation-app .quotation-workbench,
+  .quotation-app .editor-panel {
+    scroll-margin-top: 5rem;
+  }
   .quotation-app .quotation-workbench {
     display: block;
   }

@@ -5,6 +5,7 @@ import { signal } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../auth/services/auth.service';
 import { QuotationGenerationApi, QuotationProcessing } from './quotation-generation-api.service';
+import { CreditBalanceStore } from '../../account/services/credit-balance.store';
 
 describe('quotation issuance transport', () => {
   const user = signal<{ id: number } | null>({ id: 1 });
@@ -27,6 +28,28 @@ describe('quotation issuance transport', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('publishes refreshed real balances and ignores a response after an account switch', async () => {
+    const balances = TestBed.inject(CreditBalanceStore);
+    const load = api.entitlements();
+    http
+      .expectOne(`${environment.apiUrl}/quotations/entitlements`)
+      .flush({ data: { credits: { available: 5 } } });
+    await load;
+    expect(balances.quota()?.credits?.available).toBe(5);
+    const afterConsumption = api.entitlements();
+    http
+      .expectOne(`${environment.apiUrl}/quotations/entitlements`)
+      .flush({ data: { credits: { available: 4 } } });
+    await afterConsumption;
+    expect(balances.quota()?.credits?.available).toBe(4);
+    const late = api.entitlements();
+    user.set({ id: 2 });
+    http
+      .expectOne(`${environment.apiUrl}/quotations/entitlements`)
+      .flush({ data: { credits: { available: 99 } } });
+    await late;
+    expect(balances.quota()).toBeNull();
+  });
   it('posts only revision and technical identifiers with CSRF, account consistency and idempotency', async () => {
     const response = api.generate({ uuid: 'draft-uuid', revision: 4, key: 'idempotent-uuid' });
     await csrf();

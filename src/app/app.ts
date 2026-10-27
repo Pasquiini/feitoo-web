@@ -11,6 +11,7 @@ import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { finalize } from 'rxjs';
 import { environment } from '../environments/environment';
 import { AuthService } from './features/auth/services/auth.service';
+import { NavbarCredits } from './features/account/components/navbar-credits';
 
 interface HealthResponse {
   status: 'ok';
@@ -19,7 +20,7 @@ interface HealthResponse {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, CookiePreferences],
+  imports: [RouterOutlet, RouterLink, CookiePreferences, NavbarCredits],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

@@ -227,22 +227,24 @@
   background: #125d54;
   border-radius: 50%;
 }
-.hero-statement {
+h1 {
   font-size: clamp(2.5rem, 4.7vw, 4.3rem);
   font-weight: 800;
   line-height: 1.04;
   letter-spacing: -0.055em;
   margin: 0 0 1.4rem;
 }
-.hero-statement span {
-  color: #125d54;
+.home-faq details {
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--color-border);
 }
-h1 {
-  font-size: 1.05rem;
-  line-height: 1.5;
-  letter-spacing: 0;
-  margin: 0 0 0.4rem;
-  max-width: 48ch;
+.home-faq summary {
+  min-height: 44px;
+  font-weight: 600;
+}
+.home-faq details p {
+  max-width: 70ch;
+  margin: 0.75rem 0 0;
 }
 .home-lead {
   font-size: 0.9rem;
@@ -427,7 +429,7 @@ h1 {
   .hero-transformations {
     display: none;
   }
-  .hero-statement {
+  h1 {
     font-size: clamp(2.25rem, 8.5vw, 3.5rem);
   }
   .catalog {

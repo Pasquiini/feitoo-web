@@ -1,10 +1,10 @@
 <section class="home-hero" aria-labelledby="home-title">
   <div class="hero-copy">
     <p class="home-eyebrow"><span></span> Menos tarefa repetitiva. Mais feito.</p>
-    <p class="hero-statement">Arquivos entram.<br /><span>Trabalho pronto sai.</span></p>
     <h1 id="home-title">Ferramentas online para arquivos, documentos e planilhas.</h1>
     <p class="home-lead">
-      Ferramentas online para converter, organizar e transformar arquivos sem complicação.
+      Converta XML e Word, organize arquivos ou crie um orçamento em PDF. Escolha sua tarefa e
+      comece.
     </p>
     <div class="tool-search">
       <label for="tool-search">Encontre sua ferramenta</label>
@@ -175,16 +175,49 @@
   </p>
 </section>
 
+<section class="home-section home-faq" aria-labelledby="home-faq-title">
+  <h2 id="home-faq-title">Antes de começar</h2>
+  <details>
+    <summary>Posso usar o Feitoo gratuitamente?</summary>
+    <p>
+      Sim. Cada ferramenta informa sua franquia gratuita e os limites antes do processamento. Entre
+      ou crie uma conta para gerar e consultar seus resultados.
+    </p>
+  </details>
+  <details>
+    <summary>Os créditos funcionam em todas as ferramentas?</summary>
+    <p>
+      Os créditos de orçamentos são exclusivos do Gerador de Orçamentos. Uma compra avulsa de XML
+      vale para o lote selecionado. As franquias Free e Pro têm limites próprios em cada ferramenta.
+    </p>
+  </details>
+  <details>
+    <summary>Onde encontro meus arquivos depois de gerar?</summary>
+    <p>
+      Acesse Minha conta e abra o histórico. O resultado pode ser baixado durante o prazo informado;
+      depois da expiração, o histórico do processamento permanece.
+    </p>
+  </details>
+  <details>
+    <summary>O que muda com o Feitoo Pro?</summary>
+    <p>
+      O Pro oferece limites maiores conforme a ferramenta. Confira os benefícios e a disponibilidade
+      em <a routerLink="/planos">Planos</a>, e consulte seu uso na conta antes de processar.
+    </p>
+  </details>
+</section>
+
 <section class="final-cta" aria-labelledby="final-title">
   <div>
-    <h2 id="final-title">Tem um arquivo para resolver?</h2>
-    <p>Escolha uma ferramenta e deixe o Feitoo organizar o resto.</p>
+    <h2 id="final-title">Qual tarefa você quer concluir?</h2>
+    <p>Encontre uma ferramenta ou comece seu próximo orçamento.</p>
   </div>
   <div class="final-links">
-    @for (tool of tools; track tool.route) {
-      <a class="btn btn-outline-primary" [routerLink]="tool.route"
-        >{{ tool.cta }} <app-home-icon name="arrow"
-      /></a>
-    }
+    <a class="btn btn-outline-primary" href="#ferramentas"
+      >Ver ferramentas <app-home-icon name="arrow"
+    /></a>
+    <a class="btn btn-primary" routerLink="/gerador-de-orcamentos"
+      >Criar orçamento <app-home-icon name="arrow"
+    /></a>
   </div>
 </section>

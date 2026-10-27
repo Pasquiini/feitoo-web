@@ -54,8 +54,9 @@
     </nav>
     <div class="header-account">
       @if (auth.user(); as user) {
+        <app-navbar-credits />
         <details class="account-menu">
-          <summary>
+          <summary aria-label="Minha conta">
             <span class="account-initial" aria-hidden="true">{{
               user.name.slice(0, 1).toUpperCase()
             }}</span>

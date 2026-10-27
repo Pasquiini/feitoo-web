@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../auth/services/auth.service';
+import { CreditBalanceStore } from '../../account/services/credit-balance.store';
 
 export interface QuotationEntitlements {
   source: 'free' | 'pro' | 'credit';
@@ -72,6 +73,7 @@ export interface QuotationOrder {
 export class QuotationGenerationApi {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly balances = inject(CreditBalanceStore);
   private readonly base = environment.apiUrl;
   private headers(owner = this.auth.user()?.id): Record<string, string> {
     if (!owner || owner !== this.auth.user()?.id) throw new HttpErrorResponse({ status: 401 });
@@ -84,7 +86,8 @@ export class QuotationGenerationApi {
     return this.headers(owner);
   }
   async entitlements(): Promise<QuotationEntitlements> {
-    return (
+    const owner = this.auth.user()?.id;
+    const value = (
       await firstValueFrom(
         this.http.get<{ data: QuotationEntitlements }>(`${this.base}/quotations/entitlements`, {
           headers: this.headers(),
@@ -92,6 +95,8 @@ export class QuotationGenerationApi {
         }),
       )
     ).data;
+    if (owner) this.balances.publish(owner, value);
+    return value;
   }
   async generate(context: {
     uuid: string;

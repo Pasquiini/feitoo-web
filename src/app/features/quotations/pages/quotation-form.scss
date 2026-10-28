@@ -108,19 +108,6 @@
 .quotation-app .optional-fields .fields-grid {
   padding-top: 0.7rem;
 }
-.quotation-app .money-input {
-  position: relative;
-}
-.quotation-app .money-input > span {
-  position: absolute;
-  left: 0.75rem;
-  top: 0.73rem;
-  color: var(--color-muted);
-  font-size: 0.85rem;
-}
-.quotation-app .money-input input {
-  padding-left: 2.4rem;
-}
 .quotation-app .editor-totals {
   margin: 1rem 0 0;
   background: #f5f8f2;

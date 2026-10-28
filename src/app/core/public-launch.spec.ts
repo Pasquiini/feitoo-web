@@ -220,7 +220,7 @@ describe('Public launch', () => {
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain(
       'Ferramentas online para arquivos, documentos e planilhas.',
     );
-    expect(harness.routeNativeElement?.querySelectorAll('.home-tool-card').length).toBe(7);
+    expect(harness.routeNativeElement?.querySelectorAll('.home-tool-card').length).toBe(6);
     expect(harness.routeNativeElement?.querySelector('a')?.getAttribute('href')).toBe(
       '/xml-para-excel',
     );

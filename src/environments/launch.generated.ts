@@ -6,4 +6,5 @@ export const launch = {
   ga4Id: '',
   analyticsEnabled: false,
   ttlMinutes: 120,
+  quotationEnabled: false,
 };

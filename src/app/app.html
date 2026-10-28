@@ -54,7 +54,9 @@
     </nav>
     <div class="header-account">
       @if (auth.user(); as user) {
-        <app-navbar-credits />
+        @if (launch.quotationEnabled) {
+          <app-navbar-credits />
+        }
         <details class="account-menu">
           <summary aria-label="Minha conta">
             <span class="account-initial" aria-hidden="true">{{

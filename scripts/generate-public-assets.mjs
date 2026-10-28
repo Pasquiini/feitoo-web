@@ -18,9 +18,16 @@ export const paths = [
   '/como-converter-xml-nfe-para-excel',
   '/como-extrair-produtos-de-xml-nfe',
 ];
-export function publicAssets(origin) {
+export function publicAssets(origin, quotationEnabled = false) {
   return {
-    sitemap: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${origin ? paths.map((path) => `<url><loc>${origin + path}</loc></url>`).join('') : ''}</urlset>\n`,
+    sitemap: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${
+      origin
+        ? paths
+            .filter((path) => quotationEnabled || path !== '/gerador-de-orcamentos')
+            .map((path) => `<url><loc>${origin + path}</loc></url>`)
+            .join('')
+        : ''
+    }</urlset>\n`,
     robots: origin
       ? `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /sanctum/\nSitemap: ${origin}/sitemap.xml\n`
       : 'User-agent: *\nDisallow: /\n',
@@ -37,7 +44,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     'Documentos temporários não devem ser publicados na pasta OG',
   );
   assert.equal(image.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', 'OG deve ser PNG');
-  const assets = publicAssets(config.origin);
+  const assets = publicAssets(config.origin, config.quotationEnabled);
   writeFileSync(new URL('robots.txt', output), assets.robots);
   writeFileSync(new URL('sitemap.xml', output), assets.sitemap);
   copyFileSync(new URL('404/index.html', output), new URL('404.html', output));
@@ -49,6 +56,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     0,
   );
   for (const path of paths) {
+    const quotationPreview = path === '/gerador-de-orcamentos' && !config.quotationEnabled;
     const html = readFileSync(
       new URL(path === '/' ? 'index.html' : `${path.slice(1)}/index.html`, output),
       'utf8',
@@ -108,7 +116,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     assert.ok(html.includes('name="description"'), `Description ausente: ${path}`);
     assert.ok(html.includes('property="og:title"'), `Open Graph ausente: ${path}`);
     assert.ok(
-      html.includes(config.origin ? 'content="index,follow"' : 'content="noindex,follow"'),
+      html.includes(
+        config.origin && !quotationPreview ? 'content="index,follow"' : 'content="noindex,follow"',
+      ),
       `Robots incorreto: ${path}`,
     );
     if (config.origin) {
@@ -135,7 +145,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       }
       if (path === '/') assert.ok(graph.some((node) => node['@type'] === 'WebSite'));
       if (
-        path === '/gerador-de-orcamentos' ||
+        (path === '/gerador-de-orcamentos' && !quotationPreview) ||
         path === '/docx-para-pdf' ||
         path === '/xml-para-excel' ||
         path === '/produtos-dos-xmls' ||

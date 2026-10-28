@@ -399,7 +399,7 @@ try {
       ),
       true,
     );
-    assert.equal(await evaluate('document.querySelector(".generate-pdf").disabled'), false);
+    assert.equal(await evaluate('document.querySelector(".generate-pdf").disabled'), true);
     assert.equal(
       requests.some((r) => /processings|purchase|stripe|generation/.test(r.path)),
       false,

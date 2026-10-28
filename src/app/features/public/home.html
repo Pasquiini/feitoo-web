@@ -3,8 +3,7 @@
     <p class="home-eyebrow"><span></span> Menos tarefa repetitiva. Mais feito.</p>
     <h1 id="home-title">Ferramentas online para arquivos, documentos e planilhas.</h1>
     <p class="home-lead">
-      Converta XML e Word, organize arquivos ou crie um orçamento em PDF. Escolha sua tarefa e
-      comece.
+      Converta XML e Word, organize arquivos e gere planilhas. Escolha sua tarefa e comece.
     </p>
     <div class="tool-search">
       <label for="tool-search">Encontre sua ferramenta</label>
@@ -210,14 +209,18 @@
 <section class="final-cta" aria-labelledby="final-title">
   <div>
     <h2 id="final-title">Qual tarefa você quer concluir?</h2>
-    <p>Encontre uma ferramenta ou comece seu próximo orçamento.</p>
+    <p>Encontre uma ferramenta para concluir sua próxima tarefa.</p>
   </div>
   <div class="final-links">
     <a class="btn btn-outline-primary" href="#ferramentas"
       >Ver ferramentas <app-home-icon name="arrow"
     /></a>
-    <a class="btn btn-primary" routerLink="/gerador-de-orcamentos"
-      >Criar orçamento <app-home-icon name="arrow"
-    /></a>
+    @if (quotationEnabled) {
+      <a class="btn btn-primary" routerLink="/gerador-de-orcamentos"
+        >Criar orçamento <app-home-icon name="arrow"
+      /></a>
+    } @else {
+      <a class="btn btn-primary" routerLink="/xml-para-excel">Converter XML em Excel</a>
+    }
   </div>
 </section>

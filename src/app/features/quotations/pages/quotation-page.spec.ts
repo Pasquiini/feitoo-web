@@ -139,6 +139,8 @@ describe('QuotationPage editor in memory', () => {
     expect(page.value().issuer.document).toBe('AB123456000199');
   });
   it('requires a review before reserving a generation, including double clicks and cancellation', async () => {
+    // Retain coverage for the preexisting later-phase code, explicitly opted in.
+    Object.defineProperty(page, 'generationEnabled', { value: true });
     fill();
     vi.spyOn(page.auth, 'user').mockReturnValue({ id: 7 } as NonNullable<
       ReturnType<typeof page.auth.user>
@@ -176,6 +178,7 @@ describe('QuotationPage editor in memory', () => {
     expect(generate).toHaveBeenCalledOnce();
   });
   it('does not generate when the flag is off or the account changes after review', async () => {
+    Object.defineProperty(page, 'generationEnabled', { value: true });
     fill();
     const user = vi
       .spyOn(page.auth, 'user')
@@ -203,6 +206,21 @@ describe('QuotationPage editor in memory', () => {
     await page.confirmGeneration();
     expect(generate).not.toHaveBeenCalled();
   });
+  it('keeps PDF disabled and makes no generation request in preview mode even with valid data', async () => {
+    fill();
+    const refresh = vi.spyOn(page.generation, 'refresh');
+    const generate = vi.spyOn(page.generation, 'generate');
+    await page.generate();
+    await page.confirmGeneration();
+    page.goToStep(4);
+    fixture.detectChanges();
+    expect(element().querySelector<HTMLButtonElement>('.generate-pdf')!.disabled).toBe(true);
+    expect(element().querySelector('#pdf-policy')!.textContent).toContain('indisponível');
+    expect(element().querySelector('app-quotation-commerce')).toBeNull();
+    expect(refresh).not.toHaveBeenCalled();
+    expect(generate).not.toHaveBeenCalled();
+  });
+
   it('adds/removes items without removing the last and enforces 100', () => {
     page.removeItem(0);
     expect(page.form.controls.items.length).toBe(1);
@@ -322,6 +340,6 @@ describe('QuotationPage editor in memory', () => {
     expect(element().querySelector('.generate-pdf')!.getAttribute('aria-describedby')).toBe(
       'pdf-policy',
     );
-    expect(element().querySelector('#pdf-policy')!.textContent).toContain('franquia Free');
+    expect(element().querySelector('#pdf-policy')!.textContent).toContain('indisponível');
   });
 });

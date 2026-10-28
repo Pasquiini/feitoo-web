@@ -1,3 +1,5 @@
+import { launch } from '../../../environments/launch.generated';
+
 export interface ToolCard {
   title: string;
   description: string;
@@ -15,7 +17,7 @@ export interface ToolCard {
   cta: string;
 }
 
-export const HOME_TOOLS: readonly ToolCard[] = [
+const ALL_TOOLS: readonly ToolCard[] = [
   {
     title: 'XML para Excel',
     description: 'Transforme várias NF-e em uma planilha organizada.',
@@ -153,6 +155,10 @@ export const HOME_TOOLS: readonly ToolCard[] = [
     cta: 'Criar orçamento',
   },
 ];
+
+export const HOME_TOOLS = ALL_TOOLS.filter(
+  (tool) => launch.quotationEnabled || tool.route !== '/gerador-de-orcamentos',
+);
 
 export function normalizeToolSearch(value: string): string {
   return value

@@ -36,6 +36,11 @@
       "continue": true
     },
     {
+      "src": "/gerador-de-orcamentos(?:/index.html|/)?",
+      "headers": { "X-Robots-Tag": "noindex, follow" },
+      "continue": true
+    },
+    {
       "src": "/404(?:/index.html|/|\\.html)?",
       "headers": {
         "X-Robots-Tag": "noindex, follow"

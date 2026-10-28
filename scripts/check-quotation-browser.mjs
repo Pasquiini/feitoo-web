@@ -105,7 +105,7 @@ try {
         const editor = document.querySelector('.editor-panel').getBoundingClientRect();
         const preview = document.querySelector('.preview-panel').getBoundingClientRect();
         return { overflow: document.documentElement.scrollWidth > innerWidth, editor: editor.width, preview: preview.width,
-          overlap: innerWidth > 900 && editor.right > preview.left + 1,
+          overlap: innerWidth >= 992 && editor.right > preview.left + 1,
           unlabeled: [...document.querySelectorAll('.quotation-app input, .quotation-app textarea, .quotation-app select')].filter(visible).filter(e => !(e.labels?.length || e.getAttribute('aria-label'))).length,
           smallTargets: [...document.querySelectorAll('.quotation-app button, .quotation-app input, .quotation-app select')].filter(visible).filter(e => e.type !== 'radio' && !e.disabled && e.getBoundingClientRect().height < 43).map(e=>e.id || e.className),
           disabledPdf: document.querySelector('.generate-pdf').disabled
@@ -115,10 +115,14 @@ try {
       assert.equal(result.overlap, false, 'Editor/preview overlap');
       assert.equal(result.unlabeled, 0);
       assert.deepEqual(result.smallTargets, []);
-      assert.equal(result.disabledPdf, false);
+      assert.equal(result.disabledPdf, true);
       layouts.push({ width, view, state, ...result });
-      if ([390, 1440].includes(width) && ['filled', 'comfortable'].includes(state)) {
-        await evaluate('scrollTo(0,0)');
+      if ([390, 1440].includes(width) && ['filled', 'comfortable', 'items'].includes(state)) {
+        await evaluate(
+          state === 'items'
+            ? 'document.activeElement?.blur(); document.querySelector("#items-title").scrollIntoView({block:"start"}); scrollBy(0,-100)'
+            : 'scrollTo(0,0)',
+        );
         const shot = await command('Page.captureScreenshot', {
           format: 'png',
           captureBeyondViewport: false,
@@ -133,6 +137,10 @@ try {
       await snapshot(width, 'edit');
       await snapshot(width, 'preview');
     }
+    await evaluate('setStep(3)');
+    await snapshot(1440, 'edit', 'items');
+    await snapshot(390, 'edit', 'items');
+    await evaluate('setStep(4)');
     await snapshot(390, 'preview', 'before-zoom');
     await evaluate('document.querySelector(".preview-toolbar button").click()');
     await waitFor('document.querySelector(".paper").classList.contains("comfortable")');

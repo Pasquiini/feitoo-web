@@ -5,17 +5,26 @@
       <h1>Gerador de <span>Orçamentos</span></h1>
       <p>Crie orçamentos profissionais em minutos, sem planilhas e sem complicação.</p>
     </div>
-    <span class="quotation-badge">Grátis para começar</span>
+    <span class="quotation-badge badge">{{
+      generationEnabled ? 'Grátis para começar' : 'Prévia do editor'
+    }}</span>
   </div>
 </header>
 <div
-  class="draft-status"
+  class="draft-status alert"
+  [class.alert-warning]="draft.conflict()"
+  [class.alert-success]="!draft.conflict()"
   aria-label="Rascunho temporário"
   [attr.inert]="confirmation() || preparing() || generation.sending() ? '' : null"
 >
-  <p role="status">{{ draft.loading() ? 'Recuperando rascunho...' : draft.message() }}</p>
+  <p role="status" class="draft-message">
+    @if (draft.loading() || draft.saving()) {
+      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+    }
+    {{ draft.loading() ? 'Recuperando rascunho...' : draft.message() }}
+  </p>
   @if (draft.warning()) {
-    <p role="alert">{{ draft.warning() }}</p>
+    <p role="alert" class="alert alert-warning draft-warning">{{ draft.warning() }}</p>
   }
   @if (draft.conflict()) {
     <button type="button" class="btn btn-secondary" (click)="draft.recoverLatest()">
@@ -38,7 +47,7 @@
     <button
       type="button"
       class="btn btn-ghost btn-sm"
-      [disabled]="draft.loading()"
+      [disabled]="draft.loading() || draft.saving()"
       (click)="draft.flush()"
     >
       Salvar agora
@@ -75,576 +84,615 @@
     Visualizar
   </button>
 </div>
-<div class="quotation-workbench" [attr.data-view]="mobileView()">
-  <div class="editor-panel" id="quotation-editor">
-    <div class="editor-panel-heading">
-      <span>Seu orçamento</span
-      ><span
-        >Total ·
-        {{ calculation().total === null ? '—' : 'R$ ' + format(calculation().total) }}</span
-      >
-    </div>
-    <nav
-      class="editor-steps"
-      aria-label="Etapas do orçamento"
-      [attr.inert]="
-        draft.loading() || confirmation() || preparing() || generation.sending() ? '' : null
-      "
-    >
-      @for (label of steps; track label; let index = $index) {
-        <button
-          type="button"
-          [attr.aria-current]="step() === index + 1 ? 'step' : null"
-          (click)="goToStep(index + 1)"
+<div class="quotation-workbench row g-4" [attr.data-view]="mobileView()">
+  <div class="editor-column col-lg-6">
+    <div class="editor-panel card" id="quotation-editor">
+      <div class="editor-panel-heading">
+        <span>Seu orçamento</span
+        ><span
+          >Total ·
+          {{ calculation().total === null ? '—' : 'R$ ' + format(calculation().total) }}</span
         >
-          <span aria-hidden="true">{{ index + 1 }}</span
-          >{{ label }}
-        </button>
-      }
-    </nav>
-    <div class="editor-step-intro">
-      <h2 id="editor-step-title" tabindex="-1">{{ step() }} de 4 · {{ steps[step() - 1] }}</h2>
-      @if (!auth.user()) {
-        <p>Grátis para começar: um orçamento concluído por dia. Entre ao gerar o PDF.</p>
-      }
-      @if (generation.entitlements(); as quota) {
-        <p class="editor-availability">
-          @if (!quota.enabled) {
-            Geração temporariamente indisponível.
-          } @else if (quota.pro?.active) {
-            Pro: {{ quota.pro?.remaining }} orçamentos no período.
-          } @else {
-            Free: {{ quota.remaining }} orçamento disponível hoje.
-          }
-          @if (quota.credits; as credits) {
-            Créditos exclusivos de orçamentos: {{ credits.available }} disponíveis.
-          }
-        </p>
-      }
-      @if (auth.user() && !generation.entitlements()) {
-        <p role="status">Consultando sua disponibilidade…</p>
-      }
-      <p class="field-error" role="status">{{ stepMessage() }}</p>
-    </div>
-    <form
-      [formGroup]="form"
-      (ngSubmit)="step() < 4 ? nextStep() : validatePreview()"
-      [attr.inert]="
-        draft.loading() || generation.sending() || preparing() || confirmation() ? '' : null
-      "
-      novalidate
-      autocomplete="off"
-    >
-      <section
-        class="editor-section"
-        data-step="4"
-        [hidden]="step() !== 4"
-        aria-labelledby="identity-title"
-      >
-        <h2 id="identity-title">Identificação do orçamento</h2>
-        <div class="field">
-          <label for="quotation-number">Número do orçamento <span aria-hidden="true">*</span></label
-          ><input
-            class="form-control"
-            id="quotation-number"
-            formControlName="number"
-            maxlength="60"
-            required
-            [attr.aria-invalid]="!!error(form.controls.number)"
-            aria-describedby="number-error"
-          /><span class="field-error" id="number-error">{{ error(form.controls.number) }}</span>
-        </div>
-        <div class="fields-grid">
-          <div class="field">
-            <label for="issue-date">Data de emissão <span aria-hidden="true">*</span></label
-            ><input
-              class="form-control"
-              type="date"
-              id="issue-date"
-              formControlName="issue_date"
-              required
-              [attr.aria-invalid]="!!error(form.controls.issue_date)"
-              aria-describedby="issue-error"
-            /><span class="field-error" id="issue-error">{{
-              error(form.controls.issue_date)
-            }}</span>
-          </div>
-          <div class="field">
-            <label for="valid-until">Válido até <span aria-hidden="true">*</span></label
-            ><input
-              class="form-control"
-              type="date"
-              id="valid-until"
-              formControlName="valid_until"
-              required
-              [attr.min]="value().issue_date || null"
-              [attr.aria-invalid]="!!error(form.controls.valid_until) || form.hasError('validity')"
-              aria-describedby="validity-error"
-            /><span class="field-error" id="validity-error">{{
-              form.hasError('validity')
-                ? 'A validade deve ser igual ou posterior à emissão.'
-                : error(form.controls.valid_until)
-            }}</span>
-          </div>
-        </div>
-      </section>
-      <app-quotation-party
-        data-step="1"
-        [hidden]="step() !== 1"
-        [group]="form.controls.issuer"
-        prefix="issuer"
-        title="Minha empresa"
-        step="01"
-      />
-      <app-quotation-party
-        data-step="2"
-        [hidden]="step() !== 2"
-        [group]="form.controls.customer"
-        prefix="customer"
-        title="Seu cliente"
-        step="02"
-      />
-      <app-quotation-items
-        data-step="3"
-        [hidden]="step() !== 3"
-        [items]="form.controls.items"
-        [totals]="calculation().lines"
-        (addItem)="addItem()"
-        (removeItem)="removeItem($event)"
-      />
-      <section
-        class="editor-section"
-        data-step="3"
-        [hidden]="step() !== 3"
-        aria-labelledby="values-title"
-      >
-        <h2 id="values-title">Valores e desconto</h2>
-        <div class="fields-grid">
-          <div class="field">
-            <label for="discount-type">Tipo de desconto</label
-            ><select class="form-control" id="discount-type" formControlName="discount_type">
-              <option value="fixed">Valor em reais (R$)</option>
-              <option value="percent">Percentual (%)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="discount-value">{{
-              value().discount_type === 'percent' ? 'Desconto (%)' : 'Desconto (R$)'
-            }}</label>
-            @if (value().discount_type === 'percent') {
-              <input
-                class="form-control"
-                id="discount-value"
-                formControlName="discount_percent"
-                inputmode="decimal"
-                maxlength="6"
-                [attr.aria-invalid]="discountInvalid()"
-                aria-describedby="calculation-error"
-              />
-            } @else {
-              <input
-                class="form-control"
-                quotationMoney
-                id="discount-value"
-                formControlName="discount_fixed_cents"
-                inputmode="decimal"
-                maxlength="24"
-                [attr.aria-invalid]="discountInvalid()"
-                aria-describedby="calculation-error"
-              />
-            }
-          </div>
-        </div>
-        <p class="field-error" id="calculation-error" role="status" tabindex="-1">
-          {{ calculation().error }}
-        </p>
-        <dl class="editor-totals">
-          <div>
-            <dt>Subtotal</dt>
-            <dd>
-              {{ calculation().subtotal === null ? '—' : 'R$ ' + format(calculation().subtotal) }}
-            </dd>
-          </div>
-          <div>
-            <dt>Desconto</dt>
-            <dd>
-              {{ calculation().discount === null ? '—' : 'R$ ' + format(calculation().discount) }}
-            </dd>
-          </div>
-          <div class="editor-grand">
-            <dt>Total do orçamento</dt>
-            <dd>{{ calculation().total === null ? '—' : 'R$ ' + format(calculation().total) }}</dd>
-          </div>
-        </dl>
-      </section>
-      <section
-        class="editor-section"
-        data-step="3"
-        [hidden]="step() !== 3"
-        aria-labelledby="conditions-title"
-      >
-        <h2 id="conditions-title">Condições e detalhes</h2>
-        <div class="field">
-          <label for="quotation-conditions"
-            >Condições de pagamento <span class="optional-label">opcional</span></label
-          ><textarea
-            class="form-control"
-            id="quotation-conditions"
-            formControlName="conditions"
-            rows="3"
-            maxlength="4000"
-            placeholder="Ex.: 50% na aprovação e 50% na conclusão."
-            [attr.aria-invalid]="!!error(form.controls.conditions)"
-            aria-describedby="conditions-error"
-          ></textarea
-          ><span class="field-error" id="conditions-error">{{
-            error(form.controls.conditions)
-          }}</span>
-        </div>
-        <div class="field">
-          <label for="quotation-notes"
-            >Observações <span class="optional-label">opcional</span></label
-          ><textarea
-            class="form-control"
-            id="quotation-notes"
-            formControlName="notes"
-            rows="3"
-            maxlength="4000"
-            placeholder="Prazos, materiais inclusos ou detalhes do serviço."
-            [attr.aria-invalid]="!!error(form.controls.notes)"
-            aria-describedby="notes-error"
-          ></textarea
-          ><span class="field-error" id="notes-error">{{ error(form.controls.notes) }}</span>
-        </div>
-      </section>
-      <section
-        class="editor-section"
-        data-step="4"
-        [hidden]="step() !== 4"
-        aria-labelledby="appearance-title"
-      >
-        <h2 id="appearance-title">Escolha o modelo</h2>
-        <app-quotation-template-picker [control]="form.controls.template_id" />
-      </section>
-      <section
-        class="editor-section"
-        data-step="1"
-        [hidden]="step() !== 1"
-        aria-label="Logotipo da minha empresa"
-      >
-        <div class="logo-picker">
-          <div>
-            <strong>Seu logotipo <span class="optional-label">opcional</span></strong>
-            <p id="logo-help">
-              PNG ou JPEG, até 2 MB e 4 milhões de pixels. O logotipo acompanha seu rascunho
-              privado.
-            </p>
-          </div>
-          @if (logo(); as image) {
-            <div class="logo-selected">
-              <img [src]="image.url" (load)="logoLoaded($event)" alt="Logotipo selecionado" /><span
-                >{{ image.width }} × {{ image.height }} px</span
-              ><button class="btn btn-ghost" type="button" (click)="removeLogo()">
-                Remover logotipo
-              </button>
-            </div>
-          }
-          <label class="logo-upload" for="quotation-logo">{{
-            logoBusy() ? 'Preparando imagem…' : logo() ? 'Trocar logotipo' : 'Selecionar logotipo'
-          }}</label
-          ><input
-            id="quotation-logo"
-            type="file"
-            accept="image/png,image/jpeg"
-            (change)="selectLogo($event)"
-            [disabled]="logoBusy()"
-            aria-label="Selecionar logotipo PNG ou JPEG"
-            aria-describedby="logo-help logo-error"
-          />
-          <p class="field-error" id="logo-error" role="status">{{ logoError() }}</p>
-        </div>
-      </section>
-      <div class="editor-navigation">
-        <button
-          type="button"
-          class="btn btn-outline-secondary"
-          [disabled]="step() === 1"
-          (click)="goToStep(step() - 1)"
-        >
-          Voltar
-        </button>
-        @if (step() < 4) {
-          <button type="submit" class="btn btn-primary">Continuar para {{ steps[step()] }}</button>
-        }
       </div>
-      <div class="editor-finish" [hidden]="step() !== 4">
-        <h2 class="review-title">Confira antes de gerar</h2>
-        <dl class="editor-totals">
-          <div>
-            <dt>Minha empresa</dt>
-            <dd>{{ value().issuer.name || 'Ainda não informada' }}</dd>
-          </div>
-          <div>
-            <dt>Cliente</dt>
-            <dd>{{ value().customer.name || 'Ainda não informado' }}</dd>
-          </div>
-          <div>
-            <dt>Itens</dt>
-            <dd>{{ value().items.length }}</dd>
-          </div>
-          <div class="editor-grand">
-            <dt>Total</dt>
-            <dd>{{ calculation().total === null ? '—' : 'R$ ' + format(calculation().total) }}</dd>
-          </div>
-        </dl>
-        <app-quotation-commerce
-          [attr.inert]="confirmation() ? '' : null"
-          [editor]="true"
-          [entitlement]="generation.entitlements()"
-          [source]="generation.selectedSource()"
-          (choose)="generation.selectedSource.set($event)"
-          (buy)="buyCredits()"
-          (updated)="generation.refresh()"
-        />
-        <div class="completion-status" role="status">
-          <span [class.ready]="ready()" aria-hidden="true">{{ ready() ? '✓' : '○' }}</span
-          >{{
-            ready()
-              ? 'Dados preenchidos para a prévia.'
-              : 'Preencha os campos obrigatórios e confira os valores.'
-          }}
-        </div>
-        @if (reviewed()) {
-          <p class="review-result" role="status">
-            {{
-              ready()
-                ? 'Prévia conferida. Você pode solicitar a geração do PDF.'
-                : 'Confira os campos destacados antes de concluir sua prévia.'
-            }}
+      <nav
+        class="editor-steps"
+        aria-label="Etapas do orçamento"
+        [attr.inert]="
+          draft.loading() || confirmation() || preparing() || generation.sending() ? '' : null
+        "
+      >
+        @for (label of steps; track label; let index = $index) {
+          <button
+            type="button"
+            [attr.aria-current]="step() === index + 1 ? 'step' : null"
+            (click)="goToStep(index + 1)"
+          >
+            <span aria-hidden="true">{{ index + 1 }}</span
+            >{{ label }}
+          </button>
+        }
+      </nav>
+      <div class="editor-step-intro">
+        <h2 id="editor-step-title" tabindex="-1">{{ step() }} de 4 · {{ steps[step() - 1] }}</h2>
+        @if (!generationEnabled) {
+          <p>
+            Preencha e salve seu rascunho. A geração de PDF estará disponível em uma próxima etapa.
+          </p>
+        } @else if (!auth.user()) {
+          <p>Grátis para começar: um orçamento concluído por dia. Entre ao gerar o PDF.</p>
+        }
+        @if (generation.entitlements(); as quota) {
+          <p class="editor-availability">
+            @if (!quota.enabled) {
+              Geração temporariamente indisponível.
+            } @else if (quota.pro?.active) {
+              Pro: {{ quota.pro?.remaining }} orçamentos no período.
+            } @else {
+              Free: {{ quota.remaining }} orçamento disponível hoje.
+            }
+            @if (quota.credits; as credits) {
+              Créditos exclusivos de orçamentos: {{ credits.available }} disponíveis.
+            }
           </p>
         }
-        <button class="btn btn-outline-primary validate-preview" type="submit">
-          Conferir dados da prévia</button
-        ><button
-          class="btn btn-primary generate-pdf"
-          type="button"
-          [disabled]="
-            generation.sending() ||
-            preparing() ||
-            !!confirmation() ||
-            generation.entitlements()?.enabled === false ||
-            generation.pending() ||
-            generation.retryBlocked() ||
-            logoBusy() ||
-            draft.loading()
-          "
-          (click)="generate()"
-          aria-describedby="pdf-policy"
-        >
-          {{
-            preparing()
-              ? 'Consultando disponibilidade...'
-              : generation.sending()
-                ? 'Preparando emissão...'
-                : generation.pending()
-                  ? 'Geração em andamento...'
-                  : generation.selectedSource() === 'credit'
-                    ? 'Gerar PDF usando 1 crédito pago'
-                    : 'Gerar orçamento em PDF'
-          }}
-          <span aria-hidden="true">↗</span>
-        </button>
-        <p id="pdf-policy">
-          A franquia Free permite um orçamento concluído por dia. Pro: 100 orçamentos por período da
-          assinatura, exclusivos desta ferramenta. Créditos pagos só são usados mediante sua
-          escolha.
-        </p>
-        <p class="memory-note">
-          Rascunhos ficam neste navegador por 24 horas após a última edição. Ao entrar, também são
-          salvos de forma privada na sua conta pelo mesmo prazo. Você pode descartá-los a qualquer
-          momento.
-        </p>
+        @if (generationEnabled && auth.user() && !generation.entitlements()) {
+          <p role="status">Consultando sua disponibilidade…</p>
+        }
+        <p class="field-error" role="status">{{ stepMessage() }}</p>
       </div>
-    </form>
+      <form
+        [formGroup]="form"
+        (ngSubmit)="step() < 4 ? nextStep() : validatePreview()"
+        [attr.inert]="
+          draft.loading() || generation.sending() || preparing() || confirmation() ? '' : null
+        "
+        novalidate
+        autocomplete="off"
+      >
+        <section
+          class="editor-section"
+          data-step="4"
+          [hidden]="step() !== 4"
+          aria-labelledby="identity-title"
+        >
+          <h2 id="identity-title">Identificação do orçamento</h2>
+          <div class="field">
+            <label class="form-label" for="quotation-number"
+              >Número do orçamento <span aria-hidden="true">*</span></label
+            ><input
+              class="form-control"
+              id="quotation-number"
+              formControlName="number"
+              maxlength="60"
+              required
+              [attr.aria-invalid]="!!error(form.controls.number)"
+              aria-describedby="number-error"
+            /><span class="field-error" id="number-error">{{ error(form.controls.number) }}</span>
+          </div>
+          <div class="fields-grid">
+            <div class="field">
+              <label class="form-label" for="issue-date"
+                >Data de emissão <span aria-hidden="true">*</span></label
+              ><input
+                class="form-control"
+                type="date"
+                id="issue-date"
+                formControlName="issue_date"
+                required
+                [attr.aria-invalid]="!!error(form.controls.issue_date)"
+                aria-describedby="issue-error"
+              /><span class="field-error" id="issue-error">{{
+                error(form.controls.issue_date)
+              }}</span>
+            </div>
+            <div class="field">
+              <label class="form-label" for="valid-until"
+                >Válido até <span aria-hidden="true">*</span></label
+              ><input
+                class="form-control"
+                type="date"
+                id="valid-until"
+                formControlName="valid_until"
+                required
+                [attr.min]="value().issue_date || null"
+                [attr.aria-invalid]="
+                  !!error(form.controls.valid_until) || form.hasError('validity')
+                "
+                aria-describedby="validity-error"
+              /><span class="field-error" id="validity-error">{{
+                form.hasError('validity')
+                  ? 'A validade deve ser igual ou posterior à emissão.'
+                  : error(form.controls.valid_until)
+              }}</span>
+            </div>
+          </div>
+        </section>
+        <app-quotation-party
+          data-step="1"
+          [hidden]="step() !== 1"
+          [group]="form.controls.issuer"
+          prefix="issuer"
+          title="Minha empresa"
+          step="01"
+        />
+        <app-quotation-party
+          data-step="2"
+          [hidden]="step() !== 2"
+          [group]="form.controls.customer"
+          prefix="customer"
+          title="Seu cliente"
+          step="02"
+        />
+        <app-quotation-items
+          data-step="3"
+          [hidden]="step() !== 3"
+          [items]="form.controls.items"
+          [totals]="calculation().lines"
+          (addItem)="addItem()"
+          (removeItem)="removeItem($event)"
+        />
+        <section
+          class="editor-section"
+          data-step="3"
+          [hidden]="step() !== 3"
+          aria-labelledby="values-title"
+        >
+          <h2 id="values-title">Valores e desconto</h2>
+          <div class="fields-grid">
+            <div class="field">
+              <label class="form-label" for="discount-type">Tipo de desconto</label
+              ><select class="form-select" id="discount-type" formControlName="discount_type">
+                <option value="fixed">Valor em reais (R$)</option>
+                <option value="percent">Percentual (%)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="form-label" for="discount-value">{{
+                value().discount_type === 'percent' ? 'Desconto (%)' : 'Desconto (R$)'
+              }}</label>
+              @if (value().discount_type === 'percent') {
+                <input
+                  class="form-control"
+                  id="discount-value"
+                  formControlName="discount_percent"
+                  inputmode="decimal"
+                  maxlength="6"
+                  [attr.aria-invalid]="discountInvalid()"
+                  aria-describedby="calculation-error"
+                />
+              } @else {
+                <input
+                  class="form-control"
+                  quotationMoney
+                  id="discount-value"
+                  formControlName="discount_fixed_cents"
+                  inputmode="decimal"
+                  maxlength="24"
+                  [attr.aria-invalid]="discountInvalid()"
+                  aria-describedby="calculation-error"
+                />
+              }
+            </div>
+          </div>
+          <p class="field-error" id="calculation-error" role="status" tabindex="-1">
+            {{ calculation().error }}
+          </p>
+          <dl class="editor-totals">
+            <div>
+              <dt>Subtotal</dt>
+              <dd>
+                {{ calculation().subtotal === null ? '—' : 'R$ ' + format(calculation().subtotal) }}
+              </dd>
+            </div>
+            <div>
+              <dt>Desconto</dt>
+              <dd>
+                {{ calculation().discount === null ? '—' : 'R$ ' + format(calculation().discount) }}
+              </dd>
+            </div>
+            <div class="editor-grand">
+              <dt>Total do orçamento</dt>
+              <dd>
+                {{ calculation().total === null ? '—' : 'R$ ' + format(calculation().total) }}
+              </dd>
+            </div>
+          </dl>
+        </section>
+        <section
+          class="editor-section"
+          data-step="3"
+          [hidden]="step() !== 3"
+          aria-labelledby="conditions-title"
+        >
+          <h2 id="conditions-title">Condições e detalhes</h2>
+          <div class="field">
+            <label class="form-label" for="quotation-conditions"
+              >Condições de pagamento <span class="optional-label">opcional</span></label
+            ><textarea
+              class="form-control"
+              id="quotation-conditions"
+              formControlName="conditions"
+              rows="3"
+              maxlength="4000"
+              placeholder="Ex.: 50% na aprovação e 50% na conclusão."
+              [attr.aria-invalid]="!!error(form.controls.conditions)"
+              aria-describedby="conditions-error"
+            ></textarea
+            ><span class="field-error" id="conditions-error">{{
+              error(form.controls.conditions)
+            }}</span>
+          </div>
+          <div class="field">
+            <label class="form-label" for="quotation-notes"
+              >Observações <span class="optional-label">opcional</span></label
+            ><textarea
+              class="form-control"
+              id="quotation-notes"
+              formControlName="notes"
+              rows="3"
+              maxlength="4000"
+              placeholder="Prazos, materiais inclusos ou detalhes do serviço."
+              [attr.aria-invalid]="!!error(form.controls.notes)"
+              aria-describedby="notes-error"
+            ></textarea
+            ><span class="field-error" id="notes-error">{{ error(form.controls.notes) }}</span>
+          </div>
+        </section>
+        <section
+          class="editor-section"
+          data-step="4"
+          [hidden]="step() !== 4"
+          aria-labelledby="appearance-title"
+        >
+          <h2 id="appearance-title">Escolha o modelo</h2>
+          <app-quotation-template-picker [control]="form.controls.template_id" />
+        </section>
+        <section
+          class="editor-section"
+          data-step="1"
+          [hidden]="step() !== 1"
+          aria-label="Logotipo da minha empresa"
+        >
+          <div class="logo-picker">
+            <div>
+              <strong>Seu logotipo <span class="optional-label">opcional</span></strong>
+              <p id="logo-help">
+                PNG ou JPEG, até 2 MB e 4 milhões de pixels. O logotipo acompanha seu rascunho
+                privado.
+              </p>
+            </div>
+            @if (logo(); as image) {
+              <div class="logo-selected">
+                <img
+                  [src]="image.url"
+                  (load)="logoLoaded($event)"
+                  alt="Logotipo selecionado"
+                /><span>{{ image.width }} × {{ image.height }} px</span
+                ><button class="btn btn-ghost" type="button" (click)="removeLogo()">
+                  Remover logotipo
+                </button>
+              </div>
+            }
+            <label class="form-label logo-upload" for="quotation-logo">{{
+              logoBusy() ? 'Preparando imagem…' : logo() ? 'Trocar logotipo' : 'Selecionar logotipo'
+            }}</label
+            ><input
+              id="quotation-logo"
+              type="file"
+              accept="image/png,image/jpeg"
+              (change)="selectLogo($event)"
+              [disabled]="logoBusy()"
+              aria-label="Selecionar logotipo PNG ou JPEG"
+              aria-describedby="logo-help logo-error"
+            />
+            <p class="field-error" id="logo-error" role="status">{{ logoError() }}</p>
+          </div>
+        </section>
+        <div class="editor-navigation">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="step() === 1"
+            (click)="goToStep(step() - 1)"
+          >
+            Voltar
+          </button>
+          @if (step() < 4) {
+            <button type="submit" class="btn btn-primary">
+              Continuar para {{ steps[step()] }}
+            </button>
+          }
+        </div>
+        <div class="editor-finish" [hidden]="step() !== 4">
+          <h2 class="review-title">Confira antes de gerar</h2>
+          <dl class="editor-totals">
+            <div>
+              <dt>Minha empresa</dt>
+              <dd>{{ value().issuer.name || 'Ainda não informada' }}</dd>
+            </div>
+            <div>
+              <dt>Cliente</dt>
+              <dd>{{ value().customer.name || 'Ainda não informado' }}</dd>
+            </div>
+            <div>
+              <dt>Itens</dt>
+              <dd>{{ value().items.length }}</dd>
+            </div>
+            <div class="editor-grand">
+              <dt>Total</dt>
+              <dd>
+                {{ calculation().total === null ? '—' : 'R$ ' + format(calculation().total) }}
+              </dd>
+            </div>
+          </dl>
+          @if (generationEnabled) {
+            <app-quotation-commerce
+              [attr.inert]="confirmation() ? '' : null"
+              [editor]="true"
+              [entitlement]="generation.entitlements()"
+              [source]="generation.selectedSource()"
+              (choose)="generation.selectedSource.set($event)"
+              (buy)="buyCredits()"
+              (updated)="generation.refresh()"
+            />
+          }
+          <div class="completion-status" role="status">
+            <span [class.ready]="ready()" aria-hidden="true">{{ ready() ? '✓' : '○' }}</span
+            >{{
+              ready()
+                ? 'Dados preenchidos para a prévia.'
+                : 'Preencha os campos obrigatórios e confira os valores.'
+            }}
+          </div>
+          @if (reviewed()) {
+            <p class="review-result" role="status">
+              {{
+                ready()
+                  ? generationEnabled
+                    ? 'Prévia conferida. Você pode solicitar a geração do PDF.'
+                    : 'Prévia conferida. Seu rascunho continua editável.'
+                  : 'Confira os campos destacados antes de concluir sua prévia.'
+              }}
+            </p>
+          }
+          <button class="btn btn-outline-primary validate-preview" type="submit">
+            Conferir dados da prévia</button
+          ><button
+            class="btn btn-primary generate-pdf"
+            type="button"
+            [disabled]="
+              !generationEnabled ||
+              generation.sending() ||
+              preparing() ||
+              !!confirmation() ||
+              generation.entitlements()?.enabled === false ||
+              generation.pending() ||
+              generation.retryBlocked() ||
+              logoBusy() ||
+              draft.loading()
+            "
+            (click)="generate()"
+            aria-describedby="pdf-policy"
+          >
+            {{
+              preparing()
+                ? 'Consultando disponibilidade...'
+                : generation.sending()
+                  ? 'Preparando emissão...'
+                  : generation.pending()
+                    ? 'Geração em andamento...'
+                    : generation.selectedSource() === 'credit'
+                      ? 'Gerar PDF usando 1 crédito pago'
+                      : 'Gerar orçamento em PDF'
+            }}
+            <span aria-hidden="true">↗</span>
+          </button>
+          <p id="pdf-policy">
+            @if (!generationEnabled) {
+              Geração de PDF indisponível nesta etapa. Você pode editar, conferir a prévia e salvar
+              seu rascunho sem consumir cotas ou créditos.
+            } @else {
+              A franquia Free permite um orçamento concluído por dia. Pro: 100 orçamentos por
+              período da assinatura, exclusivos desta ferramenta. Créditos pagos só são usados
+              mediante sua escolha.
+            }
+          </p>
+          <p class="memory-note">
+            Rascunhos ficam neste navegador por 24 horas após a última edição. Ao entrar, também são
+            salvos de forma privada na sua conta pelo mesmo prazo. Você pode descartá-los a qualquer
+            momento. Cópias locais temporárias podem permanecer no navegador até sua exclusão. Evite
+            preencher dados pessoais em dispositivos compartilhados.
+          </p>
+        </div>
+      </form>
+    </div>
   </div>
-  <aside class="preview-panel" id="quotation-preview" aria-label="Prévia do orçamento">
-    <app-quotation-preview
-      [value]="value()"
-      [calculation]="calculation()"
-      [logo]="logo()?.url ?? null"
-    />
-  </aside>
+  <div class="preview-column col-lg-6">
+    <aside class="preview-panel card" id="quotation-preview" aria-label="Prévia do orçamento">
+      <app-quotation-preview
+        [value]="value()"
+        [calculation]="calculation()"
+        [logo]="logo()?.url ?? null"
+      />
+    </aside>
+  </div>
 </div>
 <app-quotation-drafts
   [attr.inert]="confirmation() || preparing() || generation.sending() ? '' : null"
 />
-@if (confirmation(); as confirmation) {
-  <section
-    class="generation-confirmation"
-    id="generation-confirmation"
-    tabindex="-1"
-    aria-labelledby="confirmation-title"
-  >
-    <h2 id="confirmation-title">Confirmar geração do PDF</h2>
-    <p>
-      Orçamento {{ value().number }} para {{ value().customer.name }} ·
-      {{ value().items.length }} item(ns) ·
-      {{ value().template_id === 'classic' ? 'Clássico' : 'Moderno' }}.
-    </p>
-    <p class="confirmation-total">Total: R$ {{ format(calculation().total) }}</p>
-    <p>
-      @switch (confirmation.source) {
-        @case ('credit') {
-          Será reservado 1 crédito pago do seu saldo.
-        }
-        @case ('pro') {
-          Será reservada 1 geração da franquia Pro deste período.
-        }
-        @default {
-          Será reservada 1 geração gratuita de hoje.
-        }
-      }
-      O consumo só é confirmado após a conclusão do PDF. O download ficará disponível por duas
-      horas.
-    </p>
-    <div class="confirmation-actions">
-      <button
-        class="btn btn-primary confirm-generation"
-        type="button"
-        (click)="confirmGeneration()"
-      >
-        Confirmar e gerar PDF
-      </button>
-      <button class="btn btn-secondary" type="button" (click)="cancelGeneration()">
-        Voltar à edição
-      </button>
-    </div>
-  </section>
-}
-<section
-  class="quotation-generation"
-  aria-labelledby="generation-title"
-  [attr.aria-busy]="generation.sending() || generation.pending()"
->
-  <h2 id="generation-title" tabindex="-1">Seu PDF</h2>
-  @if (generation.message()) {
-    <p role="status">{{ generation.message() }}</p>
-  }
-  @if (generation.error()) {
-    <p role="alert">{{ generation.error() }}</p>
-  }
-  @if (generation.loginRequired()) {
-    <button type="button" class="btn btn-primary" (click)="login()">Entrar para continuar</button>
-    <p>Após entrar, clique em Gerar orçamento em PDF para confirmar a emissão.</p>
-  }
-  @if (generation.entitlements(); as quota) {
-    @if (!quota.enabled) {
-      <p>A geração está temporariamente indisponível. Você pode continuar editando.</p>
-    }
-  }
-  @if (generation.processing(); as processing) {
-    <p>
-      Emissão solicitada em {{ processing.created_at | date: 'dd/MM/yyyy HH:mm' : '-0300' }} (São
-      Paulo).
-    </p>
-    <p>
-      O PDF usa os dados confirmados na emissão. Alterações posteriores no rascunho não modificam
-      esse arquivo.
-    </p>
-    <button
-      class="btn btn-secondary"
-      type="button"
-      [disabled]="draft.loading() || !!confirmation() || generation.sending()"
-      (click)="draft.open(processing.quotation.draft_uuid)"
+@if (generationEnabled) {
+  @if (confirmation(); as confirmation) {
+    <section
+      class="generation-confirmation"
+      id="generation-confirmation"
+      tabindex="-1"
+      aria-labelledby="confirmation-title"
     >
-      Editar rascunho desta emissão
-    </button>
-    @if (processing.result.available) {
+      <h2 id="confirmation-title">Confirmar geração do PDF</h2>
       <p>
-        Disponível até {{ processing.expires_at | date: 'dd/MM/yyyy HH:mm' : '-0300' }} (horário de
-        São Paulo).
+        Orçamento {{ value().number }} para {{ value().customer.name }} ·
+        {{ value().items.length }} item(ns) ·
+        {{ value().template_id === 'classic' ? 'Clássico' : 'Moderno' }}.
+      </p>
+      <p class="confirmation-total">Total: R$ {{ format(calculation().total) }}</p>
+      <p>
+        @switch (confirmation.source) {
+          @case ('credit') {
+            Será reservado 1 crédito pago do seu saldo.
+          }
+          @case ('pro') {
+            Será reservada 1 geração da franquia Pro deste período.
+          }
+          @default {
+            Será reservada 1 geração gratuita de hoje.
+          }
+        }
+        O consumo só é confirmado após a conclusão do PDF. O download ficará disponível por duas
+        horas.
+      </p>
+      <div class="confirmation-actions">
+        <button
+          class="btn btn-primary confirm-generation"
+          type="button"
+          (click)="confirmGeneration()"
+        >
+          Confirmar e gerar PDF
+        </button>
+        <button class="btn btn-secondary" type="button" (click)="cancelGeneration()">
+          Voltar à edição
+        </button>
+      </div>
+    </section>
+  }
+  <section
+    class="quotation-generation"
+    aria-labelledby="generation-title"
+    [attr.aria-busy]="generation.sending() || generation.pending()"
+  >
+    <h2 id="generation-title" tabindex="-1">Seu PDF</h2>
+    @if (generation.message()) {
+      <p role="status">{{ generation.message() }}</p>
+    }
+    @if (generation.error()) {
+      <p role="alert">{{ generation.error() }}</p>
+    }
+    @if (generation.loginRequired()) {
+      <button type="button" class="btn btn-primary" (click)="login()">Entrar para continuar</button>
+      <p>Após entrar, clique em Gerar orçamento em PDF para confirmar a emissão.</p>
+    }
+    @if (generation.entitlements(); as quota) {
+      @if (!quota.enabled) {
+        <p>A geração está temporariamente indisponível. Você pode continuar editando.</p>
+      }
+    }
+    @if (generation.processing(); as processing) {
+      <p>
+        Emissão solicitada em {{ processing.created_at | date: 'dd/MM/yyyy HH:mm' : '-0300' }} (São
+        Paulo).
+      </p>
+      <p>
+        O PDF usa os dados confirmados na emissão. Alterações posteriores no rascunho não modificam
+        esse arquivo.
       </p>
       <button
-        class="btn btn-primary download-quotation"
-        type="button"
-        [disabled]="generation.downloading() || generation.retryBlocked()"
-        (click)="generation.download()"
-      >
-        {{ generation.downloading() ? 'Baixando...' : 'Baixar orçamento em PDF' }}
-      </button>
-    }
-    @if (generation.pending() && !generation.polling()) {
-      <button
         class="btn btn-secondary"
         type="button"
+        [disabled]="draft.loading() || !!confirmation() || generation.sending()"
+        (click)="draft.open(processing.quotation.draft_uuid)"
+      >
+        Editar rascunho desta emissão
+      </button>
+      @if (processing.result.available) {
+        <p>
+          Disponível até {{ processing.expires_at | date: 'dd/MM/yyyy HH:mm' : '-0300' }} (horário
+          de São Paulo).
+        </p>
+        <button
+          class="btn btn-primary download-quotation"
+          type="button"
+          [disabled]="generation.downloading() || generation.retryBlocked()"
+          (click)="generation.download()"
+        >
+          {{ generation.downloading() ? 'Baixando...' : 'Baixar orçamento em PDF' }}
+        </button>
+      }
+      @if (generation.pending() && !generation.polling()) {
+        <button
+          class="btn btn-secondary"
+          type="button"
+          [disabled]="generation.retryBlocked()"
+          (click)="generation.consult()"
+        >
+          Consultar andamento
+        </button>
+      }
+      @if (processing.quotation.retryable) {
+        <button
+          class="btn btn-secondary"
+          type="button"
+          [disabled]="
+            generation.sending() || generation.retryBlocked() || !!confirmation() || preparing()
+          "
+          (click)="generation.retry()"
+        >
+          Tentar novamente sem novo consumo
+        </button>
+      }
+    }
+    @if (auth.user() && !generation.pending()) {
+      <button
+        type="button"
+        class="btn btn-secondary"
         [disabled]="generation.retryBlocked()"
-        (click)="generation.consult()"
+        (click)="generation.refresh()"
       >
-        Consultar andamento
+        Consultar franquia e última emissão
       </button>
     }
-    @if (processing.quotation.retryable) {
-      <button
-        class="btn btn-secondary"
-        type="button"
-        [disabled]="
-          generation.sending() || generation.retryBlocked() || !!confirmation() || preparing()
-        "
-        (click)="generation.retry()"
-      >
-        Tentar novamente sem novo consumo
-      </button>
+    @if (auth.user()) {
+      <p>
+        <a routerLink="/conta" fragment="history-title"
+          >Ver meu histórico de orçamentos e arquivos</a
+        >
+      </p>
     }
-  }
-  @if (auth.user() && !generation.pending()) {
-    <button
-      type="button"
-      class="btn btn-secondary"
-      [disabled]="generation.retryBlocked()"
-      (click)="generation.refresh()"
-    >
-      Consultar franquia e última emissão
-    </button>
-  }
-  @if (auth.user()) {
+  </section>
+}
+@if (generationEnabled) {
+  <section class="tool-explainer quotation-explainer" aria-labelledby="quotation-how-title">
+    <h2 id="quotation-how-title">Como criar um orçamento profissional em PDF</h2>
     <p>
-      <a routerLink="/conta" fragment="history-title">Ver meu histórico de orçamentos e arquivos</a>
+      Reúna os dados do seu negócio, os contatos do cliente e os produtos ou serviços que deseja
+      oferecer. O Feitoo calcula os valores enquanto você preenche.
     </p>
-  }
-</section>
-<section class="tool-explainer quotation-explainer" aria-labelledby="quotation-how-title">
-  <h2 id="quotation-how-title">Como criar um orçamento profissional em PDF</h2>
-  <p>
-    Reúna os dados do seu negócio, os contatos do cliente e os produtos ou serviços que deseja
-    oferecer. O Feitoo calcula os valores enquanto você preenche.
-  </p>
-  <ol>
-    <li>Informe a identificação, a data e a validade do orçamento.</li>
-    <li>Preencha os dados do prestador e do cliente. Contatos e documentos são opcionais.</li>
-    <li>
-      Adicione itens, quantidades e preços em reais. Se precisar, aplique um desconto e descreva as
-      condições de pagamento.
-    </li>
-    <li>Escolha Clássico ou Moderno, adicione seu logotipo e confira o resumo.</li>
-    <li>
-      Entre ou crie uma conta, confirme a franquia utilizada e gere seu PDF. Baixe a cópia para
-      enviar ao cliente.
-    </li>
-  </ol>
-  <p>
-    Use o modelo Clássico para uma apresentação formal e discreta, ou o Moderno para destacar sua
-    identidade visual. Ambos incluem os mesmos dados e estão disponíveis no gratuito.
-  </p>
-  <p>
-    Seu orçamento e seu logotipo têm acesso privado. Consulte os prazos no editor e saiba mais sobre
-    a <a routerLink="/seguranca">segurança dos seus arquivos</a>. O documento é comercial, sem valor
-    fiscal.
-  </p>
-  <h2>Dúvidas sobre o Gerador de Orçamentos</h2>
-  @for (faq of faqs; track faq.question) {
-    <details>
-      <summary>{{ faq.question }}</summary>
-      <p>{{ faq.answer }}</p>
-    </details>
-  }
-</section>
+    <ol>
+      <li>Informe a identificação, a data e a validade do orçamento.</li>
+      <li>Preencha os dados do prestador e do cliente. Contatos e documentos são opcionais.</li>
+      <li>
+        Adicione itens, quantidades e preços em reais. Se precisar, aplique um desconto e descreva
+        as condições de pagamento.
+      </li>
+      <li>Escolha Clássico ou Moderno, adicione seu logotipo e confira o resumo.</li>
+      <li>
+        Entre ou crie uma conta, confirme a franquia utilizada e gere seu PDF. Baixe a cópia para
+        enviar ao cliente.
+      </li>
+    </ol>
+    <p>
+      Use o modelo Clássico para uma apresentação formal e discreta, ou o Moderno para destacar sua
+      identidade visual. Ambos incluem os mesmos dados e estão disponíveis no gratuito.
+    </p>
+    <p>
+      Seu orçamento e seu logotipo têm acesso privado. Consulte os prazos no editor e saiba mais
+      sobre a <a routerLink="/seguranca">segurança dos seus arquivos</a>. O documento é comercial,
+      sem valor fiscal.
+    </p>
+    <h2>Dúvidas sobre o Gerador de Orçamentos</h2>
+    @for (faq of faqs; track faq.question) {
+      <details>
+        <summary>{{ faq.question }}</summary>
+        <p>{{ faq.answer }}</p>
+      </details>
+    }
+  </section>
+}

@@ -27,6 +27,7 @@ export class QuotationDraftCoordinator {
   readonly conflict = signal(false);
   readonly available = signal(false);
   readonly loading = signal(true);
+  readonly saving = signal(false);
   private record: LocalDraft | null = null;
   private readEditor: (() => EditorSnapshot) | null = null;
   private restoreEditor: ((snapshot: EditorSnapshot | null) => void) | null = null;
@@ -305,6 +306,7 @@ export class QuotationDraftCoordinator {
     if (!this.edits && !this.record) return true;
     const version = this.edits;
     const snapshot = this.readEditor();
+    this.saving.set(true);
     this.message.set('Salvando...');
     try {
       const old = this.record;
@@ -372,6 +374,8 @@ export class QuotationDraftCoordinator {
     } catch (error) {
       if (this.active(epoch)) this.failure(error, !(error instanceof HttpErrorResponse));
       return false;
+    } finally {
+      this.saving.set(false);
     }
   }
   private failure(error: unknown, local = false): void {

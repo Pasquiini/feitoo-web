@@ -32,6 +32,8 @@ const launch = {
   ga4Id: process.env.FEITOO_GA4_ID ?? '',
   analyticsEnabled: process.env.FEITOO_ANALYTICS_ENABLED === 'true',
   ttlMinutes,
+  // Preview-only until a later phase is explicitly enabled for a build.
+  quotationEnabled: process.env.FEITOO_QUOTATIONS_ENABLED === 'true',
 };
 if (launch.analyticsEnabled && (!/^G-[A-Z0-9]+$/.test(launch.ga4Id) || !origin))
   throw new Error('Analytics habilitado exige Measurement ID e domínio válidos.');

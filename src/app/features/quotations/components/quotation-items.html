@@ -23,7 +23,9 @@
         </button>
       </div>
       <div class="field">
-        <label [for]="'item-description-' + i">Descrição <span aria-hidden="true">*</span></label>
+        <label class="form-label" [for]="'item-description-' + i"
+          >Descrição <span aria-hidden="true">*</span></label
+        >
         <textarea
           class="form-control"
           [id]="'item-description-' + i"
@@ -41,7 +43,7 @@
       </div>
       <div class="item-values">
         <div class="field">
-          <label [for]="'item-quantity-' + i">Quantidade</label
+          <label class="form-label" [for]="'item-quantity-' + i">Quantidade</label
           ><input
             class="form-control"
             [id]="'item-quantity-' + i"
@@ -56,9 +58,9 @@
           }}</span>
         </div>
         <div class="field">
-          <label [for]="'item-price-' + i">Valor unitário</label>
-          <div class="money-input">
-            <span aria-hidden="true">R$</span
+          <label class="form-label" [for]="'item-price-' + i">Valor unitário</label>
+          <div class="money-input input-group">
+            <span class="input-group-text" aria-hidden="true">R$</span
             ><input
               class="form-control"
               quotationMoney

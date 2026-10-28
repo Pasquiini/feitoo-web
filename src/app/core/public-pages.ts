@@ -1,9 +1,13 @@
 import { guidePages } from './guide-pages';
+import { launch } from '../../environments/launch.generated';
 export const publicPages = {
   '/gerador-de-orcamentos': {
-    title: 'Gerador de Orçamentos Grátis em PDF | Feitoo',
-    description:
-      'Crie orçamentos profissionais online. Adicione seus produtos ou serviços, escolha um modelo e gere um PDF para enviar aos clientes.',
+    title: launch.quotationEnabled
+      ? 'Gerador de Orçamentos Grátis em PDF | Feitoo'
+      : 'Gerador de Orçamentos Online Grátis | Feitoo',
+    description: launch.quotationEnabled
+      ? 'Crie orçamentos profissionais online. Adicione seus produtos ou serviços, escolha um modelo e gere um PDF para enviar aos clientes.'
+      : 'Crie orçamentos profissionais para serviços e produtos. Adicione clientes, valores, descontos e personalize o modelo do documento.',
   },
   '/docx-para-pdf': {
     title: 'DOCX para PDF Online | Converter Word em PDF | Feitoo',

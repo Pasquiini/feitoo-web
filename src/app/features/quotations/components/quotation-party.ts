@@ -13,7 +13,7 @@ import { fieldError } from '../services/quotation-form';
         >{{ title() }}
       </legend>
       <div class="field">
-        <label [for]="prefix() + '-name'"
+        <label class="form-label" [for]="prefix() + '-name'"
           >{{ prefix() === 'issuer' ? 'Seu nome ou empresa' : 'Nome do cliente' }}
           <span aria-hidden="true">*</span></label
         >
@@ -39,7 +39,7 @@ import { fieldError } from '../services/quotation-form';
         <div class="fields-grid">
           @for (field of fields; track field.key) {
             <div class="field" [class.full-width]="field.key === 'address'">
-              <label [for]="prefix() + '-' + field.key">{{ field.label }}</label>
+              <label class="form-label" [for]="prefix() + '-' + field.key">{{ field.label }}</label>
               <input
                 class="form-control"
                 [id]="prefix() + '-' + field.key"

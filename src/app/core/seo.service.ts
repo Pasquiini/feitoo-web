@@ -7,6 +7,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { LAUNCH_CONFIG } from './launch-config';
 import { publicPages, PublicPath, safePage } from './public-pages';
+import { launch } from '../../environments/launch.generated';
 
 @Injectable({ providedIn: 'root' })
 export class SeoService {
@@ -23,6 +24,7 @@ export class SeoService {
   }
   apply(url: string): void {
     const path = safePage(url);
+    const quotationPreview = path === '/gerador-de-orcamentos' && !launch.quotationEnabled;
     const guide = path in guidePages ? guidePages[path as GuidePath] : null;
     const page = publicPages[path as PublicPath] ?? {
       title: path === '/404' ? 'Página não encontrada | Feitoo' : 'Sua conta | Feitoo',
@@ -32,7 +34,10 @@ export class SeoService {
     this.meta.updateTag({ name: 'description', content: page.description });
     this.meta.updateTag({
       name: 'robots',
-      content: this.config.origin && path in publicPages ? 'index,follow' : 'noindex,follow',
+      content:
+        this.config.origin && path in publicPages && !quotationPreview
+          ? 'index,follow'
+          : 'noindex,follow',
     });
     for (const [property, content] of Object.entries({
       'og:title': page.title,
@@ -73,7 +78,7 @@ export class SeoService {
       schema.id = 'feitoo-schema';
       schema.type = 'application/ld+json';
       const tool =
-        path === '/gerador-de-orcamentos' ||
+        (path === '/gerador-de-orcamentos' && !quotationPreview) ||
         path === '/docx-para-pdf' ||
         path === '/xml-para-excel' ||
         path === '/produtos-dos-xmls' ||
@@ -148,7 +153,7 @@ export class SeoService {
         });
       }
       if (
-        path === '/gerador-de-orcamentos' ||
+        (path === '/gerador-de-orcamentos' && !quotationPreview) ||
         path === '/docx-para-pdf' ||
         path === '/xml-para-excel' ||
         path === '/produtos-dos-xmls' ||

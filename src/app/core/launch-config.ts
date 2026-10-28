@@ -9,6 +9,7 @@ export interface LaunchConfig {
   ga4Id: string;
   analyticsEnabled: boolean;
   ttlMinutes: number;
+  quotationEnabled?: boolean;
 }
 export const LAUNCH_CONFIG = new InjectionToken<LaunchConfig>('launch', {
   providedIn: 'root',

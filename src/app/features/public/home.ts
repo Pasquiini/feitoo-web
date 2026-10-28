@@ -4,6 +4,7 @@ import { HomeIcon } from './home-icon';
 import { HOME_TOOLS, searchTools } from './home-tools';
 import { HomeToolCard } from './tool-card';
 import { HomePlans } from './home-plans';
+import { launch } from '../../../environments/launch.generated';
 
 @Component({
   selector: 'app-home',
@@ -12,9 +13,12 @@ import { HomePlans } from './home-plans';
   styleUrl: './home.scss',
 })
 export class HomePage {
+  readonly quotationEnabled = launch.quotationEnabled;
   readonly tools = HOME_TOOLS;
   readonly shortcuts = [HOME_TOOLS[0], HOME_TOOLS[5], HOME_TOOLS[3]];
-  readonly featured = [HOME_TOOLS[5], HOME_TOOLS[6]];
+  readonly featured = HOME_TOOLS.filter((tool) =>
+    ['/docx-para-pdf', '/gerador-de-orcamentos'].includes(tool.route),
+  );
   readonly query = signal('');
   readonly categories = computed(() => [
     ...new Set(this.filteredTools().map((tool) => tool.category)),

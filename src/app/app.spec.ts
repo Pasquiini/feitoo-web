@@ -34,9 +34,8 @@ describe('App', () => {
     expect([...menu.querySelectorAll('section h2')].map((h) => h.textContent)).toEqual([
       'XML e Fiscal',
       'Documentos',
-      'Negócios',
     ]);
-    expect(menu.querySelectorAll('section a')).toHaveLength(7);
+    expect(menu.querySelectorAll('section a')).toHaveLength(6);
     expect(menu.querySelector('a[href="/docx-para-pdf"]')).not.toBeNull();
     menu.open = true;
     menu
@@ -140,14 +139,9 @@ describe('App', () => {
     expect(element.querySelector('.account-menu a')?.getAttribute('href')).toBe('/conta');
     expect(element.querySelector('.account-link')).toBeNull();
     expect(element.querySelector('footer a[href="/conta"]')).not.toBeNull();
-    TestBed.inject(HttpTestingController)
-      .expectOne('http://localhost:8000/api/quotations/entitlements')
-      .flush(null, { status: 503, statusText: 'Unavailable' });
-    await vi.waitFor(() => {
-      fixture.detectChanges();
-      expect(element.querySelector('app-navbar-credits')?.textContent).toContain(
-        'Saldo indisponível',
-      );
-    });
+    TestBed.inject(HttpTestingController).expectNone(
+      'http://localhost:8000/api/quotations/entitlements',
+    );
+    expect(element.querySelector('app-navbar-credits')).toBeNull();
   });
 });

@@ -37,6 +37,7 @@ import {
 } from '../services/quotation-calculator';
 import { createItem, createQuotationForm, fieldError } from '../services/quotation-form';
 import { LocalQuotationLogo, QuotationLogoLoader } from '../services/quotation-logo';
+import { launch } from '../../../../environments/launch.generated';
 
 @Component({
   selector: 'app-quotation-page',
@@ -59,6 +60,7 @@ import { LocalQuotationLogo, QuotationLogoLoader } from '../services/quotation-l
   host: { class: 'quotation-app' },
 })
 export class QuotationPage {
+  readonly generationEnabled = launch.quotationEnabled;
   readonly commerce = viewChild(QuotationCommercePanel);
   readonly draft = inject(QuotationDraftCoordinator);
   readonly generation = inject(QuotationGenerationCoordinator);
@@ -86,7 +88,12 @@ export class QuotationPage {
   });
   readonly ready = computed(() => this.status() === 'VALID' && !this.calculation().error);
   readonly mobileView = signal<'edit' | 'preview'>('edit');
-  readonly steps = ['Minha empresa', 'Cliente', 'Itens e valores', 'Revisar e gerar'];
+  readonly steps = [
+    'Minha empresa',
+    'Cliente',
+    'Itens e valores',
+    this.generationEnabled ? 'Revisar e gerar' : 'Revisar orçamento',
+  ];
   readonly step = signal(1);
   readonly stepMessage = signal('');
   readonly reviewed = signal(false);
@@ -111,7 +118,7 @@ export class QuotationPage {
       if (this.confirmation()?.owner !== this.auth.user()?.id) this.confirmation.set(null);
     });
     afterNextRender(() => {
-      this.generation.start();
+      if (this.generationEnabled) this.generation.start();
       const parts = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Sao_Paulo',
         year: 'numeric',
@@ -213,6 +220,7 @@ export class QuotationPage {
     return this.draft.flush(false);
   }
   async generate(): Promise<void> {
+    if (!this.generationEnabled) return;
     if (
       this.preparing() ||
       this.confirmation() ||
@@ -258,6 +266,7 @@ export class QuotationPage {
     }
   }
   async confirmGeneration(): Promise<void> {
+    if (!this.generationEnabled) return;
     const confirmation = this.confirmation();
     if (!confirmation || confirmation.owner !== this.auth.user()?.id || !this.ready()) return;
     this.confirmation.set(null);

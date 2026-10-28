@@ -11,9 +11,9 @@ test('assets excluem documentos e templates temporários da pasta OG', () => {
     'og/**/*.zip',
   ]);
 });
-test('sitemap lista as quatorze páginas públicas e a origem configurada', () => {
+test('sitemap lista treze páginas públicas e mantém o gerador em prévia fora do índice', () => {
   const result = publicAssets('https://feitoo.example');
-  assert.equal((result.sitemap.match(/<url>/g) ?? []).length, 14);
+  assert.equal((result.sitemap.match(/<url>/g) ?? []).length, 13);
   assert.ok(result.sitemap.includes('/xml-para-pdf'));
   assert.ok(result.sitemap.includes('/docx-para-pdf'));
   assert.ok(result.sitemap.includes('/organizar-xml'));
@@ -21,7 +21,8 @@ test('sitemap lista as quatorze páginas públicas e a origem configurada', () =
   assert.ok(result.sitemap.includes('/como-converter-xml-nfe-para-excel'));
   assert.ok(result.sitemap.includes('/como-extrair-produtos-de-xml-nfe'));
   assert.ok(result.sitemap.includes('/produtos-dos-xmls'));
-  for (const path of paths)
+  assert.ok(!result.sitemap.includes('/gerador-de-orcamentos'));
+  for (const path of paths.filter((path) => path !== '/gerador-de-orcamentos'))
     assert.ok(result.sitemap.includes(`<loc>https://feitoo.example${path}</loc>`));
   assert.ok(!result.sitemap.includes('/login'));
   assert.ok(!result.sitemap.includes('/cadastro'));

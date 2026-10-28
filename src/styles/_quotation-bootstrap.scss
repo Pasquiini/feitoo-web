@@ -1,0 +1,131 @@
+// Bootstrap 5 is deliberately limited to the quotation editor. No Reboot,
+// typography reset, JavaScript or shared-shell overrides are loaded.
+@import 'bootstrap/scss/functions';
+
+$primary: #125d54;
+$secondary: #57665f;
+$success: #125d54;
+$danger: #a72e2e;
+$warning: #76520c;
+$info: #344f43;
+$body-color: #243631;
+$body-bg: #fff;
+$border-color: #d7e2d9;
+$border-radius: 0.65rem;
+$border-radius-sm: 0.5rem;
+$border-radius-lg: 1.25rem;
+$font-family-sans-serif: inherit;
+$input-padding-y: 0.65rem;
+$input-padding-x: 0.8rem;
+$input-border-color: #8b9d92;
+$input-focus-box-shadow: 0 0 0 3px #125d5412;
+$btn-padding-y: 0.65rem;
+$btn-padding-x: 1.15rem;
+$btn-font-weight: 600;
+$btn-font-family: inherit;
+$card-title-color: #243631;
+$card-subtitle-color: #57665f;
+$card-box-shadow: none;
+$card-cap-color: inherit;
+$card-height: auto;
+$card-color: inherit;
+$enable-dark-mode: false;
+$enable-validation-icons: false;
+
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/variables-dark';
+@import 'bootstrap/scss/maps';
+@import 'bootstrap/scss/mixins';
+
+.quotation-app {
+  // Bootstrap's root variables stay inside the feature and follow Feitoo tokens.
+  --bs-body-color: var(--color-text);
+  --bs-body-bg: var(--color-surface);
+  --bs-body-color-rgb: 36, 54, 49;
+  --bs-secondary-color: var(--color-muted);
+  --bs-secondary-bg: var(--color-subtle);
+  --bs-tertiary-bg: var(--color-subtle);
+  --bs-emphasis-color: var(--color-text);
+  --bs-emphasis-color-rgb: 36, 54, 49;
+  --bs-border-width: 1px;
+  --bs-border-style: solid;
+  --bs-border-color: var(--color-border);
+  --bs-border-color-translucent: #24363126;
+  --bs-border-radius: #{$border-radius};
+  --bs-border-radius-sm: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-lg);
+  --bs-border-radius-pill: 50rem;
+  --bs-focus-ring-color: #125d5426;
+  --bs-highlight-color: var(--color-text);
+  --bs-highlight-bg: var(--color-support);
+
+  @each $name, $value in $theme-colors-rgb {
+    --bs-#{$name}-rgb: #{$value};
+  }
+  @each $name, $value in $theme-colors-text {
+    --bs-#{$name}-text-emphasis: #{$value};
+  }
+  @each $name, $value in $theme-colors-bg-subtle {
+    --bs-#{$name}-bg-subtle: #{$value};
+  }
+  @each $name, $value in $theme-colors-border-subtle {
+    --bs-#{$name}-border-subtle: #{$value};
+  }
+  --bs-success-bg-subtle: var(--color-subtle);
+  --bs-success-border-subtle: var(--color-border);
+  --bs-success-text-emphasis: var(--color-primary);
+  --bs-warning-bg-subtle: #fff8e9;
+  --bs-warning-border-subtle: #eadbb9;
+  --bs-warning-text-emphasis: var(--color-warning);
+
+  @import 'bootstrap/scss/containers';
+  @import 'bootstrap/scss/grid';
+  @import 'bootstrap/scss/forms/labels';
+  @import 'bootstrap/scss/forms/form-control';
+  @import 'bootstrap/scss/forms/form-select';
+  @import 'bootstrap/scss/forms/input-group';
+  @import 'bootstrap/scss/buttons';
+  @import 'bootstrap/scss/card';
+  @import 'bootstrap/scss/alert';
+  @import 'bootstrap/scss/badge';
+  @import 'bootstrap/scss/spinners';
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 44px;
+  }
+  .btn-secondary {
+    @include button-outline-variant($primary, $primary, #edf4ed, $primary);
+    --bs-btn-bg: transparent;
+  }
+  .btn-ghost {
+    --bs-btn-color: var(--color-primary);
+    --bs-btn-hover-color: var(--color-primary-hover);
+    --bs-btn-hover-bg: var(--color-subtle);
+  }
+  .form-control[aria-invalid='true'],
+  .form-select[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+  .form-label {
+    display: block;
+  }
+  .form-select {
+    min-height: 46px;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 0.9rem;
+  }
+  .input-group > .input-group-text {
+    color: var(--color-muted);
+    background: var(--color-subtle);
+  }
+  @media (max-width: 480px) {
+    .form-select {
+      font-size: 16px;
+    }
+  }
+}

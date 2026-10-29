@@ -67,7 +67,15 @@ test('aliases HTML redirecionam antes do filesystem e privados recebem noindex H
     const match = new RegExp(`^${rule.src}$`).exec(alias);
     assert.equal(rule.headers.Location.replace('$1', match[1]), path);
   }
-  for (const path of ['/login', '/cadastro', '/conta']) {
+  for (const path of [
+    '/login',
+    '/cadastro',
+    '/conta',
+    '/conta/assinatura',
+    '/conta/creditos',
+    '/conta/arquivos',
+    '/conta/perfil',
+  ]) {
     assert.equal(
       routes.find((r) => r.dest && new RegExp(`^${r.src}$`).test(path)).dest,
       '/index.csr.html',

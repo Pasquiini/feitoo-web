@@ -22,6 +22,10 @@ export class AuthPage {
     const path = this.route.snapshot.queryParamMap.get('returnTo');
     return path === '/docx-para-pdf' ||
       path === '/conta' ||
+      path === '/conta/assinatura' ||
+      path === '/conta/creditos' ||
+      path === '/conta/arquivos' ||
+      path === '/conta/perfil' ||
       path === '/gerador-de-orcamentos' ||
       path === '/analisar-xml' ||
       path === '/organizar-xml' ||
@@ -33,6 +37,12 @@ export class AuthPage {
       : null;
   })();
   readonly busy = signal(false);
+  readonly sessionExpired = this.route.snapshot.queryParamMap.get('session') === 'expired';
+  readonly creditOrder =
+    this.returnTo === '/conta/creditos' &&
+    /^[0-9a-f-]{36}$/i.test(this.route.snapshot.queryParamMap.get('quotation_order') ?? '')
+      ? this.route.snapshot.queryParamMap.get('quotation_order')
+      : null;
   readonly action = signal<'email' | 'google' | null>(null);
   readonly passwordVisible = signal(false);
   readonly confirmationVisible = signal(false);
@@ -92,7 +102,11 @@ export class AuthPage {
       .subscribe({
         next: () => {
           this.form.reset();
-          void this.router.navigateByUrl(this.returnTo ?? '/');
+          if (this.creditOrder)
+            void this.router.navigate(['/conta/creditos'], {
+              queryParams: { quotation_order: this.creditOrder },
+            });
+          else void this.router.navigateByUrl(this.returnTo ?? '/');
         },
         error: (error: unknown) =>
           this.error.set(
@@ -110,6 +124,13 @@ export class AuthPage {
     this.busy.set(true);
     this.action.set('google');
     this.error.set('');
+    if (this.creditOrder) {
+      try {
+        sessionStorage.setItem('quotation-login-return', this.creditOrder);
+      } catch {
+        /* Auth remains available without local storage. */
+      }
+    }
     this.auth
       .startGoogle('login', this.returnTo ?? undefined)
       .pipe(

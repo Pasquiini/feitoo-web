@@ -123,6 +123,20 @@ describe('AuthPage', () => {
       harness.routeNativeElement?.querySelector('.auth-switch a')?.getAttribute('href'),
     ).toContain('returnTo=%2Fconta');
   });
+  it.each(['/conta/assinatura', '/conta/creditos', '/conta/arquivos', '/conta/perfil'])(
+    'preserves the safe account destination %s',
+    async (path) => {
+      const harness = await RouterTestingHarness.create(
+        '/login?returnTo=' + encodeURIComponent(path) + '&session=expired',
+      );
+      expect(harness.routeNativeElement?.textContent).toContain('Sua sessão expirou');
+      expect(harness.routeNativeElement?.textContent).toContain('Entre para acessar sua conta');
+      expect(harness.routeNativeElement?.querySelector('.auth-back')?.getAttribute('href')).toBe(
+        path,
+      );
+      http.expectNone(environment.csrfUrl);
+    },
+  );
 
   it('toggles password visibility without changing its value or submitting', async () => {
     const harness = await RouterTestingHarness.create();

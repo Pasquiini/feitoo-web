@@ -1,0 +1,209 @@
+<section class="history-section" aria-labelledby="history-title" [attr.aria-busy]="loading()">
+  <div class="history-heading d-flex flex-wrap align-items-center gap-3">
+    <div>
+      <h1 id="history-title" #historyTitle tabindex="-1">Meus arquivos</h1>
+      <p class="small text-secondary">
+        Os arquivos expiram automaticamente. O registro do processamento permanece.
+      </p>
+    </div>
+    <button
+      type="button"
+      class="btn btn-outline-secondary btn-sm"
+      [disabled]="loading() || !!action() || !!confirming()"
+      (click)="loadHistory()"
+    >
+      {{ loading() ? 'Carregando…' : 'Atualizar histórico' }}
+    </button>
+  </div>
+  @if (historyError()) {
+    <p class="feedback feedback-error" role="alert">{{ historyError() }}</p>
+  }
+  @if (historyMessage()) {
+    <p class="feedback feedback-success" role="status">{{ historyMessage() }}</p>
+  }
+  @if (loading()) {
+    <p class="text-secondary" role="status">Carregando seus processamentos…</p>
+  }
+  @if (!loading() && !historyError() && !history().length) {
+    <div class="empty-history">
+      <p>Você ainda não fez nenhum processamento.</p>
+      <a class="btn btn-primary" routerLink="/xml-para-excel">Converter XML para Excel</a>
+    </div>
+  }
+  <ul class="history-list">
+    @for (batch of history(); track batch.id) {
+      <li class="history-row" [attr.aria-labelledby]="'history-' + batch.id">
+        <div class="history-info">
+          <div class="history-row-heading">
+            <h3 class="item-title" [id]="'history-' + batch.id">{{ tools[batch.tool].name }}</h3>
+            <span
+              class="history-status"
+              [class.has-errors]="batch.failed_files_count > 0 && !batch.files_deleted"
+              >{{ status(batch) }}</span
+            >
+          </div>
+          <p class="small text-secondary">
+            {{ batch.created_at | date: "dd/MM/yyyy 'às' HH:mm" }}
+          </p>
+          <p class="history-counts small">
+            {{ batch.files_count }}
+            {{
+              batch.tool === 'quotation-generator'
+                ? 'orçamento'
+                : batch.tool === 'docx_to_pdf'
+                  ? 'documentos'
+                  : 'XMLs'
+            }}
+            · {{ batch.successful_files_count }} concluídos ·
+            @if (batch.failed_files_count > 0) {
+              {{ batch.failed_files_count }} com erro
+            }
+          </p>
+          @if (batch.total_value != null) {
+            <p class="small text-secondary">
+              {{ batch.tool === 'products-from-xml' ? 'Valor em produtos' : 'Total fiscal' }}:
+              {{ fiscalTotal(batch.total_value!) }}
+            </p>
+          }
+          @if (batch.products_summary; as summary) {
+            <p class="small text-secondary">
+              {{ summary.items_count }} itens · {{ summary.products_count }} produtos
+            </p>
+          }
+          @if (available(batch)) {
+            <p class="small text-secondary">
+              {{ batch.tool === 'docx_to_pdf' ? 'PDFs disponíveis' : 'Resultado disponível' }} até
+              {{ batch.expires_at | date: 'dd/MM/yyyy HH:mm' }}.
+            </p>
+          } @else if (batch.status === 'completed' && !expired(batch) && !batch.files_deleted) {
+            <p class="small text-secondary">Resultado indisponível.</p>
+          }
+        </div>
+        <div class="history-actions d-flex flex-wrap align-items-center gap-2">
+          @if (batch.tool === 'quotation-generator') {
+            <a
+              class="btn btn-outline-primary btn-sm"
+              routerLink="/gerador-de-orcamentos"
+              [queryParams]="{ generation: batch.id }"
+              fragment="generation-title"
+              >Consultar orçamento</a
+            >
+          }
+          @if (available(batch)) {
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="!!action() || loading() || !!confirming()"
+              [attr.aria-label]="
+                (batch.tool === 'quotation-generator'
+                  ? 'Baixar orçamento de '
+                  : batch.tool === 'docx_to_pdf'
+                    ? 'Baixar PDFs de '
+                    : 'Baixar resultado de ') + (batch.created_at | date: 'dd/MM/yyyy HH:mm')
+              "
+              (click)="download(batch)"
+            >
+              {{
+                action()?.id === batch.id && action()?.kind === 'download'
+                  ? 'Baixando…'
+                  : batch.tool === 'quotation-generator'
+                    ? 'Baixar orçamento em PDF'
+                    : batch.tool === 'docx_to_pdf'
+                      ? 'Baixar PDFs (.zip)'
+                      : batch.tool === 'xml-to-pdf'
+                        ? 'Baixar PDFs (.zip)'
+                        : batch.tool === 'xml-organizer'
+                          ? 'Baixar XMLs (.zip)'
+                          : 'Baixar Excel'
+              }}
+            </button>
+            @if (batch.tool === 'docx_to_pdf') {
+              <a
+                class="btn btn-outline-primary"
+                routerLink="/docx-para-pdf"
+                [queryParams]="{ processing: batch.id }"
+                >Ver PDFs</a
+              >
+            }
+          }
+          @if (batch.can_delete_files) {
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              [disabled]="!!action() || loading() || !!confirming()"
+              [attr.aria-label]="
+                'Excluir arquivos de ' + (batch.created_at | date: 'dd/MM/yyyy HH:mm')
+              "
+              (click)="requestDelete(batch, $event)"
+            >
+              Excluir arquivos
+            </button>
+          }
+          @if (expired(batch) || batch.files_deleted) {
+            <a class="small" [routerLink]="tools[batch.tool].path"
+              >Usar {{ tools[batch.tool].name }} novamente</a
+            >
+          }
+        </div>
+        @if (confirming()?.id === batch.id) {
+          <div
+            class="delete-confirmation feedback feedback-error"
+            role="group"
+            [attr.aria-labelledby]="'confirm-' + batch.id"
+          >
+            <h4 [id]="'confirm-' + batch.id">Excluir arquivos deste processamento?</h4>
+            <p class="small">
+              Os arquivos deste processamento serão excluídos. Esta ação não pode ser desfeita. O
+              registro permanece no histórico.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+              <button
+                #confirmButton
+                type="button"
+                class="btn btn-danger"
+                [disabled]="!!action()"
+                (click)="deleteFiles()"
+              >
+                {{ action()?.kind === 'delete' ? 'Excluindo…' : 'Confirmar exclusão' }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                [disabled]="!!action()"
+                (click)="cancelDelete()"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+  @if (total() > 10) {
+    <nav
+      class="history-pagination d-flex flex-wrap align-items-center gap-2"
+      aria-label="Páginas dos processamentos"
+    >
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        type="button"
+        [disabled]="page() <= 1 || loading() || !!action() || !!confirming()"
+        (click)="loadHistory(page() - 1)"
+      >
+        Anterior
+      </button>
+      <span class="small" role="status"
+        >Página {{ page() }} de {{ lastPage() }} · {{ total() }} processamentos</span
+      >
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        type="button"
+        [disabled]="page() >= lastPage() || loading() || !!action() || !!confirming()"
+        (click)="loadHistory(page() + 1)"
+      >
+        Próxima
+      </button>
+    </nav>
+  }
+</section>

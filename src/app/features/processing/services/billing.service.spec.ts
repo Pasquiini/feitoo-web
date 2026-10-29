@@ -35,4 +35,19 @@ describe('BillingService', () => {
     expect(() => api.redirect('https://checkout.stripe.com.evil.test/pay')).toThrow();
     expect(() => api.redirect('http://checkout.stripe.com/pay')).toThrow();
   });
+  it.each(['proCheckout', 'portal'] as const)(
+    'obtains CSRF before the subscription mutation %s',
+    (method) => {
+      api[method]().subscribe();
+      http.expectNone(
+        `${environment.apiUrl}/account/subscription/${method === 'portal' ? 'portal' : 'checkout'}`,
+      );
+      http.expectOne(environment.csrfUrl).flush(null);
+      const request = http.expectOne(
+        `${environment.apiUrl}/account/subscription/${method === 'portal' ? 'portal' : 'checkout'}`,
+      );
+      expect(request.request.body).toEqual({});
+      request.flush({ data: { url: 'https://checkout.stripe.com/test' } });
+    },
+  );
 });

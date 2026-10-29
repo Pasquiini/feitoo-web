@@ -1,0 +1,154 @@
+:host {
+  display: block;
+  color: var(--color-text);
+}
+h1 {
+  font-size: clamp(1.55rem, 3.5vw, 2rem);
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+  margin: 0 0 0.55rem;
+}
+h2 {
+  font-size: 1.12rem;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.85rem;
+}
+h3 {
+  font-size: 1rem;
+}
+p {
+  line-height: 1.55;
+}
+.area-heading {
+  margin-bottom: 1.6rem;
+}
+.area-heading > p {
+  color: var(--color-muted);
+  margin: 0;
+}
+.area-heading .greeting {
+  margin-bottom: 0.45rem;
+}
+.account-panel {
+  min-width: 0;
+  padding: 1.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+.eyebrow {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 0.9rem;
+}
+
+.balance-value {
+  font-size: 2.2rem;
+  font-weight: 650;
+  line-height: 1.25;
+  margin: 0.8rem 0;
+  letter-spacing: -0.04em;
+}
+.balance-value span {
+  display: block;
+  font-size: 0.87rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--color-muted);
+}
+.balance-value.large {
+  font-size: 3.4rem;
+  margin: 0.75rem 0 0.5rem;
+}
+.price {
+  font-size: 2.5rem;
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 1.2;
+  margin: 1rem 0 0.35rem;
+}
+
+.commercial-note {
+  margin: 1.1rem 0 0;
+  max-width: 38rem;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+.actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.text-action {
+  background: transparent;
+  border: 0;
+  padding: 0.4rem 0;
+  min-height: 44px;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+:where(a, button, summary, input):focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+}
+h1:focus {
+  outline: none;
+}
+.section-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+.section-line h2 {
+  margin: 0;
+}
+.section-line a {
+  font-size: 0.85rem;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.empty-state {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+.account-panel {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .account-panel {
+    padding: 1.2rem;
+  }
+  .area-heading {
+    margin-bottom: 1.25rem;
+  }
+  .balance-value.large {
+    font-size: 2.3rem;
+    margin: 0.5rem 0;
+  }
+  .balance-value.large span {
+    display: inline;
+    font-size: 0.85rem;
+    margin-left: 0.35rem;
+  }
+  .commercial-note {
+    font-size: 0.78rem;
+    margin-top: 0.85rem;
+  }
+}

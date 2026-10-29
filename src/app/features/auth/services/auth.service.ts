@@ -106,6 +106,10 @@ export class AuthService {
     returnTo?:
       | '/docx-para-pdf'
       | '/conta'
+      | '/conta/assinatura'
+      | '/conta/creditos'
+      | '/conta/arquivos'
+      | '/conta/perfil'
       | '/analisar-xml'
       | '/organizar-xml'
       | '/xml-para-excel'

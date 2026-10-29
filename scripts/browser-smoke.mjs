@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 
 // Shared CDP harness for browser checks; no production dependencies.
-export async function withBrowser(name, run) {
+export async function withBrowser(name, run, { blockExternal = false } = {}) {
   const browser = spawn(
     process.env.FEITOO_BROWSER_BINARY ??
       'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
@@ -51,8 +51,33 @@ export async function withBrowser(name, run) {
         message.error
           ? request.reject(new Error(message.error.message))
           : request.done(message.result);
+      } else if (blockExternal && message.method === 'Fetch.requestPaused') {
+        const local = ['localhost', '127.0.0.1', '[::1]'].includes(
+          new URL(message.params.request.url).hostname,
+        );
+        // Intercept documents as well as subresources. Network.setBlockedURLs alone may
+        // still allow a top-level external navigation on some browser versions.
+        void send(
+          local ? 'Fetch.continueRequest' : 'Fetch.fulfillRequest',
+          local
+            ? { requestId: message.params.requestId }
+            : {
+                requestId: message.params.requestId,
+                responseCode: 200,
+                responseHeaders: [{ name: 'Content-Type', value: 'text/html; charset=utf-8' }],
+                body: Buffer.from(
+                  '<!doctype html><title>Simulador local</title><p>Destino externo interceptado pelo laboratório local.</p>',
+                ).toString('base64'),
+              },
+          message.sessionId,
+        ).catch(() => {});
       } else if (message.method === 'Runtime.exceptionThrown')
-        errors.push(message.params.exceptionDetails.text);
+        errors.push(
+          message.params.exceptionDetails.text +
+            (message.params.exceptionDetails.exception?.description
+              ? ': ' + message.params.exceptionDetails.exception.description
+              : ''),
+        );
     };
     const send = (method, params = {}, sessionId) =>
       new Promise((done, reject) => {
@@ -71,6 +96,10 @@ export async function withBrowser(name, run) {
     await command('Runtime.enable');
     await command('Page.enable');
     await command('Network.enable');
+    if (blockExternal)
+      await command('Fetch.enable', {
+        patterns: [{ urlPattern: 'http*', requestStage: 'Request' }],
+      });
     await command('Network.setBlockedURLs', {
       urls: ['*googletagmanager.com*', '*google-analytics.com*'],
     });

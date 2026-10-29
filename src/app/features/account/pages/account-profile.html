@@ -1,0 +1,181 @@
+<header class="area-heading">
+  <h1 tabindex="-1">Perfil e segurança</h1>
+  <p>Seus dados e formas de acesso.</p>
+</header>
+@if (auth.user(); as user) {
+  <div class="account-top">
+    <section class="account-panel" aria-labelledby="profile-title">
+      <h2 class="section-title" id="profile-title">Seus dados</h2>
+      <form
+        [formGroup]="profileForm"
+        (ngSubmit)="saveProfile()"
+        [attr.aria-busy]="saving()"
+        novalidate
+      >
+        <fieldset [disabled]="saving()">
+          <label class="form-label" for="account-name">Nome</label>
+          <input
+            id="account-name"
+            class="form-control"
+            formControlName="name"
+            autocomplete="name"
+            maxlength="120"
+            required
+            aria-describedby="account-name-error"
+            [attr.aria-invalid]="!!nameError()"
+          />
+          <p id="account-name-error" class="field-error">{{ nameError() }}</p>
+          <label class="form-label" for="account-email">E-mail</label>
+          <input
+            id="account-email"
+            class="form-control readonly-field"
+            type="email"
+            [value]="user.email"
+            readonly
+            aria-describedby="email-hint"
+          />
+          <p id="email-hint" class="small text-secondary">
+            O e-mail não pode ser alterado nesta página.
+          </p>
+          <dl class="profile-details d-flex flex-wrap gap-3">
+            <div>
+              <dt class="small text-secondary">Formas de acesso</dt>
+              <dd>
+                {{ user.has_password ? 'E-mail e senha' : ''
+                }}{{
+                  user.has_password && user.google_linked
+                    ? ' e Google'
+                    : user.google_linked
+                      ? 'Google'
+                      : ''
+                }}
+              </dd>
+            </div>
+            <div>
+              <dt class="small text-secondary">Conta criada em</dt>
+              <dd>{{ user.created_at | date: 'dd/MM/yyyy' }}</dd>
+            </div>
+          </dl>
+          <button class="btn btn-primary" type="submit">
+            {{ saving() ? 'Salvando…' : 'Salvar nome' }}
+          </button>
+        </fieldset>
+      </form>
+      @if (profileMessage()) {
+        <p class="feedback feedback-success mt-3" role="status">{{ profileMessage() }}</p>
+      }
+      @if (profileError()) {
+        <p class="feedback feedback-error mt-3" role="alert">{{ profileError() }}</p>
+      }
+    </section>
+
+    <section class="account-panel" aria-labelledby="security-title">
+      <h2 class="section-title" id="security-title">Segurança e acesso</h2>
+      <div class="google-access">
+        <h3>Google</h3>
+        <p>{{ user.google_linked ? 'Conectado' : 'Não conectado' }}</p>
+        @if (!user.google_linked) {
+          <p class="small text-secondary">Vincule uma conta Google com o mesmo e-mail do Feitoo.</p>
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            [disabled]="linkingGoogle()"
+            (click)="linkGoogle()"
+          >
+            {{ linkingGoogle() ? 'Conectando com Google…' : 'Vincular Google' }}
+          </button>
+        }
+        @if (googleError()) {
+          <p class="feedback feedback-error mt-3" role="alert">{{ googleError() }}</p>
+        }
+      </div>
+      @if (user.has_password) {
+        <h3>Senha</h3>
+        <details class="password-disclosure">
+          <summary>Alterar senha</summary>
+          <p id="password-hint" class="small text-secondary">
+            Use de 12 a 72 caracteres, até 72 bytes.
+          </p>
+          <form
+            [formGroup]="passwordForm"
+            (ngSubmit)="changePassword()"
+            [attr.aria-busy]="changingPassword()"
+            novalidate
+          >
+            <fieldset [disabled]="changingPassword()">
+              <label class="form-label" for="account-current-password">Senha atual</label>
+              <input
+                id="account-current-password"
+                class="form-control"
+                formControlName="current_password"
+                type="password"
+                autocomplete="current-password"
+                maxlength="72"
+                required
+                aria-describedby="current-password-error"
+                [attr.aria-invalid]="!!passwordFieldError('current_password')"
+              />
+              <p id="current-password-error" class="field-error">
+                {{ passwordFieldError('current_password') }}
+              </p>
+              <label class="form-label" for="account-password">Nova senha</label>
+              <input
+                id="account-password"
+                class="form-control"
+                formControlName="password"
+                type="password"
+                autocomplete="new-password"
+                maxlength="72"
+                required
+                aria-describedby="new-password-error password-hint"
+                [attr.aria-invalid]="!!passwordFieldError('password')"
+              />
+              <p id="new-password-error" class="field-error">
+                {{ passwordFieldError('password') }}
+              </p>
+              <label class="form-label" for="account-confirmation">Confirmar nova senha</label>
+              <input
+                id="account-confirmation"
+                class="form-control"
+                formControlName="password_confirmation"
+                type="password"
+                autocomplete="new-password"
+                maxlength="72"
+                required
+                aria-describedby="confirmation-error"
+                [attr.aria-invalid]="!!passwordFieldError('password_confirmation')"
+              />
+              <p id="confirmation-error" class="field-error">
+                {{ passwordFieldError('password_confirmation') }}
+              </p>
+              <button class="btn btn-outline-primary" type="submit">
+                {{ changingPassword() ? 'Atualizando senha…' : 'Atualizar senha' }}
+              </button>
+            </fieldset>
+          </form>
+          @if (passwordMessage()) {
+            <p class="feedback feedback-success mt-3" role="status">{{ passwordMessage() }}</p>
+          }
+          @if (passwordError()) {
+            <p class="feedback feedback-error mt-3" role="alert">{{ passwordError() }}</p>
+          }
+        </details>
+      } @else {
+        <h3>Senha</h3>
+        <p class="small text-secondary">Você entra com Google.</p>
+      }
+    </section>
+  </div>
+}
+
+<section class="account-privacy mt-4" aria-labelledby="privacy-title">
+  <h2 class="section-title" id="privacy-title">Privacidade e segurança</h2>
+  <p class="small text-secondary">
+    Seus arquivos são privados e ficam disponíveis apenas durante o prazo informado. Você também
+    pode excluí-los ao terminar.
+  </p>
+  <nav aria-label="Privacidade da conta" class="d-flex flex-wrap gap-3">
+    <a routerLink="/seguranca">Segurança</a><a routerLink="/privacidade">Privacidade</a
+    ><a routerLink="/termos">Termos</a>
+  </nav>
+</section>

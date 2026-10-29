@@ -29,7 +29,7 @@
       "status": 308
     },
     {
-      "src": "/(?:conta|login|cadastro)/?",
+      "src": "/(?:conta(?:/(?:assinatura|creditos|arquivos|perfil))?|login|cadastro)/?",
       "headers": {
         "X-Robots-Tag": "noindex, follow"
       },
@@ -77,7 +77,7 @@
       "handle": "filesystem"
     },
     {
-      "src": "/(?:conta|login|cadastro)/?",
+      "src": "/(?:conta(?:/(?:assinatura|creditos|arquivos|perfil))?|login|cadastro)/?",
       "dest": "/index.csr.html"
     },
     {

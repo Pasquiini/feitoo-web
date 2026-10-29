@@ -68,6 +68,8 @@ export const publicPages = {
 export type PublicPath = keyof typeof publicPages;
 export function safePage(url: string): PublicPath | '/404' | '/login' | '/cadastro' | '/conta' {
   const path = url.split(/[?#]/)[0].replace(/\/$/, '') || '/';
+  if (['/conta/assinatura', '/conta/creditos', '/conta/arquivos', '/conta/perfil'].includes(path))
+    return '/conta';
   return path in publicPages || path === '/login' || path === '/cadastro' || path === '/conta'
     ? (path as PublicPath | '/login' | '/cadastro' | '/conta')
     : '/404';

@@ -51,7 +51,39 @@ export const routes: Routes = [
   {
     path: 'conta',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/account/pages/account-page').then((m) => m.AccountPage),
+    canActivateChild: [authGuard],
+    loadComponent: () =>
+      import('./features/account/pages/account-shell').then((m) => m.AccountShell),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./features/account/pages/account-page').then((m) => m.AccountPage),
+      },
+      {
+        path: 'assinatura',
+        loadComponent: () =>
+          import('./features/account/pages/account-subscription').then(
+            (m) => m.AccountSubscriptionPage,
+          ),
+      },
+      {
+        path: 'creditos',
+        loadComponent: () =>
+          import('./features/account/pages/account-credits').then((m) => m.AccountCreditsPage),
+      },
+      {
+        path: 'arquivos',
+        loadComponent: () =>
+          import('./features/account/pages/account-files').then((m) => m.AccountFilesPage),
+      },
+      {
+        path: 'perfil',
+        loadComponent: () =>
+          import('./features/account/pages/account-profile').then((m) => m.AccountProfilePage),
+      },
+    ],
   },
   {
     path: 'xml-para-excel',

@@ -36,9 +36,15 @@
       >feitoo<span aria-hidden="true">.</span></a
     >
     <h1 id="auth-title">{{ registering ? 'Crie sua conta' : 'Bom ter você aqui' }}</h1>
+    @if (sessionExpired) {
+      <p class="feedback feedback-info" role="status">
+        Sua sessão expirou. Entre novamente para consultar sua conta. Uma compra não será reenviada
+        automaticamente.
+      </p>
+    }
     <p class="auth-subtitle">
       {{
-        returnTo === '/conta'
+        returnTo?.startsWith('/conta')
           ? 'Entre para acessar sua conta.'
           : returnTo === '/gerador-de-orcamentos'
             ? 'Entre para continuar seu orçamento. O rascunho será preservado.'
@@ -187,14 +193,16 @@
     }
     <p class="auth-switch">
       {{ registering ? 'Já tem uma conta?' : 'Ainda não tem uma conta?' }}
-      <a [routerLink]="registering ? '/login' : '/cadastro'" [queryParams]="{ returnTo }">{{
-        registering ? 'Entrar' : 'Criar conta'
-      }}</a>
+      <a
+        [routerLink]="registering ? '/login' : '/cadastro'"
+        [queryParams]="{ returnTo, quotation_order: creditOrder }"
+        >{{ registering ? 'Entrar' : 'Criar conta' }}</a
+      >
     </p>
     <a class="auth-back" [routerLink]="returnTo ?? '/'"
       >←
       {{
-        returnTo === '/conta'
+        returnTo?.startsWith('/conta')
           ? 'Voltar para Minha conta'
           : returnTo === '/gerador-de-orcamentos'
             ? 'Voltar ao orçamento'

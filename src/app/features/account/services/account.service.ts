@@ -11,9 +11,9 @@ export class AccountService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
 
-  history(page = 1) {
+  history(page = 1, perPage = 10) {
     return this.http.get<HistoryResponse>(`${environment.apiUrl}/processings`, {
-      params: { page },
+      params: { page, ...(perPage === 3 ? { per_page: 3 } : {}) },
       timeout: 15000,
     });
   }

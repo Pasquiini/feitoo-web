@@ -52,7 +52,16 @@ test('HTTP permite a rota limpa e mantém noindex em conta, autenticação e con
       ),
     );
   }
-  for (const path of ['/conta', '/login', '/cadastro', '/404']) {
+  for (const path of [
+    '/conta',
+    '/conta/assinatura',
+    '/conta/creditos',
+    '/conta/arquivos',
+    '/conta/perfil',
+    '/login',
+    '/cadastro',
+    '/404',
+  ]) {
     assert.ok(headerRules(path).some((route) => route.headers['X-Robots-Tag'].includes('noindex')));
   }
   assert.equal(html('index.csr.html').querySelector('meta[name=robots]').content, 'noindex,follow');

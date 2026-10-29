@@ -1,0 +1,53 @@
+@use './account-area';
+.account-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.4rem;
+  align-items: start;
+}
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.field-error {
+  color: var(--color-danger);
+  font-size: 0.83rem;
+  margin: 0.35rem 0 0.9rem;
+}
+.field-error:empty {
+  margin: 0 0 1rem;
+}
+.readonly-field {
+  background: var(--color-subtle);
+}
+.profile-details {
+  margin: 1.2rem 0;
+  font-size: 0.85rem;
+}
+.profile-details dd {
+  margin: 0.2rem 0 0;
+}
+.google-access {
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 1.2rem;
+  padding-bottom: 1.2rem;
+}
+.password-disclosure summary {
+  padding: 0.5rem 0;
+  min-height: 44px;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.account-privacy {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+@media (max-width: 767px) {
+  .account-top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+}

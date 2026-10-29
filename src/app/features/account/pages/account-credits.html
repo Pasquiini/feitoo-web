@@ -1,0 +1,244 @@
+<header class="area-heading">
+  <h1 tabindex="-1">Créditos</h1>
+  <p>Saldo para gerar seus orçamentos em PDF.</p>
+</header>
+<div class="credits-grid">
+  <section class="balance-panel" aria-labelledby="balance-title">
+    <div class="eyebrow">SALDO DISPONÍVEL</div>
+    <h2 id="balance-title">Créditos de orçamentos</h2>
+    @if (balances.quota(); as q) {
+      <p class="balance-value large">{{ q.credits?.available ?? 0 }} <span>créditos pagos</span></p>
+      <p class="small text-secondary">Sem expiração comercial.</p>
+      <div class="quota-line">
+        <strong>{{ q.pro?.active ? 'Benefício Pro' : 'Franquia Free diária' }}</strong
+        ><span
+          >{{ q.pro?.active ? q.pro?.remaining : q.remaining }}
+          {{ q.pro?.active ? 'disponíveis no período' : 'disponível hoje' }}</span
+        >
+      </div>
+      @if (q.pro?.period_end && q.pro?.active) {
+        <p class="small text-secondary">
+          Período até {{ q.pro?.period_end | date: 'dd/MM/yyyy' }}.
+        </p>
+      }
+      @if ((q.credits?.reserved ?? 0) > 0 || (q.credits?.revoked ?? 0) > 0) {
+        <details class="context-details">
+          <summary>Detalhes do saldo</summary>
+          <p>
+            {{ q.credits?.reserved }} reservados em gerações · {{ q.credits?.revoked }} bloqueados
+            por reembolso ou disputa.
+          </p>
+        </details>
+      }
+    } @else if (!quotaError()) {
+      <p role="status">Consultando saldo…</p>
+    }
+    @if (quotaError()) {
+      <p role="alert">{{ quotaError() }}</p>
+    }
+    <button class="text-action" [disabled]="quotaLoading() || retryBlocked()" (click)="loadQuota()">
+      {{ quotaLoading() ? 'Atualizando…' : 'Atualizar saldo' }}
+    </button>
+  </section>
+  <section class="account-panel credit-offer" aria-labelledby="offer-title">
+    <div class="eyebrow">PAGAMENTO ÚNICO</div>
+    <h2 id="offer-title">5 créditos de orçamentos</h2>
+    <p class="price">R$ 9,90</p>
+    <p class="small text-secondary">Sem assinatura. Disponível para Free e Pro.</p>
+    <button
+      class="btn btn-primary"
+      [disabled]="busy() || retryBlocked() || !balances.quota()?.offer?.available"
+      (click)="buy()"
+    >
+      {{
+        busy()
+          ? 'Consultando…'
+          : current()?.status === 'pending'
+            ? 'Retomar pedido pendente'
+            : pendingAttempt()
+              ? 'Retomar tentativa de compra'
+              : 'Comprar 5 créditos'
+      }}
+    </button>
+    @if (balances.quota()?.offer && !balances.quota()?.offer?.available) {
+      <p class="small feedback feedback-info">Compra temporariamente indisponível.</p>
+    }
+    <p class="small commercial-note">
+      Cada crédito vale uma geração de PDF concluída. Saldo liberado após confirmação do pagamento.
+      O PDF fica disponível para download por 2 horas após a conclusão.
+    </p>
+    <p class="small commercial-note">
+      Reembolso parcial ou integral bloqueia os créditos restantes do pacote.
+    </p>
+  </section>
+</div>
+@if (message()) {
+  <p class="feedback feedback-info" role="status">{{ message() }}</p>
+}
+@if (error()) {
+  <p class="feedback feedback-error" role="alert">{{ error() }}</p>
+}
+@if (returnId()) {
+  <button
+    class="btn btn-outline-secondary"
+    [disabled]="busy() || retryBlocked()"
+    (click)="consult()"
+  >
+    Consultar pagamento
+  </button>
+}
+<details class="context-details commercial-details">
+  <summary>Uso, reembolso e segurança do saldo</summary>
+  <p>
+    O Pro tem prioridade enquanto houver franquia no período. O uso de crédito pago é uma escolha
+    explícita no gerador. A franquia Free é diária e não se soma ao benefício Pro.
+  </p>
+  <p>
+    Reembolso parcial ou integral bloqueia os créditos restantes do pacote. Disputas bloqueiam o
+    saldo durante a análise; uma disputa ganha restaura o saldo não utilizado quando não houver
+    reembolso. Gerações concluídas permanecem registradas.
+  </p>
+  <a routerLink="/termos">Consultar termos</a>
+</details>
+<section class="orders-section" aria-labelledby="orders-title">
+  <div class="section-line">
+    <h2 id="orders-title">Compras de créditos</h2>
+    <button
+      class="text-action"
+      [disabled]="ordersLoading() || retryBlocked()"
+      (click)="loadOrders()"
+    >
+      Atualizar pedidos
+    </button>
+  </div>
+  @if (ordersLoading()) {
+    <p role="status">Carregando compras…</p>
+  }
+  @if (ordersError()) {
+    <p role="alert">{{ ordersError() }}</p>
+  }
+  @if (ordersLoaded() && !ordersLoading() && !ordersError()) {
+    <ul class="order-list">
+      @for (order of orders(); track order.id) {
+        <li>
+          <div>
+            <strong
+              >{{ order.credits }} créditos · {{ money(order.amount, order.currency) }}</strong
+            >
+            <p class="small text-secondary">
+              {{ order.created_at | date: 'dd/MM/yyyy HH:mm' }} · {{ status(order.status) }}
+            </p>
+            @if (order.refunded_amount > 0) {
+              <p class="small">
+                Reembolsado: {{ money(order.refunded_amount, order.currency) }}. Saldo restante do
+                pacote bloqueado.
+              </p>
+            }
+            @if (order.status === 'disputed') {
+              <p class="small">Saldo restante bloqueado durante a análise.</p>
+            }
+          </div>
+          @if (order.actions?.refresh) {
+            <div class="actions">
+              <button
+                class="text-action"
+                [disabled]="busy() || retryBlocked()"
+                (click)="consult(order.id)"
+              >
+                Consultar pedido
+              </button>
+              @if (order.actions?.resume_checkout) {
+                <button
+                  class="text-action"
+                  [disabled]="busy() || retryBlocked()"
+                  (click)="consult(order.id, false, true)"
+                >
+                  Retomar pagamento
+                </button>
+              }
+            </div>
+          }
+        </li>
+      } @empty {
+        <li class="empty-state">Você ainda não comprou créditos de orçamentos.</li>
+      }
+    </ul>
+  }
+  @if (lastPage() > 1) {
+    <nav class="pagination" aria-label="Páginas de compras de créditos">
+      <button
+        class="btn btn-outline-secondary"
+        [disabled]="page() <= 1 || ordersLoading() || retryBlocked()"
+        (click)="loadOrders(page() - 1)"
+      >
+        Anterior</button
+      ><span>{{ page() }} de {{ lastPage() }}</span
+      ><button
+        class="btn btn-outline-secondary"
+        [disabled]="page() >= lastPage() || ordersLoading() || retryBlocked()"
+        (click)="loadOrders(page() + 1)"
+      >
+        Próxima
+      </button>
+    </nav>
+  }
+</section>
+<details
+  class="context-details xml-purchases"
+  (toggle)="$any($event.target).open && !xmlLoaded() && loadXml()"
+>
+  <summary>Compras avulsas de lotes XML</summary>
+  <p class="small text-secondary">
+    Cada compra pertence ao seu lote e não adiciona créditos de orçamentos.
+  </p>
+  @if (xmlLoading()) {
+    <p role="status">Carregando compras XML…</p>
+  }
+  @if (xmlError()) {
+    <p role="alert">{{ xmlError() }}</p>
+    <button class="text-action" (click)="loadXml()">Consultar compras XML novamente</button>
+  }
+  @if (xmlLoaded() && !xmlError()) {
+    <ul class="order-list">
+      @for (item of xmlPurchases(); track item.id) {
+        <li>
+          <div>
+            <strong
+              >{{ money(item.amount, item.currency) }} · até {{ item.files_limit }} XMLs</strong
+            >
+            <p class="small text-secondary">
+              {{ item.created_at | date: 'dd/MM/yyyy' }} · {{ status(item.status) }}
+            </p>
+          </div>
+          @if (item.can_resume_processing) {
+            <a
+              [routerLink]="xmlPath(item.tool)"
+              [queryParams]="{ processing: item.processing_id, payment: 'success' }"
+              >Retomar lote pago</a
+            >
+          }
+        </li>
+      } @empty {
+        <li>Você ainda não tem compras avulsas de XML.</li>
+      }
+    </ul>
+    @if (xmlLastPage() > 1) {
+      <nav class="pagination" aria-label="Páginas de compras XML">
+        <button
+          class="btn btn-outline-secondary"
+          [disabled]="xmlPage() <= 1 || xmlLoading()"
+          (click)="loadXml(xmlPage() - 1)"
+        >
+          Anterior</button
+        ><span>{{ xmlPage() }} de {{ xmlLastPage() }}</span
+        ><button
+          class="btn btn-outline-secondary"
+          [disabled]="xmlPage() >= xmlLastPage() || xmlLoading()"
+          (click)="loadXml(xmlPage() + 1)"
+        >
+          Próxima
+        </button>
+      </nav>
+    }
+  }
+</details>

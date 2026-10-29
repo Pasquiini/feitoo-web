@@ -60,10 +60,8 @@ import { CreditBalanceStore } from '../services/credit-balance.store';
         >
           Atualizar saldo
         </button>
-        <a routerLink="/conta" fragment="credits-title" (click)="close($event)">Meus créditos</a>
-        <a routerLink="/conta" fragment="buy-credits-title" (click)="close($event)"
-          >Comprar créditos</a
-        >
+        <a routerLink="/conta/creditos" (click)="close($event)">Meus créditos</a>
+        <a routerLink="/conta/creditos" (click)="close($event)">Comprar créditos</a>
       </div>
     </details>
   `,

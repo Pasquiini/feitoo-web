@@ -1,708 +1,106 @@
-<section class="account-page" aria-labelledby="account-title">
-  <header class="account-heading mb-4">
-    <h1 id="account-title">Minha conta</h1>
-    <p class="text-secondary">Acompanhe seus benefícios, compras e arquivos em um só lugar.</p>
-  </header>
-  <nav class="account-navigation" aria-label="Áreas da minha conta">
-    <a href="#account-overview">Visão geral</a>
-    <a href="#credits-title">Meus créditos</a>
-    <a href="#buy-credits-title">Comprar créditos</a>
-    <a href="#purchases-title">Movimentações e compras</a>
-    <a href="#plan-title">Assinatura Pro</a>
-    <a href="#history-title">Histórico</a>
-    <a href="#profile-title">Dados e segurança</a>
-  </nav>
-  <section id="account-overview" class="account-overview" aria-labelledby="overview-title">
-    <h2 id="overview-title" class="section-title">Visão geral</h2>
-    <p>Confira o uso de cada ferramenta e encontre seus resultados no histórico.</p>
-    <div class="d-flex flex-wrap gap-3">
-      <a class="btn btn-primary" routerLink="/gerador-de-orcamentos">Criar orçamento</a>
-      <a class="btn btn-outline-primary" routerLink="/" fragment="ferramentas"
-        >Escolher ferramenta</a
-      >
-      <a class="btn btn-outline-secondary" href="#history-title">Baixar resultados recentes</a>
-    </div>
+<header class="area-heading">
+  <p class="greeting">Olá, {{ auth.user()?.name?.split(' ')?.[0] }}.</p>
+  <h1 tabindex="-1">Tudo pronto para continuar.</h1>
+</header>
+<div class="overview-grid">
+  <section class="account-panel" aria-labelledby="overview-plan">
+    <div class="eyebrow">SEU PLANO</div>
+    @if (summary(); as billing) {
+      <div class="plan-line">
+        <h2 id="overview-plan">Feitoo {{ billing.subscription?.grants_pro ? 'Pro' : 'Free' }}</h2>
+        <span class="status-label">{{ planStatus() }}</span>
+      </div>
+      @if (benefits.usage(); as u) {
+        <p class="text-secondary">
+          {{ u.limits.remaining_today }} de {{ u.limits.daily }} XMLs disponíveis hoje
+        </p>
+      }
+      <a class="btn btn-primary" routerLink="/conta/assinatura">{{
+        billing.actions?.resume_checkout
+          ? 'Retomar assinatura'
+          : billing.actions?.checkout
+            ? 'Conhecer o Pro'
+            : 'Ver assinatura'
+      }}</a>
+    } @else if (!summaryError()) {
+      <p role="status">Consultando plano…</p>
+    }
+    @if (summaryError()) {
+      <p role="alert">{{ summaryError() }}</p>
+      <button class="text-action" (click)="loadSummary()">Consultar plano novamente</button>
+    }
   </section>
-  <div class="account-credit-areas">
-    <section class="account-panel" aria-labelledby="credits-title">
-      <h2 id="credits-title" class="section-title">Meus créditos</h2>
-      @if (balances.quota(); as quota) {
-        @if (quota.credits; as credits) {
-          <p>
-            <strong>{{ credits.available }} créditos pagos de orçamentos disponíveis</strong>
-          </p>
-          <p class="small">
-            {{ credits.reserved }} reservados · {{ credits.consumed }} utilizados ·
-            {{ credits.revoked }} revogados
-          </p>
-        }
-        @if (quota.pro?.active) {
-          <p>Pro: {{ quota.pro?.remaining }} orçamentos disponíveis no período.</p>
-        } @else {
-          <p>Free: {{ quota.remaining }} orçamento disponível hoje.</p>
-        }
-      }
-      <p>
-        Créditos pagos de orçamentos, franquias do plano e compras de lotes XML têm usos próprios.
+  <section class="account-panel" aria-labelledby="overview-credit">
+    <div class="eyebrow">ORÇAMENTOS</div>
+    <h2 id="overview-credit">Seus créditos</h2>
+    @if (benefits.balances.quota(); as q) {
+      <p class="balance-value">
+        {{ q.credits?.available ?? 0 }} <span>créditos pagos disponíveis</span>
       </p>
-      <a href="#quotation-credits-title">Consultar créditos e benefícios de orçamentos</a>
       <p class="small text-secondary">
-        O uso de XML para Excel aparece no seu plano. Cada ferramenta consulta sua própria franquia
-        antes de processar.
+        {{
+          q.pro?.active
+            ? q.pro?.remaining + ' gerações Pro neste período'
+            : q.remaining + ' geração Free disponível hoje'
+        }}
       </p>
-    </section>
-    <section class="account-panel" aria-labelledby="buy-credits-title">
-      <h2 id="buy-credits-title" class="section-title">Comprar créditos</h2>
-      @if (balances.quota()?.offer; as offer) {
-        <p>
-          <strong
-            >{{ offer.credits }} créditos de orçamentos · R$
-            {{ (offer.amount / 100).toFixed(2).replace('.', ',') }}</strong
-          >
-        </p>
-        @if (!offer.available) {
-          <p class="feedback feedback-info">
-            A compra deste pacote está temporariamente indisponível.
-          </p>
-        }
-      }
-      <p>
-        Para orçamentos, confira o pacote, o preço e a disponibilidade no editor. Os créditos pagos
-        são exclusivos para gerar orçamentos em PDF.
-      </p>
-      <a
-        class="btn btn-outline-primary"
-        routerLink="/gerador-de-orcamentos"
-        [queryParams]="{ etapa: 'revisar' }"
-        fragment="quotation-editor"
-        >Ver pacote de orçamentos</a
-      >
-      <p class="small text-secondary">
-        Para um lote XML maior, selecione os arquivos na ferramenta. A compra avulsa informa o preço
-        e vale para aquele lote.
-      </p>
-      <a routerLink="/xml-para-excel">Selecionar lote XML</a>
-      <p class="small text-secondary">
-        O saldo só é liberado após a confirmação do pagamento. Compras indisponíveis não podem ser
-        concluídas.
-      </p>
-    </section>
+    } @else if (!benefits.error()) {
+      <p role="status">Consultando saldo…</p>
+    }
+    <a class="btn btn-outline-primary" routerLink="/conta/creditos">Comprar créditos</a>
+  </section>
+</div>
+@if (benefits.error()) {
+  <p role="alert" class="feedback feedback-warning">{{ benefits.error() }}</p>
+  <button class="text-action" (click)="benefits.refresh(!!summary()?.subscription?.grants_pro)">
+    Atualizar benefícios
+  </button>
+}
+<section class="recent-section" aria-labelledby="recent-title">
+  <div class="section-line">
+    <h2 id="recent-title">Arquivos recentes</h2>
+    <a routerLink="/conta/arquivos">Ver todos os arquivos</a>
   </div>
-  <div class="account-commercial">
-    <section class="account-panel plan-panel" aria-labelledby="plan-title">
-      <h2 class="section-title" id="plan-title">Seu plano e assinatura Pro</h2>
-      @if (usage(); as current) {
-        <div class="plan-heading d-flex flex-wrap align-items-center gap-2 mb-3">
-          <h3>{{ current.plan === 'pro' ? 'Feitoo Pro' : 'Feitoo Free' }}</h3>
-          @if (subscription()?.subscription) {
-            <span
-              class="plan-status"
-              [class.plan-status-attention]="
-                paymentProblem() || subscription()?.subscription?.status === 'incomplete'
-              "
-              >{{ subscriptionStatus() }}</span
-            >
-          }
-        </div>
-        <ul class="plan-benefits">
-          <li>{{ current.limits.per_processing }} XMLs por processamento</li>
-          <li>{{ current.limits.daily }} XMLs por dia</li>
-          @if (current.plan === 'pro') {
-            <li>24h de retenção</li>
-          }
-        </ul>
-      } @else if (!usageError()) {
-        <p role="status">Consultando seu plano…</p>
-      }
-      @if (usageError()) {
-        <p class="feedback feedback-error" role="alert">{{ usageError() }}</p>
-        <button
-          type="button"
-          class="btn btn-outline-secondary"
-          [disabled]="usageLoading()"
-          (click)="loadUsage()"
-        >
-          Consultar uso novamente
-        </button>
-      }
-      @if (confirmingSubscription()) {
-        @if (subscriptionPollingActive()) {
-          <p role="status">
-            Confirmando sua assinatura… Isso normalmente leva apenas alguns segundos.
-          </p>
-          <button class="btn btn-outline-secondary" (click)="cancelSubscriptionConfirmation()">
-            Parar confirmação automática
-          </button>
-        }
-        <button
-          class="btn btn-outline-secondary"
-          [disabled]="
-            subscriptionPollingActive() || subscriptionLoading() || subscriptionRetryBlocked()
-          "
-          (click)="loadSubscription()"
-        >
-          {{ subscriptionPollingActive() ? 'Consultar confirmação' : 'Consultar novamente' }}
-        </button>
-      }
-      @if (subscriptionMessage()) {
-        <p role="status">{{ subscriptionMessage() }}</p>
-      }
-      @if (subscriptionError()) {
-        <p role="alert">{{ subscriptionError() }}</p>
-      }
-      @if (subscription(); as billing) {
-        @if (billing.subscription; as sub) {
-          @if (paymentProblem()) {
-            <p class="payment-notice feedback feedback-warning">
-              Há um problema com o pagamento da sua assinatura.
-            </p>
-          } @else if (sub.cancel_at_period_end && sub.grants_pro) {
-            <p class="subscription-notice">
-              Seu Pro ficará ativo até
-              {{ sub.current_period_end | date: 'dd/MM/yyyy' }}.<br />Depois disso, sua conta
-              voltará ao plano Free.
-            </p>
-          } @else if (sub.grants_pro && sub.current_period_end) {
-            <dl class="billing-date">
-              <dt class="small text-secondary">Próxima cobrança</dt>
-              <dd>{{ sub.current_period_end | date: 'dd/MM/yyyy' }}</dd>
-            </dl>
-          }
-          <button
-            type="button"
-            class="btn btn-outline-primary"
-            [disabled]="subscriptionBusy()"
-            (click)="openSubscription(true)"
-          >
-            {{
-              subscriptionBusy()
-                ? 'Abrindo…'
-                : paymentProblem()
-                  ? 'Atualizar pagamento'
-                  : 'Gerenciar assinatura'
-            }}
-          </button>
-        }
-        @if (canUpgrade()) {
-          <div class="upgrade-offer d-flex flex-wrap align-items-center gap-3">
-            <div>
-              <strong>Mais espaço para sua rotina</strong>
-              <p>{{ proPrice() }}/mês</p>
-            </div>
-            <button
-              type="button"
-              class="btn btn-primary"
-              [disabled]="subscriptionBusy()"
-              (click)="openSubscription()"
-            >
-              {{ subscriptionBusy() ? 'Abrindo…' : 'Assinar Feitoo Pro' }}
-            </button>
-            <p class="small text-secondary">
-              {{ billing.offer.per_processing }} XMLs por processamento ·
-              {{ billing.offer.daily }} XMLs por dia · Retenção de 24 horas
-            </p>
-          </div>
-        }
-      } @else if (subscriptionLoading()) {
-        <p role="status" class="small text-secondary">Consultando assinatura…</p>
-      }
-      @if (usage(); as current) {
-        <section class="usage-section" aria-labelledby="usage-title">
-          <h3 id="usage-title">Uso hoje · XML para Excel</h3>
-          <div class="usage-numbers d-flex flex-wrap gap-2">
-            <strong>{{ current.limits.used_today }} / {{ current.limits.daily }} XMLs</strong
-            ><span>{{ current.limits.remaining_today }} restantes</span>
-          </div>
-          <progress
-            [value]="current.limits.used_today"
-            [max]="current.limits.daily"
-            [class.usage-warning]="usagePercent() >= 80"
-            [class.usage-full]="usagePercent() >= 100"
-            aria-labelledby="usage-title"
-            [attr.aria-valuetext]="
-              current.limits.used_today + ' de ' + current.limits.daily + ' XMLs usados hoje'
-            "
-          ></progress>
-          <p class="small usage-state">{{ usageState() }}</p>
-          <p class="small text-secondary">Renova à meia-noite, no horário de São Paulo.</p>
-        </section>
-      }
-    </section>
-    <section
-      class="account-panel purchases-panel"
-      aria-labelledby="purchases-title"
-      [attr.aria-busy]="purchasesLoading()"
-    >
-      <h2 class="section-title" id="purchases-title">Movimentações e compras</h2>
-      <p class="small text-secondary">
-        Compras avulsas de XML, vinculadas ao lote.
-        <a href="#quotation-credits-title">Ver compras e consumo de orçamentos</a>.
-      </p>
-      @if (billingError()) {
-        <p role="alert">{{ billingError() }}</p>
-        <button
-          class="btn btn-outline-secondary"
-          type="button"
-          (click)="loadPurchases(purchasePage())"
-        >
-          Consultar novamente
-        </button>
-      }
-      @if (purchasesLoading()) {
-        <p role="status">Carregando compras…</p>
-      }
-      @for (item of purchases(); track item.id) {
-        <article class="purchase-row small">
-          <div class="purchase-heading d-flex flex-wrap gap-2">
-            <h3 class="item-title mb-1">
-              {{
-                tools[
-                  item.tool === 'xml-to-pdf'
-                    ? 'xml-to-pdf'
-                    : item.tool === 'products-from-xml'
-                      ? 'products-from-xml'
-                      : 'xml-to-excel'
-                ].name
-              }}
-            </h3>
-            <strong>{{ purchasePrice(item) }}</strong>
-          </div>
-          <p class="text-secondary">{{ item.created_at | date: 'dd/MM/yyyy HH:mm' }}</p>
-          <p>Pacote de até {{ item.files_limit }} XMLs · {{ item.files_count }} XMLs enviados</p>
-          <p class="purchase-status text-secondary">{{ purchaseStatus(item) }}</p>
-          @if (item.can_resume_processing) {
-            <a
-              [routerLink]="
-                tools[
-                  item.tool === 'xml-to-pdf'
-                    ? 'xml-to-pdf'
-                    : item.tool === 'products-from-xml'
-                      ? 'products-from-xml'
-                      : 'xml-to-excel'
-                ].path
-              "
-              [queryParams]="{ processing: item.processing_id, payment: 'success' }"
-              >Retomar processamento pago</a
-            >
-          }
-        </article>
-      } @empty {
-        @if (!purchasesLoading() && !billingError()) {
-          <p class="text-secondary">Você ainda não fez compras avulsas.</p>
-        }
-      }
-      @if (purchaseLastPage() > 1) {
-        <nav aria-label="Páginas de compras" class="d-flex gap-2">
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            [disabled]="purchasesLoading() || purchasePage() === 1"
-            (click)="loadPurchases(purchasePage() - 1)"
-          >
-            Anterior
-          </button>
-          <span>{{ purchasePage() }} de {{ purchaseLastPage() }}</span>
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            [disabled]="purchasesLoading() || purchasePage() === purchaseLastPage()"
-            (click)="loadPurchases(purchasePage() + 1)"
-          >
-            Próxima
-          </button>
-        </nav>
-      }
-    </section>
-  </div>
-
-  @if (auth.user(); as user) {
-    <div class="account-top">
-      <section class="account-panel" aria-labelledby="profile-title">
-        <h2 class="section-title" id="profile-title">Seus dados</h2>
-        <form
-          [formGroup]="profileForm"
-          (ngSubmit)="saveProfile()"
-          [attr.aria-busy]="saving()"
-          novalidate
-        >
-          <fieldset [disabled]="saving()">
-            <label class="form-label" for="account-name">Nome</label>
-            <input
-              id="account-name"
-              class="form-control"
-              formControlName="name"
-              autocomplete="name"
-              maxlength="120"
-              required
-              aria-describedby="account-name-error"
-              [attr.aria-invalid]="!!nameError()"
-            />
-            <p id="account-name-error" class="field-error">{{ nameError() }}</p>
-            <label class="form-label" for="account-email">E-mail</label>
-            <input
-              id="account-email"
-              class="form-control readonly-field"
-              type="email"
-              [value]="user.email"
-              readonly
-              aria-describedby="email-hint"
-            />
-            <p id="email-hint" class="small text-secondary">
-              O e-mail não pode ser alterado nesta página.
-            </p>
-            <dl class="profile-details d-flex flex-wrap gap-3">
-              <div>
-                <dt class="small text-secondary">Formas de acesso</dt>
-                <dd>
-                  {{ user.has_password ? 'E-mail e senha' : ''
-                  }}{{
-                    user.has_password && user.google_linked
-                      ? ' e Google'
-                      : user.google_linked
-                        ? 'Google'
-                        : ''
-                  }}
-                </dd>
-              </div>
-              <div>
-                <dt class="small text-secondary">Conta criada em</dt>
-                <dd>{{ user.created_at | date: 'dd/MM/yyyy' }}</dd>
-              </div>
-            </dl>
-            <button class="btn btn-primary" type="submit">
-              {{ saving() ? 'Salvando…' : 'Salvar nome' }}
-            </button>
-          </fieldset>
-        </form>
-        @if (profileMessage()) {
-          <p class="feedback feedback-success mt-3" role="status">{{ profileMessage() }}</p>
-        }
-        @if (profileError()) {
-          <p class="feedback feedback-error mt-3" role="alert">{{ profileError() }}</p>
-        }
-      </section>
-
-      <section class="account-panel" aria-labelledby="security-title">
-        <h2 class="section-title" id="security-title">Segurança e acesso</h2>
-        <div class="google-access">
-          <h3>Google</h3>
-          <p>{{ user.google_linked ? 'Conectado' : 'Não conectado' }}</p>
-          @if (!user.google_linked) {
-            <p class="small text-secondary">
-              Vincule uma conta Google com o mesmo e-mail do Feitoo.
-            </p>
-            <button
-              class="btn btn-outline-secondary"
-              type="button"
-              [disabled]="linkingGoogle()"
-              (click)="linkGoogle()"
-            >
-              {{ linkingGoogle() ? 'Conectando com Google…' : 'Vincular Google' }}
-            </button>
-          }
-          @if (googleError()) {
-            <p class="feedback feedback-error mt-3" role="alert">{{ googleError() }}</p>
-          }
-        </div>
-        @if (user.has_password) {
-          <h3>Senha</h3>
-          <details class="password-disclosure">
-            <summary>Alterar senha</summary>
-            <p id="password-hint" class="small text-secondary">
-              Use de 12 a 72 caracteres, até 72 bytes.
-            </p>
-            <form
-              [formGroup]="passwordForm"
-              (ngSubmit)="changePassword()"
-              [attr.aria-busy]="changingPassword()"
-              novalidate
-            >
-              <fieldset [disabled]="changingPassword()">
-                <label class="form-label" for="account-current-password">Senha atual</label>
-                <input
-                  id="account-current-password"
-                  class="form-control"
-                  formControlName="current_password"
-                  type="password"
-                  autocomplete="current-password"
-                  maxlength="72"
-                  required
-                  aria-describedby="current-password-error"
-                  [attr.aria-invalid]="!!passwordFieldError('current_password')"
-                />
-                <p id="current-password-error" class="field-error">
-                  {{ passwordFieldError('current_password') }}
-                </p>
-                <label class="form-label" for="account-password">Nova senha</label>
-                <input
-                  id="account-password"
-                  class="form-control"
-                  formControlName="password"
-                  type="password"
-                  autocomplete="new-password"
-                  maxlength="72"
-                  required
-                  aria-describedby="new-password-error password-hint"
-                  [attr.aria-invalid]="!!passwordFieldError('password')"
-                />
-                <p id="new-password-error" class="field-error">
-                  {{ passwordFieldError('password') }}
-                </p>
-                <label class="form-label" for="account-confirmation">Confirmar nova senha</label>
-                <input
-                  id="account-confirmation"
-                  class="form-control"
-                  formControlName="password_confirmation"
-                  type="password"
-                  autocomplete="new-password"
-                  maxlength="72"
-                  required
-                  aria-describedby="confirmation-error"
-                  [attr.aria-invalid]="!!passwordFieldError('password_confirmation')"
-                />
-                <p id="confirmation-error" class="field-error">
-                  {{ passwordFieldError('password_confirmation') }}
-                </p>
-                <button class="btn btn-outline-primary" type="submit">
-                  {{ changingPassword() ? 'Atualizando senha…' : 'Atualizar senha' }}
-                </button>
-              </fieldset>
-            </form>
-            @if (passwordMessage()) {
-              <p class="feedback feedback-success mt-3" role="status">{{ passwordMessage() }}</p>
-            }
-            @if (passwordError()) {
-              <p class="feedback feedback-error mt-3" role="alert">{{ passwordError() }}</p>
-            }
-          </details>
-        } @else {
-          <h3>Senha</h3>
-          <p class="small text-secondary">Você entra com Google.</p>
-        }
-      </section>
-    </div>
+  @if (historyLoading()) {
+    <p role="status">Carregando arquivos recentes…</p>
   }
-
-  <section class="history-section" aria-labelledby="history-title" [attr.aria-busy]="loading()">
-    <div class="history-heading d-flex flex-wrap align-items-center gap-3">
-      <div>
-        <h2 id="history-title" #historyTitle tabindex="-1">Processamentos recentes</h2>
-        <p class="small text-secondary">
-          Os arquivos expiram automaticamente. O registro do processamento permanece.
-        </p>
-      </div>
-      <button
-        type="button"
-        class="btn btn-outline-secondary btn-sm"
-        [disabled]="loading() || !!action() || !!confirming()"
-        (click)="loadHistory()"
-      >
-        {{ loading() ? 'Carregando…' : 'Atualizar histórico' }}
-      </button>
-    </div>
-    @if (historyError()) {
-      <p class="feedback feedback-error" role="alert">{{ historyError() }}</p>
-    }
-    @if (historyMessage()) {
-      <p class="feedback feedback-success" role="status">{{ historyMessage() }}</p>
-    }
-    @if (loading()) {
-      <p class="text-secondary" role="status">Carregando seus processamentos…</p>
-    }
-    @if (!loading() && !historyError() && !history().length) {
-      <div class="empty-history">
-        <p>Você ainda não fez nenhum processamento.</p>
-        <a class="btn btn-primary" routerLink="/xml-para-excel">Converter XML para Excel</a>
-      </div>
-    }
-    <ul class="history-list">
-      @for (batch of history(); track batch.id) {
-        <li class="history-row" [attr.aria-labelledby]="'history-' + batch.id">
-          <div class="history-info">
-            <div class="history-row-heading">
-              <h3 class="item-title" [id]="'history-' + batch.id">{{ tools[batch.tool].name }}</h3>
-              <span
-                class="history-status"
-                [class.has-errors]="batch.failed_files_count > 0 && !batch.files_deleted"
-                >{{ status(batch) }}</span
-              >
-            </div>
+  @if (historyError()) {
+    <p role="alert">{{ historyError() }}</p>
+    <button class="text-action" (click)="loadRecent()">Consultar arquivos novamente</button>
+  }
+  @if (!historyLoading() && !historyError()) {
+    <ul class="recent-list">
+      @for (file of history(); track file.id) {
+        <li>
+          <div>
+            <strong>{{ tools[file.tool].name }}</strong>
             <p class="small text-secondary">
-              {{ batch.created_at | date: "dd/MM/yyyy 'às' HH:mm" }}
-            </p>
-            <p class="history-counts small">
-              {{ batch.files_count }}
+              {{ file.created_at | date: 'dd/MM/yyyy HH:mm' }} ·
               {{
-                batch.tool === 'quotation-generator'
-                  ? 'orçamento'
-                  : batch.tool === 'docx_to_pdf'
-                    ? 'documentos'
-                    : 'XMLs'
+                file.files_deleted
+                  ? 'Arquivos excluídos'
+                  : file.status === 'completed'
+                    ? 'Concluído'
+                    : file.status === 'expired'
+                      ? 'Expirado'
+                      : file.status === 'failed'
+                        ? 'Falhou'
+                        : 'Em andamento'
               }}
-              · {{ batch.successful_files_count }} concluídos ·
-              @if (batch.failed_files_count > 0) {
-                {{ batch.failed_files_count }} com erro
-              }
             </p>
-            @if (batch.total_value != null) {
-              <p class="small text-secondary">
-                {{ batch.tool === 'products-from-xml' ? 'Valor em produtos' : 'Total fiscal' }}:
-                {{ fiscalTotal(batch.total_value!) }}
-              </p>
-            }
-            @if (batch.products_summary; as summary) {
-              <p class="small text-secondary">
-                {{ summary.items_count }} itens · {{ summary.products_count }} produtos
-              </p>
-            }
-            @if (available(batch)) {
-              <p class="small text-secondary">
-                {{ batch.tool === 'docx_to_pdf' ? 'PDFs disponíveis' : 'Resultado disponível' }} até
-                {{ batch.expires_at | date: 'dd/MM/yyyy HH:mm' }}.
-              </p>
-            } @else if (batch.status === 'completed' && !expired(batch) && !batch.files_deleted) {
-              <p class="small text-secondary">Resultado indisponível.</p>
-            }
           </div>
-          <div class="history-actions d-flex flex-wrap align-items-center gap-2">
-            @if (batch.tool === 'quotation-generator') {
-              <a
-                class="btn btn-outline-primary btn-sm"
-                routerLink="/gerador-de-orcamentos"
-                [queryParams]="{ generation: batch.id }"
-                fragment="generation-title"
-                >Consultar orçamento</a
-              >
-            }
-            @if (available(batch)) {
-              <button
-                type="button"
-                class="btn btn-primary"
-                [disabled]="!!action() || loading() || !!confirming()"
-                [attr.aria-label]="
-                  (batch.tool === 'quotation-generator'
-                    ? 'Baixar orçamento de '
-                    : batch.tool === 'docx_to_pdf'
-                      ? 'Baixar PDFs de '
-                      : 'Baixar Excel de ') + (batch.created_at | date: 'dd/MM/yyyy HH:mm')
-                "
-                (click)="download(batch)"
-              >
-                {{
-                  action()?.id === batch.id && action()?.kind === 'download'
-                    ? 'Baixando…'
-                    : batch.tool === 'quotation-generator'
-                      ? 'Baixar orçamento em PDF'
-                      : batch.tool === 'docx_to_pdf'
-                        ? 'Baixar PDFs (.zip)'
-                        : 'Baixar Excel'
-                }}
-              </button>
-              @if (batch.tool === 'docx_to_pdf') {
-                <a
-                  class="btn btn-outline-primary"
-                  routerLink="/docx-para-pdf"
-                  [queryParams]="{ processing: batch.id }"
-                  >Ver PDFs</a
-                >
-              }
-            }
-            @if (batch.can_delete_files) {
-              <button
-                type="button"
-                class="btn btn-outline-secondary"
-                [disabled]="!!action() || loading() || !!confirming()"
-                [attr.aria-label]="
-                  'Excluir arquivos de ' + (batch.created_at | date: 'dd/MM/yyyy HH:mm')
-                "
-                (click)="requestDelete(batch, $event)"
-              >
-                Excluir arquivos
-              </button>
-            }
-            @if (expired(batch) || batch.files_deleted) {
-              <a class="small" [routerLink]="tools[batch.tool].path"
-                >Usar {{ tools[batch.tool].name }} novamente</a
-              >
-            }
-          </div>
-          @if (confirming()?.id === batch.id) {
-            <div
-              class="delete-confirmation feedback feedback-error"
-              role="group"
-              [attr.aria-labelledby]="'confirm-' + batch.id"
-            >
-              <h4 [id]="'confirm-' + batch.id">Excluir arquivos deste processamento?</h4>
-              <p class="small">
-                Os arquivos deste processamento serão excluídos. Esta ação não pode ser desfeita. O
-                registro permanece no histórico.
-              </p>
-              <div class="d-flex flex-wrap gap-2">
-                <button
-                  #confirmButton
-                  type="button"
-                  class="btn btn-danger"
-                  [disabled]="!!action()"
-                  (click)="deleteFiles()"
-                >
-                  {{ action()?.kind === 'delete' ? 'Excluindo…' : 'Confirmar exclusão' }}
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary"
-                  [disabled]="!!action()"
-                  (click)="cancelDelete()"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          }
+          <a
+            routerLink="/conta/arquivos"
+            [attr.aria-label]="'Ver arquivo de ' + (file.created_at | date: 'dd/MM/yyyy HH:mm')"
+            >Abrir</a
+          >
+        </li>
+      } @empty {
+        <li class="empty-state">
+          <p>Seus próximos resultados aparecerão aqui.</p>
+          <a routerLink="/" fragment="ferramentas">Escolher ferramenta</a>
         </li>
       }
     </ul>
-    @if (total() > 10) {
-      <nav
-        class="history-pagination d-flex flex-wrap align-items-center gap-2"
-        aria-label="Páginas dos processamentos"
-      >
-        <button
-          class="btn btn-outline-secondary btn-sm"
-          type="button"
-          [disabled]="page() <= 1 || loading() || !!action() || !!confirming()"
-          (click)="loadHistory(page() - 1)"
-        >
-          Anterior
-        </button>
-        <span class="small" role="status"
-          >Página {{ page() }} de {{ lastPage() }} · {{ total() }} processamentos</span
-        >
-        <button
-          class="btn btn-outline-secondary btn-sm"
-          type="button"
-          [disabled]="page() >= lastPage() || loading() || !!action() || !!confirming()"
-          (click)="loadHistory(page() + 1)"
-        >
-          Próxima
-        </button>
-      </nav>
-    }
-  </section>
-
-  <section class="account-card mt-4">
-    <h2 id="quotation-credits-title" class="section-title">Créditos e compras de orçamentos</h2>
-    <app-quotation-commerce />
-  </section>
-
-  <section class="account-privacy mt-4" aria-labelledby="privacy-title">
-    <h2 class="section-title" id="privacy-title">Privacidade e segurança</h2>
-    <p class="small text-secondary">
-      Seus arquivos são privados e ficam disponíveis apenas durante o prazo informado. Você também
-      pode excluí-los ao terminar.
-    </p>
-    <nav aria-label="Privacidade da conta" class="d-flex flex-wrap gap-3">
-      <a routerLink="/seguranca">Segurança</a><a routerLink="/privacidade">Privacidade</a
-      ><a routerLink="/termos">Termos</a>
-    </nav>
-  </section>
+  }
 </section>

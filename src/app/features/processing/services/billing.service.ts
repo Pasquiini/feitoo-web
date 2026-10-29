@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { ProcessingTool } from '../models/processing';
+import { switchMap } from 'rxjs';
 
 export interface Usage {
   plan: 'free' | 'pro';
@@ -77,18 +78,30 @@ export class BillingService {
     });
   }
   proCheckout() {
-    return this.http.post<{ data: { url: string } }>(
-      `${this.base}/account/subscription/checkout`,
-      {},
-      { timeout: 60000 },
-    );
+    return this.http
+      .get(environment.csrfUrl, { timeout: 15000 })
+      .pipe(
+        switchMap(() =>
+          this.http.post<{ data: { url: string } }>(
+            `${this.base}/account/subscription/checkout`,
+            {},
+            { timeout: 60000 },
+          ),
+        ),
+      );
   }
   portal() {
-    return this.http.post<{ data: { url: string } }>(
-      `${this.base}/account/subscription/portal`,
-      {},
-      { timeout: 30000 },
-    );
+    return this.http
+      .get(environment.csrfUrl, { timeout: 15000 })
+      .pipe(
+        switchMap(() =>
+          this.http.post<{ data: { url: string } }>(
+            `${this.base}/account/subscription/portal`,
+            {},
+            { timeout: 30000 },
+          ),
+        ),
+      );
   }
   portalRedirect(url: string): void {
     const target = new URL(url);
@@ -105,6 +118,8 @@ export class BillingService {
 }
 
 export interface SubscriptionSummary {
+  state?: string;
+  actions?: { checkout: boolean; resume_checkout: boolean; portal: boolean; refresh: boolean };
   offer: {
     amount: number;
     currency: string;
@@ -113,6 +128,8 @@ export interface SubscriptionSummary {
     available: boolean;
   };
   subscription: {
+    amount?: number | null;
+    currency?: string | null;
     status: string;
     current_period_end: string | null;
     cancel_at_period_end: boolean;

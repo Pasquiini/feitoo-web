@@ -68,9 +68,12 @@ export interface QuotationOrder {
   created_at: string;
   paid_at: string | null;
   refunded_amount: number;
+  expires_at?: string;
+  actions?: { refresh: boolean; resume_checkout: boolean };
 }
 @Injectable({ providedIn: 'root' })
 export class QuotationGenerationApi {
+  private entitlementSequence = 0;
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly balances = inject(CreditBalanceStore);
@@ -86,6 +89,7 @@ export class QuotationGenerationApi {
     return this.headers(owner);
   }
   async entitlements(): Promise<QuotationEntitlements> {
+    const sequence = ++this.entitlementSequence;
     const owner = this.auth.user()?.id;
     const value = (
       await firstValueFrom(
@@ -95,7 +99,7 @@ export class QuotationGenerationApi {
         }),
       )
     ).data;
-    if (owner) this.balances.publish(owner, value);
+    if (owner && sequence === this.entitlementSequence) this.balances.publish(owner, value);
     return value;
   }
   async generate(context: {
@@ -115,12 +119,15 @@ export class QuotationGenerationApi {
       )
     ).data;
   }
-  async checkout(key: string): Promise<QuotationOrder> {
+  async checkout(
+    key: string,
+    destination: 'editor' | 'account' = 'editor',
+  ): Promise<QuotationOrder> {
     return (
       await firstValueFrom(
         this.http.post<{ data: QuotationOrder }>(
           `${this.base}/quotations/credit-orders`,
-          {},
+          destination === 'account' ? { return_destination: 'account' } : {},
           {
             headers: { ...(await this.csrf()), 'Idempotency-Key': key },
             timeout: 20000,

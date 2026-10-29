@@ -1,0 +1,135 @@
+@use './account-area';
+.orders-section {
+  margin-top: 2.2rem;
+}
+.order-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.order-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.order-list p {
+  margin: 0.35rem 0 0;
+}
+.order-list strong {
+  font-size: 0.94rem;
+  font-weight: 600;
+}
+.credits-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 2rem;
+}
+.balance-panel {
+  padding: 1.5rem 0;
+}
+.credit-offer {
+  background: #f7faf8;
+}
+.credit-offer .btn {
+  margin-top: 0.4rem;
+}
+.quota-line {
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+  margin-top: 1rem;
+  font-size: 0.88rem;
+}
+.quota-line strong,
+.quota-line span {
+  display: block;
+}
+.quota-line span {
+  margin-top: 0.35rem;
+  color: var(--color-muted);
+}
+.context-details {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+.context-details summary {
+  min-height: 44px;
+  padding-block: 0.65rem;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: 550;
+}
+.commercial-details {
+  border-block: 1px solid var(--color-border);
+  padding-bottom: 0.25rem;
+  margin-top: 1.5rem;
+}
+.xml-purchases {
+  border-top: 1px solid var(--color-border);
+  margin-top: 2rem;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.3rem;
+  font-size: 0.85rem;
+}
+.order-list li > div {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .credits-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+  .credits-grid {
+    gap: 0.5rem;
+  }
+  .balance-panel {
+    padding: 0.15rem 0 0.9rem;
+  }
+  .balance-panel .eyebrow {
+    margin-bottom: 0.5rem;
+  }
+  .balance-panel h2 {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+  }
+  .balance-panel > .small {
+    margin-bottom: 0.4rem;
+  }
+  .quota-line {
+    margin-top: 0.5rem;
+    padding-top: 0.6rem;
+  }
+  .quota-line strong,
+  .quota-line span {
+    display: inline;
+  }
+  .quota-line span {
+    margin-left: 0.5rem;
+  }
+  .credit-offer .eyebrow {
+    margin-bottom: 0.6rem;
+  }
+  .credit-offer .price {
+    font-size: 2rem;
+    margin: 0.65rem 0 0.25rem;
+  }
+  .credit-offer .btn {
+    width: 100%;
+  }
+  .order-list li {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .orders-section {
+    margin-top: 1.6rem;
+  }
+}

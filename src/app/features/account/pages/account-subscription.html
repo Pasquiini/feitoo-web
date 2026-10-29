@@ -1,0 +1,167 @@
+<header class="area-heading">
+  <h1 tabindex="-1">Assinatura</h1>
+  <p>Seu plano, seus benefícios e sua cobrança.</p>
+</header>
+@if (subscriptionLoading() && !subscription()) {
+  <p class="loading-state" role="status">Consultando assinatura…</p>
+}
+@if (subscriptionError()) {
+  <div class="feedback feedback-error" role="alert">{{ subscriptionError() }}</div>
+  <button
+    class="btn btn-outline-secondary"
+    [disabled]="subscriptionLoading() || subscriptionRetryBlocked()"
+    (click)="loadSubscription()"
+  >
+    Consultar assinatura novamente
+  </button>
+}
+@if (subscription(); as billing) {
+  <section class="account-panel subscription-summary" aria-labelledby="plan-title">
+    <div class="eyebrow">PLANO ATUAL</div>
+    <div class="plan-line">
+      <h2 id="plan-title">Feitoo {{ billing.subscription?.grants_pro ? 'Pro' : 'Free' }}</h2>
+      <span class="status-label">{{
+        billing.subscription ? subscriptionStatus() : 'Gratuito'
+      }}</span>
+    </div>
+    @if (paymentProblem()) {
+      <p class="feedback feedback-warning">
+        Seu pagamento precisa de atenção. Regularize a assinatura existente para recuperar o Pro.
+      </p>
+    }
+    @if (
+      billing.subscription && !canUpgrade() && !canResume() && billing.subscription.amount == null
+    ) {
+      <p class="price-note">Valor contratado disponível no gerenciamento.</p>
+    } @else {
+      <p class="price">{{ proPrice() }}<span>/mês</span></p>
+      <p class="text-secondary small">
+        {{
+          billing.subscription?.amount != null && !canUpgrade()
+            ? 'Mensalidade contratada'
+            : 'Feitoo Pro · oferta mensal'
+        }}
+        · cobrança recorrente
+      </p>
+    }
+    @if (billing.subscription?.current_period_end; as end) {
+      <p class="relevant-date">
+        {{
+          billing.subscription?.cancel_at_period_end && billing.subscription?.grants_pro
+            ? 'Pro disponível até'
+            : billing.subscription?.grants_pro
+              ? 'Próxima cobrança'
+              : 'Fim do período registrado'
+        }}
+        <strong>{{ end | date: 'dd/MM/yyyy' }}</strong>
+      </p>
+    }
+    @if (stateHelp()) {
+      <p class="state-help">{{ stateHelp() }}</p>
+    }
+    <div class="actions">
+      @if (canUpgrade() || canResume() || canPortal()) {
+        <button
+          class="btn btn-primary"
+          [disabled]="subscriptionBusy() || errors.blocked()"
+          (click)="openSubscription(!(canUpgrade() || canResume()))"
+        >
+          {{ subscriptionBusy() ? 'Abrindo…' : primaryLabel() }}
+        </button>
+      } @else {
+        <p class="small text-secondary">
+          Novas contratações estão temporariamente indisponíveis. Consulte novamente mais tarde.
+        </p>
+      }
+      @if ((canUpgrade() || canResume()) && canPortal()) {
+        <button
+          class="text-action"
+          [disabled]="subscriptionBusy() || errors.blocked()"
+          (click)="openSubscription(true)"
+        >
+          Acessar gerenciamento
+        </button>
+      }
+    </div>
+    <p class="small text-secondary commercial-note">
+      Renovação mensal. Gerencie pagamentos e cancelamento no Portal Stripe. Se o cancelamento for
+      agendado, o acesso termina na data informada.
+    </p>
+  </section>
+}
+@if (subscriptionMessage()) {
+  <p class="feedback feedback-info" role="status">{{ subscriptionMessage() }}</p>
+}
+@if (confirmingSubscription() || stateHelp()) {
+  <div class="actions secondary-actions">
+    <button
+      class="btn btn-outline-secondary"
+      [disabled]="
+        subscriptionLoading() || subscriptionPollingActive() || subscriptionRetryBlocked()
+      "
+      (click)="loadSubscription()"
+    >
+      Consultar confirmação
+    </button>
+    @if (subscriptionPollingActive()) {
+      <button class="text-action" (click)="cancelSubscriptionConfirmation()">
+        Parar consulta automática
+      </button>
+    }
+  </div>
+}
+@if (subscription(); as billing) {
+  <section class="benefits-section" aria-labelledby="benefits-title">
+    <h2 id="benefits-title">O que está incluído no Pro</h2>
+    <dl class="benefit-list">
+      <div>
+        <dt>XML para Excel</dt>
+        <dd>
+          {{ billing.offer.per_processing }} XMLs por lote · {{ billing.offer.daily }} por dia
+        </dd>
+      </div>
+      <div>
+        <dt>Orçamentos em PDF</dt>
+        <dd>Até 100 gerações por período da assinatura</dd>
+      </div>
+      <div>
+        <dt>Demais ferramentas</dt>
+        <dd>
+          XML para PDF, produtos, análise, organização e DOCX mantêm seus limites próprios,
+          informados em cada ferramenta.
+        </dd>
+      </div>
+      <div>
+        <dt>Arquivos</dt>
+        <dd>
+          Resultados fiscais Pro por até 24h. PDF de orçamento por 2h. Consulte o prazo de cada
+          arquivo.
+        </dd>
+      </div>
+    </dl>
+  </section>
+}
+@if (usageLoading()) {
+  <p role="status">Atualizando benefícios de XML e orçamentos…</p>
+}
+@if (usageError()) {
+  <p role="alert" class="feedback feedback-warning">{{ usageError() }}</p>
+  <button class="btn btn-outline-secondary" (click)="loadUsage(true)" [disabled]="usageLoading()">
+    Atualizar benefícios
+  </button>
+}
+@if (usage(); as current) {
+  <section class="usage-section" aria-labelledby="usage-title">
+    <h2 id="usage-title">Seu uso hoje · XML para Excel</h2>
+    <p>
+      {{ current.limits.used_today }} de {{ current.limits.daily }} XMLs ·
+      {{ current.limits.remaining_today }} restantes
+    </p>
+    <progress
+      [value]="current.limits.used_today"
+      [max]="current.limits.daily"
+      aria-labelledby="usage-title"
+    ></progress>
+    <p class="small text-secondary">Renova à meia-noite, no horário de São Paulo.</p>
+  </section>
+}

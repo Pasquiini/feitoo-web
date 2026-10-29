@@ -13,7 +13,7 @@ const privateRoot = resolve(
   'storage/app/private/quotation-validation/e2e-phase4-' + token,
 ).replaceAll('\\', '/');
 const artifacts = resolve('dist/validation/quotation-generation');
-const root = resolve('dist/feitoo-web/browser');
+const root = resolve(process.env.FEITOO_TEST_BROWSER_ROOT ?? 'dist/feitoo-web/browser');
 for (const directory of [
   privateRoot,
   artifacts,
@@ -53,6 +53,7 @@ const env = {
   MAIL_MAILER: 'array',
   QUOTATION_E2E_ROOT: privateRoot,
   QUOTATION_GENERATION_ENABLED: 'true',
+  QUOTATION_PURCHASES_ENABLED: 'false',
   QUOTATION_SANDBOX: 'php',
   QUOTATION_PHP_BINARY: php,
 };
@@ -285,6 +286,13 @@ try {
     await waitFor(
       'document.querySelector(".quotation-app").textContent.includes("Você já utilizou seu orçamento gratuito de hoje.")',
     );
+    assert.equal(
+      await evaluate(
+        '[...document.querySelectorAll("app-quotation-commerce button")].filter(e=>e.textContent.trim().startsWith("Comprar")).every(e=>e.disabled)',
+      ),
+      true,
+      'Exhausting Free must not enable checkout',
+    );
     assert.equal((await fixture('inspect')).generations, 1);
     const forbidden = await evaluate(
       `fetch('/api/quotations/drafts/00000000-0000-4000-8000-000000000001/generations',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({revision:1})}).then(r=>r.status)`,
@@ -450,7 +458,9 @@ try {
     assert.equal(await evaluate('document.querySelectorAll(".home-faq details").length'), 4);
     assert.equal(
       requests.some(
-        (r) => r.method !== 'GET' && /purchase|checkout|stripe|\/start|\/files$/.test(r.path),
+        (r) =>
+          r.method !== 'GET' &&
+          /purchase|checkout|credit-orders|stripe|\/start|\/files$/.test(r.path),
       ),
       false,
     );
@@ -468,6 +478,7 @@ try {
           database: 'isolated SQLite file',
           realDatabaseQueue: true,
           realSubprocessPdf: true,
+          purchasesDisabled: true,
           keyboardActivation: true,
           labelledGenerationAndLiveStatus: true,
           generationConfirmation: true,

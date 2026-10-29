@@ -9,6 +9,7 @@ import { LAUNCH_CONFIG, LaunchConfig } from './launch-config';
 import { SeoService } from './seo.service';
 import { routes } from '../app.routes';
 import { publicPages } from './public-pages';
+import { launch } from '../../environments/launch.generated';
 
 const config: LaunchConfig = {
   origin: 'https://feitoo.example',
@@ -214,6 +215,29 @@ describe('Public launch', () => {
     expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe(
       'noindex,follow',
     );
+  });
+  it('publica apenas a rota limpa e conserva noindex para contextos privados de orçamento', () => {
+    const previous = launch.quotationEnabled;
+    launch.quotationEnabled = true;
+    try {
+      const seo = TestBed.inject(SeoService);
+      seo.apply('/gerador-de-orcamentos');
+      expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe(
+        'index,follow',
+      );
+      for (const key of ['draft', 'generation', 'quotation_order', 'payment']) {
+        seo.apply('/gerador-de-orcamentos?' + key + '=private');
+        expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe(
+          'noindex,follow',
+        );
+        expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+          config.origin + '/gerador-de-orcamentos',
+        );
+        expect(document.getElementById('feitoo-schema')?.textContent).not.toContain('private');
+      }
+    } finally {
+      launch.quotationEnabled = previous;
+    }
   });
   it('home mostra as três ferramentas e navegação funcional', async () => {
     const harness = await RouterTestingHarness.create('/');

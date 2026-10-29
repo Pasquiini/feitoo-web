@@ -76,6 +76,11 @@ export const toolFaqs: Record<
       answer:
         'A geração reserva uma unidade, e o consumo só é confirmado quando o PDF é concluído. Em uma falha definitiva ou expiração do processamento, a reserva é liberada. Tentativas de recuperação mantêm a mesma emissão e não geram consumo duplicado.',
     },
+    {
+      question: 'O que acontece com os créditos em um reembolso ou disputa?',
+      answer:
+        'Reembolso parcial ou integral bloqueia os créditos restantes do pacote afetado. Gerações concluídas permanecem registradas. Durante uma disputa, o saldo fica bloqueado; se a disputa for ganha e não houver reembolso, o saldo não utilizado é restaurado. Entre em contato com o suporte para atendimento.',
+    },
   ],
   '/docx-para-pdf': [
     {

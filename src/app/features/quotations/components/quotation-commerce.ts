@@ -94,6 +94,11 @@ import {
             @if (!q.pro?.active) {
               <a routerLink="/conta">Conhecer o Feitoo Pro</a>
             }
+            <p class="small text-secondary">
+              Reembolso parcial ou integral bloqueia os créditos restantes deste pacote. Uma disputa
+              bloqueia o saldo enquanto é analisada; se for ganha, o saldo não utilizado é
+              restaurado quando não houver reembolso. Gerações já concluídas permanecem registradas.
+            </p>
           }
         }
         <p>
@@ -273,6 +278,11 @@ export class QuotationCommercePanel {
           this.checkoutUnavailable.set(true);
           this.error.set(
             'A compra de créditos está temporariamente indisponível. Seu rascunho foi preservado; as gerações gratuitas e Pro continuam disponíveis conforme seu saldo.',
+          );
+        } else if (error instanceof HttpErrorResponse && error.error?.code === 'checkout_expired') {
+          this.checkoutUnavailable.set(true);
+          this.error.set(
+            'Esta tentativa de compra venceu. Confira as compras em Minha Conta antes de iniciar outra compra. Seu rascunho foi preservado.',
           );
         } else if (error instanceof HttpErrorResponse && [401, 419].includes(error.status)) {
           this.error.set('Entre novamente antes de comprar créditos. Seu rascunho foi preservado.');

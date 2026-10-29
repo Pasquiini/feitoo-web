@@ -25,6 +25,10 @@ export class SeoService {
   apply(url: string): void {
     const path = safePage(url);
     const quotationPreview = path === '/gerador-de-orcamentos' && !launch.quotationEnabled;
+    const params = new URLSearchParams(url.split('?')[1]?.split('#')[0] ?? '');
+    const quotationContext =
+      path === '/gerador-de-orcamentos' &&
+      ['quotation_order', 'generation', 'draft', 'payment'].some((key) => params.has(key));
     const guide = path in guidePages ? guidePages[path as GuidePath] : null;
     const page = publicPages[path as PublicPath] ?? {
       title: path === '/404' ? 'Página não encontrada | Feitoo' : 'Sua conta | Feitoo',
@@ -35,7 +39,7 @@ export class SeoService {
     this.meta.updateTag({
       name: 'robots',
       content:
-        this.config.origin && path in publicPages && !quotationPreview
+        this.config.origin && path in publicPages && !quotationPreview && !quotationContext
           ? 'index,follow'
           : 'noindex,follow',
     });

@@ -94,6 +94,13 @@ import { LAUNCH_CONFIG } from '../../core/launch-config';
         Arquivos selecionados permanecem apenas em memória; não são guardados em localStorage ou
         IndexedDB.
       </p>
+      <p>
+        No Gerador de Orçamentos, o rascunho e o logotipo são salvos temporariamente no IndexedDB
+        deste navegador. Na conta, o conteúdo do rascunho e o snapshot de geração são criptografados
+        pela aplicação; logos e PDFs ficam em armazenamento privado. O rascunho expira em 24 horas
+        após a última edição e o PDF, duas horas após concluir. Dados de compras e consumo são
+        conservados separadamente dos arquivos. Você pode excluir os arquivos sem apagar o consumo.
+      </p>
       <h2>Medição opcional</h2>
       <p>
         Se habilitado pelo responsável e aceito por você, o Google Analytics 4 mede uso das
@@ -145,6 +152,23 @@ import { LAUNCH_CONFIG } from '../../core/launch-config';
         Arquivos e resultados são temporários, com prazo configurado de
         {{ retention.minutes() }} minutos a partir da criação do lote. Baixe o resultado antes do
         vencimento. O serviço não substitui seu armazenamento ou suas cópias de segurança.
+      </p>
+      <h2>Orçamentos, benefícios e créditos</h2>
+      <p>
+        O orçamento é um documento comercial sem valor fiscal. A conta Free permite uma geração
+        bem-sucedida por data de reserva em São Paulo; uma geração que atravessa a meia-noite mantém
+        a data original. Pro inclui até 100 gerações por período da assinatura, com prioridade sobre
+        as demais modalidades. Créditos avulsos são exclusivos para orçamentos: cinco por R$ 9,90,
+        sem expiração comercial, usados apenas por escolha explícita. O saldo é liberado após
+        pagamento confirmado. Falhas definitivas não consomem e novos downloads não consomem
+        novamente.
+      </p>
+      <p>
+        Reembolso parcial ou integral bloqueia os créditos restantes do pacote afetado, preservando
+        gerações já concluídas. Disputas bloqueiam o saldo durante a análise; uma disputa ganha
+        restaura o saldo não utilizado se não houver reembolso. Para solicitar atendimento ou
+        reembolso, use o contato do responsável. As condições comerciais não limitam direitos
+        previstos na legislação aplicável.
       </p>
       <h2>Evolução e contato</h2>
       <p>

@@ -37,7 +37,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const config = JSON.parse(
     readFileSync(new URL('../.angular-launch.json', import.meta.url), 'utf8'),
   );
-  const output = new URL('../dist/feitoo-web/browser/', import.meta.url);
+  const output = new URL(
+    '../' + (process.env.FEITOO_ASSET_OUTPUT ?? 'dist/feitoo-web/browser') + '/',
+    import.meta.url,
+  );
   const image = readFileSync(new URL('og/feitoo-og.png', output));
   assert.ok(
     readdirSync(new URL('og/', output)).every((file) => !/\.(html|pdf|zip)$/i.test(file)),

@@ -37,6 +37,25 @@
     },
     {
       "src": "/gerador-de-orcamentos(?:/index.html|/)?",
+      "has": [{ "type": "query", "key": "quotation_order" }],
+      "headers": { "X-Robots-Tag": "noindex, follow" },
+      "continue": true
+    },
+    {
+      "src": "/gerador-de-orcamentos(?:/index.html|/)?",
+      "has": [{ "type": "query", "key": "generation" }],
+      "headers": { "X-Robots-Tag": "noindex, follow" },
+      "continue": true
+    },
+    {
+      "src": "/gerador-de-orcamentos(?:/index.html|/)?",
+      "has": [{ "type": "query", "key": "draft" }],
+      "headers": { "X-Robots-Tag": "noindex, follow" },
+      "continue": true
+    },
+    {
+      "src": "/gerador-de-orcamentos(?:/index.html|/)?",
+      "has": [{ "type": "query", "key": "payment" }],
       "headers": { "X-Robots-Tag": "noindex, follow" },
       "continue": true
     },

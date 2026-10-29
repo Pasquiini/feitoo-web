@@ -35,7 +35,7 @@ test('quotation editor prerenders safely as a draft preview with PDF disabled', 
   assert.equal(document.querySelector('app-quotation-drafts').textContent.trim(), '');
   assert.equal(document.querySelector('.generation-confirmation'), null);
 });
-test('preview is absent from home and sitemap and carries a noindex HTTP override', () => {
+test('preview is absent from home and sitemap; HTTP noindex covers private query contexts only', () => {
   assert.ok(!publicAssets('https://feitoo.com.br').sitemap.includes('/gerador-de-orcamentos'));
   const home = new JSDOM(
     readFileSync(new URL('../dist/feitoo-web/browser/index.html', import.meta.url), 'utf8'),
@@ -50,7 +50,16 @@ test('preview is absent from home and sitemap and carries a noindex HTTP overrid
     before.some(
       (route) =>
         new RegExp(`^${route.src}$`).test('/gerador-de-orcamentos') &&
+        route.has?.some((condition) => condition.key === 'quotation_order') &&
         route.headers?.['X-Robots-Tag'] === 'noindex, follow',
+    ),
+  );
+  assert.ok(
+    !before.some(
+      (route) =>
+        new RegExp(`^${route.src}$`).test('/gerador-de-orcamentos') &&
+        !route.has &&
+        route.headers?.['X-Robots-Tag'],
     ),
   );
   for (const alias of ['/gerador-de-orcamentos/', '/gerador-de-orcamentos/index.html']) {

@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { withBrowser } from './browser-smoke.mjs';
 
 // Browser integration uses a local contract fake. Laravel security is tested with SQLite in PHPUnit.
-const root = resolve('dist/feitoo-web/browser');
+const root = resolve(process.env.FEITOO_TEST_BROWSER_ROOT ?? 'dist/feitoo-web/browser');
 const artifacts = resolve('dist/validation/quotation-commerce');
 await mkdir(artifacts, { recursive: true });
 let account = null;

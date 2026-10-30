@@ -121,6 +121,25 @@ describe('direct account credit checkout', () => {
     expect(api.entitlements).toHaveBeenCalled();
     expect(api.checkout).not.toHaveBeenCalled();
   });
+  it('keeps a delayed PIX or boleto return pending without starting another purchase', async () => {
+    params.set('quotation_order', pending.id);
+    params.set('payment', 'success');
+    sessionStorage.setItem('quotation-checkout-1', 'same-key');
+    sessionStorage.setItem('quotation-checkout-order-1', pending.id);
+    api.order.mockResolvedValue({
+      ...pending,
+      checkout_url: null,
+      actions: { refresh: true, resume_checkout: false },
+    });
+    const f = await create();
+    expect(f.componentInstance.message()).toContain('Aguardando confirmação');
+    expect(f.componentInstance.message()).not.toContain('Pagamento confirmado');
+    expect(sessionStorage.getItem('quotation-checkout-1')).toBe('same-key');
+    expect(api.checkout).not.toHaveBeenCalled();
+    expect(billing.redirect).not.toHaveBeenCalled();
+    await f.componentInstance.buy();
+    expect(api.checkout).not.toHaveBeenCalled();
+  });
   it('an old paid return cannot erase a newer attempt key', async () => {
     sessionStorage.setItem('quotation-checkout-1', 'new-key');
     sessionStorage.setItem('quotation-checkout-order-1', '22222222-2222-4222-8222-222222222222');

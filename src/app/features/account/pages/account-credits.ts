@@ -109,7 +109,7 @@ export class AccountCreditsPage {
       this.message.set(
         order.actions?.resume_checkout
           ? 'Pagamento pendente. O saldo será liberado após confirmação. Você pode consultar ou retomar o mesmo pedido.'
-          : 'Pagamento pendente de conciliação. Consulte novamente em instantes; o saldo será liberado após confirmação.',
+          : 'Aguardando confirmação do pagamento. PIX e boleto podem exigir uma confirmação posterior. Consulte novamente; o saldo será liberado após confirmação.',
       );
       return;
     }

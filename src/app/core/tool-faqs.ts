@@ -47,6 +47,11 @@ export const toolFaqs: Record<
 > = {
   '/gerador-de-orcamentos': [
     {
+      question: 'Posso criar um orçamento de prestação de serviços?',
+      answer:
+        'Sim. Descreva os serviços nos itens, informe quantidades e preços e preencha as condições de pagamento e o prazo de entrega. Você pode combinar produtos e serviços e gerar um PDF com os dados do prestador e do cliente. O orçamento é um documento comercial, sem valor fiscal.',
+    },
+    {
       question: 'O gerador de orçamentos é grátis?',
       answer:
         'Sim. Com uma conta gratuita, você pode concluir um orçamento por dia, com renovação à meia-noite no horário de São Paulo. Os modelos Clássico e Moderno estão incluídos.',

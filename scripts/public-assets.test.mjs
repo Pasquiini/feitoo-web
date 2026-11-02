@@ -32,6 +32,30 @@ test('sem domínio nenhum endereço é inventado e robots bloqueia staging', () 
   assert.ok(!publicAssets('').sitemap.includes('<url>'));
   assert.equal(publicAssets('').robots, 'User-agent: *\nDisallow: /\n');
 });
+
+test('sitemap de produção inclui o gerador habilitado e permite rastrear todas as ferramentas', () => {
+  const { sitemap, robots } = publicAssets('https://feitoo.com.br', true);
+  assert.equal((sitemap.match(/<url>/g) ?? []).length, paths.length);
+  assert.ok(sitemap.includes('<loc>https://feitoo.com.br/gerador-de-orcamentos</loc>'));
+  for (const path of paths) {
+    assert.ok(sitemap.includes(`<loc>https://feitoo.com.br${path}</loc>`));
+    assert.ok(!robots.includes(`Disallow: ${path}\n`));
+  }
+});
+
+test('a página 404 e seus aliases devolvem 404 e noindex antes do filesystem', () => {
+  const { routes } = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+  const beforeFiles = routes.slice(
+    0,
+    routes.findIndex((route) => route.handle === 'filesystem'),
+  );
+  for (const path of ['/404', '/404/', '/404.html', '/404/index.html']) {
+    const rule = beforeFiles.find((route) => new RegExp(`^${route.src}$`).test(path) && route.dest);
+    assert.equal(rule?.status, 404, path);
+    assert.equal(rule?.dest, '/404.html', path);
+    assert.equal(rule?.headers['X-Robots-Tag'], 'noindex, follow', path);
+  }
+});
 test('Vercel normaliza rotas públicas antes do filesystem e preserva 404 real', () => {
   const { routes } = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
   const redirectIndex = routes.findIndex(

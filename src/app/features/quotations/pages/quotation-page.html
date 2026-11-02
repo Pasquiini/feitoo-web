@@ -3,7 +3,9 @@
   <div class="quotation-title-row">
     <div>
       <h1>Gerador de <span>Orçamentos</span></h1>
-      <p>Crie orçamentos profissionais em minutos, sem planilhas e sem complicação.</p>
+      <p>
+        Crie seu orçamento online com produtos ou serviços e gere um PDF para enviar ao cliente.
+      </p>
     </div>
     <span class="quotation-badge badge">{{
       generationEnabled ? 'Grátis para começar' : 'Prévia do editor'
@@ -682,10 +684,25 @@
       Use o modelo Clássico para uma apresentação formal e discreta, ou o Moderno para destacar sua
       identidade visual. Ambos incluem os mesmos dados e estão disponíveis no gratuito.
     </p>
+    <h2>Orçamentos para seus clientes e serviços</h2>
+    <p>
+      Para elaborar um orçamento de prestação de serviços, descreva cada serviço nos itens, informe
+      a quantidade e o preço e detalhe o prazo e as condições de pagamento. Você também pode incluir
+      produtos no mesmo documento.
+    </p>
+    <p>
+      Personalize os dados do prestador e do cliente, o número, a data, a validade, o logotipo e as
+      observações. A prévia ajuda a conferir o documento, e o cálculo automático reúne subtotal,
+      desconto e total antes da geração do PDF.
+    </p>
     <p>
       Seu orçamento e seu logotipo têm acesso privado. Consulte os prazos no editor e saiba mais
       sobre a <a routerLink="/seguranca">segurança dos seus arquivos</a>. O documento é comercial,
       sem valor fiscal.
+    </p>
+    <p>
+      Já tem uma proposta escrita no Word? Use o conversor de
+      <a routerLink="/docx-para-pdf">DOCX para PDF</a> para compartilhar seu documento.
     </p>
     <h2>Dúvidas sobre o Gerador de Orçamentos</h2>
     @for (faq of faqs; track faq.question) {

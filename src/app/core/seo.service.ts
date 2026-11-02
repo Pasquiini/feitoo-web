@@ -32,7 +32,10 @@ export class SeoService {
     const guide = path in guidePages ? guidePages[path as GuidePath] : null;
     const page = publicPages[path as PublicPath] ?? {
       title: path === '/404' ? 'Página não encontrada | Feitoo' : 'Sua conta | Feitoo',
-      description: 'Entre na sua conta Feitoo para continuar.',
+      description:
+        path === '/404'
+          ? 'Página não encontrada. Acesse as ferramentas online do Feitoo para continuar.'
+          : 'Entre na sua conta Feitoo para continuar.',
     };
     this.title.setTitle(page.title);
     this.meta.updateTag({ name: 'description', content: page.description });

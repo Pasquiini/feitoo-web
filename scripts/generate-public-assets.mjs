@@ -58,6 +58,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     privateShell.querySelectorAll('link[rel="canonical"], #feitoo-schema, h1').length,
     0,
   );
+  const titles = new Set();
+  const descriptions = new Set();
   for (const path of paths) {
     const quotationPreview = path === '/gerador-de-orcamentos' && !config.quotationEnabled;
     const html = readFileSync(
@@ -90,10 +92,19 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     assert.equal(document.querySelectorAll('title').length, 1);
     assert.equal(document.querySelectorAll('meta[name="description"]').length, 1);
     assert.equal(document.querySelectorAll('meta[name="robots"]').length, 1);
+    assert.ok(document.title.trim(), `Title vazio: ${path}`);
+    const description = document.querySelector('meta[name="description"]').content;
+    assert.ok(description.trim(), `Description vazia: ${path}`);
+    assert.ok(!titles.has(document.title), `Title duplicado: ${path}`);
+    assert.ok(!descriptions.has(description), `Description duplicada: ${path}`);
+    titles.add(document.title);
+    descriptions.add(description);
+    assert.equal(document.querySelector('html').lang, 'pt-BR');
     if (config.origin)
       assert.equal(document.querySelector('link[rel="canonical"]').href, config.origin + path);
     const contextual = {
-      '/docx-para-pdf': ['/seguranca', '/planos'],
+      '/gerador-de-orcamentos': quotationPreview ? [] : ['/docx-para-pdf', '/seguranca'],
+      '/docx-para-pdf': ['/gerador-de-orcamentos', '/seguranca', '/planos'],
       '/xml-para-excel': ['/produtos-dos-xmls', '/analisar-xml'],
       '/xml-para-pdf': ['/xml-para-excel'],
       '/organizar-xml': ['/analisar-xml'],
@@ -205,5 +216,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const notFound = readFileSync(new URL('404.html', output), 'utf8');
   assert.ok(notFound.includes('content="noindex,follow"'));
   assert.ok(!notFound.includes('rel="canonical"'));
+  const notFoundDocument = new JSDOM(notFound).window.document;
+  assert.equal(notFoundDocument.title, 'Página não encontrada | Feitoo');
+  assert.equal(
+    notFoundDocument.querySelector('meta[name="description"]').content,
+    'Página não encontrada. Acesse as ferramentas online do Feitoo para continuar.',
+  );
+  assert.equal(notFoundDocument.querySelectorAll('#feitoo-schema').length, 0);
   console.log('robots.txt, sitemap.xml e 404.html gerados.');
 }

@@ -31,7 +31,25 @@ test('public prerender contains no account balance or personal data', () => {
 test('quotation stages and home discovery remain available in the public HTML', () => {
   const home = new JSDOM(readFileSync(new URL('index.html', root), 'utf8')).window.document;
   assert.equal(home.querySelectorAll('.home-tool-card').length, 7);
-  assert.equal(home.querySelectorAll('.home-faq details').length, 4);
+  assert.equal(home.querySelectorAll('.home-faq details').length, 0);
+  assert.equal(
+    home.querySelectorAll('.tool-shortcuts').length,
+    0,
+    'Prerender must not contain browser preferences',
+  );
+  assert.equal(home.querySelectorAll('.favorite-toggle').length, 7);
+  for (const button of home.querySelectorAll('.favorite-toggle')) {
+    assert.equal(button.closest('a'), null);
+    assert.equal(button.getAttribute('aria-pressed'), 'false');
+    assert.ok(button.getAttribute('aria-label'));
+  }
+  assert.ok(home.querySelector('.plans-callout a[href="/planos"]'));
+  assert.ok(home.querySelector('.security-block a[href="/seguranca"]'));
+  const homeGraph = JSON.parse(home.querySelector('#feitoo-schema').textContent)['@graph'];
+  assert.deepEqual(
+    homeGraph.map((node) => node['@type']),
+    ['WebSite', 'Organization'],
+  );
   const quotation = new JSDOM(
     readFileSync(new URL('gerador-de-orcamentos/index.html', root), 'utf8'),
   ).window.document;

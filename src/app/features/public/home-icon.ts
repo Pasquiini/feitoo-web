@@ -4,7 +4,7 @@ import { Component, input } from '@angular/core';
   selector: 'app-home-icon',
   template: `<svg
     viewBox="0 0 24 24"
-    fill="none"
+    [attr.fill]="filled() ? 'currentColor' : 'none'"
     stroke="currentColor"
     stroke-width="1.7"
     stroke-linecap="round"
@@ -27,7 +27,10 @@ import { Component, input } from '@angular/core';
   `,
 })
 export class HomeIcon {
+  readonly filled = input(false);
   readonly name = input.required<
+    | 'star'
+    | 'clock'
     | 'xml'
     | 'excel'
     | 'product'
@@ -42,6 +45,8 @@ export class HomeIcon {
     | 'search'
   >();
   readonly paths = {
+    star: 'm12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z',
+    clock: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0 M12 7v5l3 2',
     search: 'M16 10a6 6 0 1 1-12 0 6 6 0 0 1 12 0 M15 15l6 6',
     xml: 'M14 2H5v20h14V7z M14 2v5h5 M9 11l-3 3 3 3 M15 11l3 3-3 3',
     excel: 'M14 2H5v20h14V7z M14 2v5h5 M8 11h8v7H8z M12 11v7 M8 14h8',

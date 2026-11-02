@@ -455,7 +455,11 @@ try {
     await evaluate(`document.querySelector('a.brand').click()`);
     await waitFor('!!document.querySelector("#tool-search")');
     await captureUx('home', [320, 390, 768, 1440]);
-    assert.equal(await evaluate('document.querySelectorAll(".home-faq details").length'), 4);
+    assert.equal(await evaluate('document.querySelectorAll(".home-faq details").length'), 0);
+    assert.equal(
+      await evaluate('document.querySelector(".plans-callout a").getAttribute("href")'),
+      '/planos',
+    );
     assert.equal(
       requests.some(
         (r) =>

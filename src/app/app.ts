@@ -12,6 +12,7 @@ import { finalize } from 'rxjs';
 import { environment } from '../environments/environment';
 import { AuthService } from './features/auth/services/auth.service';
 import { NavbarCredits } from './features/account/components/navbar-credits';
+import { ToolPreferencesService } from './core/tool-preferences.service';
 
 interface HealthResponse {
   status: 'ok';
@@ -40,6 +41,7 @@ export class App {
   protected readonly apiStatus = signal('Verificando conexão com a API…');
 
   constructor() {
+    inject(ToolPreferencesService);
     inject(SeoService).start();
     const browser = isPlatformBrowser(inject(PLATFORM_ID));
     const http = inject(HttpClient);

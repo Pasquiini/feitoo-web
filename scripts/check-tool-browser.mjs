@@ -561,7 +561,7 @@ try {
   );
   const publicChecks = [];
   for (const [path, heading] of [
-    ['/', 'Ferramentas online para arquivos, documentos e planilhas.'],
+    ['/', 'Ferramentas simples para resolver tarefas de verdade.'],
     ['/seguranca', 'Segurança sem promessas vazias'],
     ['/privacidade', 'Privacidade e cookies'],
     ['/termos', 'Termos de uso'],
@@ -584,9 +584,11 @@ try {
       publicChecks.push({ path, width, overflow: false });
       if (path === '/') {
         assert.equal(await evaluate('document.querySelectorAll(".home-tool-card").length'), 7);
-        assert.equal(await evaluate('document.querySelectorAll(".plan-card").length'), 3);
+        assert.equal(await evaluate('document.querySelectorAll(".plan-card").length'), 0);
         assert.ok(
-          await evaluate('document.querySelector(".plan-pro a").getAttribute("href") === "/conta"'),
+          await evaluate(
+            'document.querySelector(".plans-callout a").getAttribute("href") === "/planos"',
+          ),
         );
         assert.ok(
           await evaluate('document.querySelector(".site-footer a[href=\\"/termos\\"]") !== null'),
@@ -659,9 +661,9 @@ try {
         ),
       );
       await command('Emulation.setEmulatedMedia', { features: [] });
-      await evaluate('document.querySelector(".plan-pro a").click()');
+      await evaluate('document.querySelector(".plans-callout a").click()');
       await waitFor(
-        'location.pathname === "/login" && location.search.includes("returnTo=%2Fconta") && !!document.querySelector("#email")',
+        'location.pathname === "/planos" && document.querySelectorAll(".plan-card").length === 3',
       );
     }
   }

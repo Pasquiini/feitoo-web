@@ -1,27 +1,26 @@
-<article class="home-tool-card">
+<article class="home-tool-card" [attr.data-tool-route]="tool().route">
   <a [routerLink]="tool().route" [attr.aria-label]="tool().cta + ': ' + tool().title">
     <div class="tool-top">
-      <span class="tool-category-label">{{ tool().category }}</span
-      ><span class="tool-badge">{{ tool().badge }}</span>
+      <span class="tool-icon"><app-home-icon [name]="tool().icon" /></span>
+      <span class="tool-format" aria-hidden="true">
+        {{ tool().inputLabel }} <span>→</span> {{ tool().outputLabel }}
+      </span>
     </div>
-    <div class="card-transformation" aria-hidden="true">
-      <span>{{ tool().inputLabel }}</span
-      ><span class="card-arrow">→</span><strong>{{ tool().outputLabel }}</strong>
-    </div>
-    <h3>
-      @if (tool().icon === 'pdf') {
-        <app-home-icon name="pdf" />
-      }
-      {{ tool().title }}
-    </h3>
+    <h4>{{ tool().title }}</h4>
     <p class="tool-description">{{ tool().description }}</p>
-    <ul class="tool-tags" aria-label="Recursos">
-      @for (tag of tool().tags; track tag) {
-        <li>{{ tag }}</li>
-      }
-    </ul>
-    <div class="tool-bottom">
-      <span class="tool-cta">{{ tool().cta }} <app-home-icon name="arrow" /></span>
-    </div>
+    <span class="tool-cta">{{ tool().cta }} <app-home-icon name="arrow" /></span>
   </a>
+  <button
+    type="button"
+    class="favorite-toggle"
+    [attr.aria-label]="
+      (favorite() ? 'Remover ' : 'Adicionar ') +
+      tool().title +
+      (favorite() ? ' dos favoritos' : ' aos favoritos')
+    "
+    [attr.aria-pressed]="favorite()"
+    (click)="preferences.toggleFavorite(tool().route)"
+  >
+    <app-home-icon name="star" [filled]="favorite()" />
+  </button>
 </article>

@@ -10,7 +10,7 @@ test('production prerender: home and DOCX metadata, schemas and visible FAQ', ()
     [
       'index.html',
       'Feitoo | Ferramentas Online para XML, Word, PDF e Planilhas',
-      'Ferramentas online para arquivos, documentos e planilhas.',
+      'Ferramentas simples para resolver tarefas de verdade.',
     ],
     [
       'docx-para-pdf/index.html',

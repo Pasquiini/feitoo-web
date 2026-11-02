@@ -1,24 +1,21 @@
-import { Component, computed, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HomeIcon } from './home-icon';
 import { HOME_TOOLS, searchTools } from './home-tools';
 import { HomeToolCard } from './tool-card';
-import { HomePlans } from './home-plans';
-import { launch } from '../../../environments/launch.generated';
+import { ToolPreferencesService } from '../../core/tool-preferences.service';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, HomeIcon, HomePlans, HomeToolCard],
+  imports: [RouterLink, HomeIcon, HomeToolCard],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
 export class HomePage {
-  readonly quotationEnabled = launch.quotationEnabled;
+  readonly preferences = inject(ToolPreferencesService);
+  private readonly document = inject(DOCUMENT);
   readonly tools = HOME_TOOLS;
-  readonly shortcuts = [HOME_TOOLS[0], HOME_TOOLS[5], HOME_TOOLS[3]];
-  readonly featured = HOME_TOOLS.filter((tool) =>
-    ['/docx-para-pdf', '/gerador-de-orcamentos'].includes(tool.route),
-  );
   readonly query = signal('');
   readonly categories = computed(() => [
     ...new Set(this.filteredTools().map((tool) => tool.category)),
@@ -27,4 +24,15 @@ export class HomePage {
     return this.filteredTools().filter((tool) => tool.category === category);
   }
   readonly filteredTools = computed(() => searchTools(this.query(), this.tools));
+
+  removeFavorite(route: string, event: Event): void {
+    const item = (event.currentTarget as HTMLElement).closest('li');
+    const nextFocus =
+      item?.nextElementSibling?.querySelector<HTMLElement>('button') ??
+      item?.previousElementSibling?.querySelector<HTMLElement>('button') ??
+      this.document.querySelector<HTMLElement>(`[data-tool-route="${route}"] .favorite-toggle`) ??
+      this.document.getElementById('tool-search');
+    this.preferences.toggleFavorite(route);
+    nextFocus?.focus();
+  }
 }

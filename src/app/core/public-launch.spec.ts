@@ -239,12 +239,14 @@ describe('Public launch', () => {
       launch.quotationEnabled = previous;
     }
   });
-  it('home mostra as três ferramentas e navegação funcional', async () => {
+  it('home mostra as ferramentas habilitadas e navegação funcional', async () => {
     const harness = await RouterTestingHarness.create('/');
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain(
-      'Ferramentas online para arquivos, documentos e planilhas.',
+      'Ferramentas simples para resolver tarefas de verdade.',
     );
-    expect(harness.routeNativeElement?.querySelectorAll('.home-tool-card').length).toBe(6);
+    expect(harness.routeNativeElement?.querySelectorAll('.home-tool-card').length).toBe(
+      launch.quotationEnabled ? 7 : 6,
+    );
     expect(harness.routeNativeElement?.querySelector('a')?.getAttribute('href')).toBe(
       '/xml-para-excel',
     );

@@ -4,6 +4,8 @@ import {
   DestroyRef,
   effect,
   inject,
+  input,
+  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -16,8 +18,16 @@ import { CreditBalanceStore } from '../services/credit-balance.store';
   selector: 'app-navbar-credits',
   imports: [RouterLink],
   template: `
-    <details (keydown.escape)="close($event)">
-      <summary aria-label="Créditos de orçamentos e benefícios">
+    <div class="credits-menu">
+      <button
+        type="button"
+        class="credit-trigger"
+        data-nav-trigger="credits"
+        aria-label="Créditos de orçamentos e benefícios"
+        [attr.aria-expanded]="open()"
+        aria-controls="credit-popover"
+        (click)="toggleRequested.emit()"
+      >
         @if (balances.quota()?.credits; as credits) {
           <span
             >{{ credits.available }} <span class="credit-unit">créditos de orçamentos</span
@@ -26,8 +36,8 @@ import { CreditBalanceStore } from '../services/credit-balance.store';
         } @else {
           <span>Saldo</span>
         }
-      </summary>
-      <div class="credit-popover">
+      </button>
+      <div id="credit-popover" class="credit-popover" [hidden]="!open()">
         <strong>Créditos e benefícios</strong>
         @if (balances.quota(); as q) {
           @if (q.credits; as credits) {
@@ -60,14 +70,17 @@ import { CreditBalanceStore } from '../services/credit-balance.store';
         >
           Atualizar saldo
         </button>
-        <a routerLink="/conta/creditos" (click)="close($event)">Meus créditos</a>
-        <a routerLink="/conta/creditos" (click)="close($event)">Comprar créditos</a>
+        <a routerLink="/conta/creditos" (click)="navigateRequested.emit()">Meus créditos</a>
+        <a routerLink="/conta/creditos" (click)="navigateRequested.emit()">Comprar créditos</a>
       </div>
-    </details>
+    </div>
   `,
   styleUrl: './navbar-credits.scss',
 })
 export class NavbarCredits {
+  readonly open = input(false);
+  readonly toggleRequested = output<void>();
+  readonly navigateRequested = output<void>();
   readonly balances = inject(CreditBalanceStore);
   private readonly api = inject(QuotationGenerationApi);
   private readonly auth = inject(AuthService);
@@ -108,14 +121,6 @@ export class NavbarCredits {
       }
     } finally {
       if (epoch === this.epoch && !this.destroy.destroyed) this.loading.set(false);
-    }
-  }
-  close(event: Event): void {
-    const details = (event.target as HTMLElement).closest('details');
-    details?.removeAttribute('open');
-    if (event.type === 'keydown') {
-      event.stopPropagation();
-      details?.querySelector('summary')?.focus();
     }
   }
 }

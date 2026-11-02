@@ -199,17 +199,21 @@ try {
           await evaluate('parseFloat(getComputedStyle(document.activeElement).outlineWidth) >= 3'),
         );
 
-        if (width < 768) {
+        if (width <= 900) {
           await evaluate('document.querySelector(".mobile-menu-toggle").click()');
           await waitFor(
             'document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded") === "true"',
           );
           assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'), false);
-          await evaluate('document.querySelector(".tools-menu summary").focus()');
+          await evaluate('document.querySelector("[data-nav-trigger=tools]").focus()');
           await key('Enter', 'Enter', { windowsVirtualKeyCode: 13 });
-          await waitFor('document.querySelector(".tools-menu").open');
+          await waitFor(
+            'document.querySelector("[data-nav-trigger=tools]").getAttribute("aria-expanded") === "true"',
+          );
           await key('Escape');
-          await waitFor('!document.querySelector(".tools-menu").open');
+          await waitFor(
+            'document.querySelector("[data-nav-trigger=tools]").getAttribute("aria-expanded") === "false"',
+          );
           await key('Escape');
           await waitFor(
             'document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded") === "false"',

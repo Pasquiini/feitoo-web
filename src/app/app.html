@@ -1,98 +1,125 @@
-﻿<a class="skip-link" href="#main-content">Pular para o conteúdo</a>
-<header class="site-header container">
-  <a routerLink="/" class="brand" aria-label="Feitoo, início"
+<a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+<header #header class="site-header container">
+  <a routerLink="/" class="brand" aria-label="Feitoo, início" (click)="closeMenus()"
     >feitoo<span aria-hidden="true">.</span></a
   >
-  <div class="header-actions" (keydown.escape)="closeMobileMenu($event)">
+  <div class="header-actions">
     <button
       type="button"
       class="mobile-menu-toggle"
       [attr.aria-expanded]="mobileMenuOpen()"
       aria-controls="primary-nav"
-      (click)="mobileMenuOpen.set(!mobileMenuOpen())"
+      [attr.aria-label]="mobileMenuOpen() ? 'Fechar navegação' : 'Abrir navegação'"
+      (click)="toggleMobileMenu()"
     >
-      Menu
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.7"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path d="M4 6h16 M4 12h16 M4 18h16" />
-      </svg>
+      <span>Menu</span><app-home-icon [name]="mobileMenuOpen() ? 'close' : 'menu'" />
     </button>
     <nav id="primary-nav" aria-label="Navegação principal" [class.is-open]="mobileMenuOpen()">
-      <details class="tools-menu" (keydown.escape)="closeAccountMenu($event)">
-        <summary>Ferramentas</summary>
-        <div class="tools-dropdown">
-          <a
-            routerLink="/"
-            fragment="ferramentas"
-            (click)="closeAccountMenu($event); mobileMenuOpen.set(false)"
-            >Ver todas as ferramentas ↗</a
-          >
+      <div class="tools-menu">
+        <button
+          type="button"
+          class="nav-trigger"
+          data-nav-trigger="tools"
+          [attr.aria-expanded]="dropdown() === 'tools'"
+          aria-controls="tools-dropdown"
+          (click)="toggleDropdown('tools')"
+        >
+          Ferramentas <app-home-icon name="chevron" />
+        </button>
+        <div id="tools-dropdown" class="tools-dropdown" [hidden]="dropdown() !== 'tools'">
+          <a class="catalog-link" routerLink="/" fragment="ferramentas" (click)="closeMenus()">
+            <span>Encontre sua próxima ferramenta</span
+            ><span>Ver catálogo <app-home-icon name="arrow" /></span>
+          </a>
           @for (category of toolCategories; track category) {
-            <section>
+            <section class="tool-group" [attr.aria-label]="category">
               <h2>{{ category }}</h2>
               @for (tool of tools; track tool.route) {
                 @if (tool.category === category) {
-                  <a
-                    [routerLink]="tool.route"
-                    (click)="closeAccountMenu($event); mobileMenuOpen.set(false)"
-                    >{{ tool.title }}</a
+                  <a [routerLink]="tool.route" (click)="closeMenus()"
+                    ><app-home-icon [name]="tool.icon" />{{ tool.title }}</a
                   >
                 }
               }
             </section>
           }
         </div>
-      </details>
-      <a routerLink="/planos" (click)="mobileMenuOpen.set(false)">Planos</a
-      ><a routerLink="/seguranca" (click)="mobileMenuOpen.set(false)">Segurança</a>
+      </div>
+      <a
+        routerLink="/planos"
+        routerLinkActive="nav-active"
+        ariaCurrentWhenActive="page"
+        (click)="closeMenus()"
+        >Planos</a
+      >
+      <a
+        routerLink="/seguranca"
+        routerLinkActive="nav-active"
+        ariaCurrentWhenActive="page"
+        (click)="closeMenus()"
+        >Segurança</a
+      >
     </nav>
     <div class="header-account">
       @if (auth.user(); as user) {
         @if (launch.quotationEnabled) {
-          <app-navbar-credits />
+          <app-navbar-credits
+            [open]="dropdown() === 'credits'"
+            (toggleRequested)="toggleDropdown('credits')"
+            (navigateRequested)="closeMenus()"
+          />
         }
-        <details class="account-menu">
-          <summary aria-label="Minha conta">
+        <div class="account-menu">
+          <button
+            type="button"
+            class="account-trigger"
+            data-nav-trigger="account"
+            aria-label="Minha conta"
+            [attr.aria-expanded]="dropdown() === 'account'"
+            aria-controls="account-dropdown"
+            (click)="toggleDropdown('account')"
+          >
             <span class="account-initial" aria-hidden="true">{{
               user.name.slice(0, 1).toUpperCase()
             }}</span>
-            <span class="account-name">Minha conta</span>
-          </summary>
-          <div>
-            <p>Olá, {{ user.name }}.</p>
-            <a
-              class="btn btn-outline-secondary btn-sm"
-              routerLink="/conta"
-              (click)="closeAccountMenu($event)"
-              >Minha conta</a
+            <span class="account-name">Minha conta</span><app-home-icon name="chevron" />
+          </button>
+          <div
+            id="account-dropdown"
+            class="account-dropdown"
+            [hidden]="dropdown() !== 'account'"
+            [attr.aria-busy]="loggingOut()"
+          >
+            <p class="account-greeting">Sua conta Feitoo</p>
+            <p class="account-user">{{ user.name }}</p>
+            <a routerLink="/conta" (click)="closeMenus()"
+              ><app-home-icon name="user" />Minha conta</a
             >
             <button
-              class="btn btn-outline-secondary btn-sm"
               type="button"
+              class="logout-button"
               [disabled]="loggingOut()"
               (click)="logout()"
             >
-              {{ loggingOut() ? 'Saindo…' : 'Sair' }}
+              <app-home-icon name="logout" />{{ loggingOut() ? 'Saindo…' : 'Sair' }}
             </button>
           </div>
-        </details>
+        </div>
       } @else {
-        <a routerLink="/login" [queryParams]="loginContext" class="account-link">Entrar</a>
+        <a
+          routerLink="/login"
+          [queryParams]="loginContext"
+          class="account-link"
+          (click)="closeMenus()"
+          >Entrar <app-home-icon name="arrow"
+        /></a>
       }
     </div>
   </div>
 </header>
 <main id="main-content" class="container" tabindex="-1">
   @if (authError()) {
-    <p class="feedback feedback-error" role="alert">
-      {{ authError() }}
-    </p>
+    <p class="feedback feedback-error" role="alert">{{ authError() }}</p>
   }
   <router-outlet />
   @if (development) {
@@ -101,39 +128,36 @@
 </main>
 <footer class="site-footer container">
   <div class="footer-identity">
-    <a class="brand" routerLink="/">feitoo<span aria-hidden="true">.</span></a>
-    <p>Ferramentas online para resolver tarefas com arquivos.</p>
+    <a class="brand" routerLink="/" aria-label="Feitoo, início"
+      >feitoo<span aria-hidden="true">.</span></a
+    >
+    <p>Ferramentas simples para resolver tarefas de verdade.</p>
     <a href="mailto:suporte@feitoo.com.br">suporte@feitoo.com.br</a>
   </div>
   <div class="footer-groups">
-    <nav aria-label="Ferramentas">
+    <nav class="footer-tools" aria-label="Ferramentas">
       <h2>Ferramentas</h2>
-      @for (tool of tools; track tool.route) {
-        <a [routerLink]="tool.route">{{ tool.title }}</a>
-      }
+      <div>
+        @for (tool of tools; track tool.route) {
+          <a [routerLink]="tool.route">{{ tool.title }}</a>
+        }
+      </div>
     </nav>
-    <nav aria-label="Produto">
-      <h2>Produto</h2>
-      <a routerLink="/planos">Planos</a><a routerLink="/seguranca">Segurança</a>
+    <nav aria-label="Feitoo">
+      <h2>Feitoo</h2>
+      <a routerLink="/planos">Planos</a><a routerLink="/seguranca">Segurança</a
+      ><a routerLink="/conta">Minha conta</a>
     </nav>
     <nav aria-label="Legal">
       <h2>Legal</h2>
       <a routerLink="/privacidade">Privacidade</a><a routerLink="/termos">Termos</a>
-    </nav>
-    <nav aria-label="Conta">
-      <h2>Conta</h2>
-      @if (auth.user()) {
-        <a routerLink="/conta">Minha conta</a>
-      } @else {
-        <a routerLink="/login">Entrar</a><a routerLink="/conta">Minha conta</a>
-      }
+      <button type="button" class="link-button" (click)="analytics.preferences.set(true)">
+        Preferências de cookies
+      </button>
     </nav>
   </div>
   <div class="footer-bottom">
-    <small>© {{ year }} Feitoo. Todos os direitos reservados.</small
-    ><button type="button" class="link-button" (click)="analytics.preferences.set(true)">
-      Preferências de cookies
-    </button>
+    <small>© {{ year }} Feitoo. Todos os direitos reservados.</small>
   </div>
 </footer>
 <app-cookie-preferences />

@@ -317,9 +317,7 @@ try {
       await evaluate('document.querySelector("#quotation-notes").value'),
       'Sessão expirou, recuperar depois',
     );
-    await evaluate(
-      'document.querySelector("details.account-menu, details:has(.account-name)")?.setAttribute("open", "")',
-    );
+    await evaluate('document.querySelector("[data-nav-trigger=account]")?.click()');
     await click('Sair');
     await waitFor('!!document.querySelector("#email")');
     records = await readLocal();

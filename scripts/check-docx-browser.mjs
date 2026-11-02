@@ -189,13 +189,13 @@ try {
         ),
         width < 768 ? 1 : width <= 1024 ? 2 : 3,
       );
-      if (width <= 640) {
+      if (width <= 900) {
         await evaluate('document.querySelector(".mobile-menu-toggle").click()');
         await waitFor(
           'document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded") === "true"',
         );
       }
-      await evaluate('document.querySelector(".tools-menu summary").focus()');
+      await evaluate('document.querySelector("[data-nav-trigger=tools]").focus()');
       await command('Input.dispatchKeyEvent', {
         type: 'keyDown',
         key: 'Enter',
@@ -210,7 +210,9 @@ try {
         code: 'Enter',
         windowsVirtualKeyCode: 13,
       });
-      await waitFor('document.querySelector(".tools-menu").open');
+      await waitFor(
+        'document.querySelector("[data-nav-trigger=tools]").getAttribute("aria-expanded") === "true"',
+      );
       assert.equal(
         await evaluate('document.querySelectorAll(".tools-dropdown section a").length'),
         6,
@@ -222,11 +224,15 @@ try {
         Buffer.from(menu.data, 'base64'),
       );
       await command('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape' });
-      await waitFor('!document.querySelector(".tools-menu").open');
-      assert.ok(
-        await evaluate('document.activeElement === document.querySelector(".tools-menu summary")'),
+      await waitFor(
+        'document.querySelector("[data-nav-trigger=tools]").getAttribute("aria-expanded") === "false"',
       );
-      if (width <= 640) {
+      assert.ok(
+        await evaluate(
+          `document.activeElement === document.querySelector('${width <= 900 ? '.mobile-menu-toggle' : '[data-nav-trigger=tools]'}')`,
+        ),
+      );
+      if (width <= 900) {
         await command('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape' });
         await waitFor(
           'document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded") === "false"',

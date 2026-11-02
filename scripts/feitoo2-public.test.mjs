@@ -24,6 +24,18 @@ test('public prerender contains no account balance or personal data', () => {
     assert.equal(document.querySelector('.quota-summary'), null, route);
     assert.equal(document.querySelector('.editor-availability'), null, route);
     assert.equal(document.querySelector('.account-name'), null, route);
+    assert.equal(
+      document.querySelector('[data-nav-trigger="tools"]').getAttribute('aria-expanded'),
+      'false',
+      route,
+    );
+    assert.equal(document.querySelector('#tools-dropdown').hidden, true, route);
+    assert.equal(document.querySelector('.skip-link').getAttribute('href'), '#main-content', route);
+    assert.equal(
+      document.querySelector('.mobile-menu-toggle').getAttribute('aria-expanded'),
+      'false',
+      route,
+    );
     assert.equal(document.querySelectorAll('link[rel=canonical]').length, 1, route);
     assert.equal(document.querySelector('meta[name=robots]').content, 'index,follow', route);
   }

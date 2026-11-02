@@ -29,6 +29,11 @@ import { Component, input } from '@angular/core';
 export class HomeIcon {
   readonly filled = input(false);
   readonly name = input.required<
+    | 'chevron'
+    | 'menu'
+    | 'close'
+    | 'user'
+    | 'logout'
     | 'star'
     | 'clock'
     | 'xml'
@@ -45,6 +50,11 @@ export class HomeIcon {
     | 'search'
   >();
   readonly paths = {
+    chevron: 'm7 10 5 5 5-5',
+    menu: 'M4 6h16 M4 12h16 M4 18h16',
+    close: 'm6 6 12 12 M6 18 18 6',
+    user: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M4 21v-2a8 8 0 0 1 16 0v2',
+    logout: 'M9 3H4v18h5 M13 7l5 5-5 5 M8 12h13',
     star: 'm12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z',
     clock: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0 M12 7v5l3 2',
     search: 'M16 10a6 6 0 1 1-12 0 6 6 0 0 1 12 0 M15 15l6 6',

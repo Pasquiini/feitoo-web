@@ -593,7 +593,7 @@ try {
         assert.ok(
           await evaluate('document.querySelector(".site-footer a[href=\\"/termos\\"]") !== null'),
         );
-        if (width <= 640) {
+        if (width <= 900) {
           await evaluate('document.querySelector(".mobile-menu-toggle").click()');
           await waitFor(
             'document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded") === "true"',
@@ -614,7 +614,7 @@ try {
             resolve(artifacts, `home-menu-${width}.png`),
             Buffer.from(menuShot.data, 'base64'),
           );
-          await evaluate('document.querySelector(".tools-menu summary").focus()');
+          await evaluate('document.querySelector("[data-nav-trigger=tools]").focus()');
           await command('Input.dispatchKeyEvent', {
             type: 'keyDown',
             key: 'Escape',
@@ -829,7 +829,7 @@ try {
   }
   // Account workflow uses only the same synthetic session/API server.
   await evaluate(
-    'document.querySelector(".account-menu").open = true; document.querySelector(".account-menu a").click()',
+    'document.querySelector("[data-nav-trigger=account]").click(); document.querySelector(".account-menu a").click()',
   );
   await waitFor(
     '!!document.querySelector("#account-name") && document.querySelectorAll(".history-row").length === 10',
@@ -954,7 +954,7 @@ try {
   await command('Page.navigate', { url: 'http://127.0.0.1:' + port + '/conta' });
   await waitFor('document.body.innerText.includes("Você entra com Google")');
   assert.equal(await evaluate('document.querySelector("#account-password") === null'), true);
-  await evaluate('document.querySelector(".account-menu").open = true');
+  await evaluate('document.querySelector("[data-nav-trigger=account]").click()');
   await clickText('Sair');
   await waitFor('!!document.querySelector("#email")');
   assert.equal(loggedIn, false);

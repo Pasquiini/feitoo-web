@@ -3,12 +3,20 @@ import { App } from './app';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
+import { LAUNCH_CONFIG } from './core/launch-config';
+import { launch } from '../environments/launch.generated';
+import { HOME_TOOLS, TOOL_CATEGORIES } from './features/public/home-tools';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: LAUNCH_CONFIG, useValue: { ...launch, quotationEnabled: false } },
+      ],
     }).compileComponents();
   });
 
@@ -30,19 +38,20 @@ describe('App', () => {
     respondToHealth();
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
-    const menu = element.querySelector<HTMLDetailsElement>('.tools-menu')!;
-    expect([...menu.querySelectorAll('section h2')].map((h) => h.textContent)).toEqual([
-      'XML e Fiscal',
-      'Documentos',
-    ]);
-    expect(menu.querySelectorAll('section a')).toHaveLength(6);
+    const menu = element.querySelector<HTMLElement>('.tools-menu')!;
+    expect([...menu.querySelectorAll('section h2')].map((h) => h.textContent)).toEqual(
+      TOOL_CATEGORIES,
+    );
+    expect(menu.querySelectorAll('section a')).toHaveLength(HOME_TOOLS.length);
     expect(menu.querySelector('a[href="/docx-para-pdf"]')).not.toBeNull();
-    menu.open = true;
-    menu
-      .querySelector('summary')!
-      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    const trigger = menu.querySelector<HTMLButtonElement>('.nav-trigger')!;
+    trigger.click();
     fixture.detectChanges();
-    expect(menu.open).toBe(false);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(trigger);
   });
 
   it('should create the app', () => {

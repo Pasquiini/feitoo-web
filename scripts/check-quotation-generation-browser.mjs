@@ -409,7 +409,7 @@ try {
       }
     };
     await captureUx('account', [320, 390, 768, 1440]);
-    await evaluate('document.querySelector("app-navbar-credits summary").click()');
+    await evaluate('document.querySelector("app-navbar-credits .credit-trigger").click()');
     await captureUx('credits');
     await evaluate(
       `document.querySelector('app-navbar-credits details').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`,
@@ -419,7 +419,7 @@ try {
       false,
     );
     assert.equal(
-      await evaluate('document.activeElement.matches("app-navbar-credits summary")'),
+      await evaluate('document.activeElement.matches("app-navbar-credits .credit-trigger")'),
       true,
     );
     await click('Ver pacote de orçamentos');
